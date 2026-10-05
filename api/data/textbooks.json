@@ -1,0 +1,65 @@
+{
+  "pep-2019-required-1": {
+    "id": "pep-2019-required-1",
+    "publisher": "人民教育出版社",
+    "name": "人教版",
+    "subject": "高中英语",
+    "series": "2019新教材",
+    "volume": "必修第一册",
+    "dataFile": "pep-2019-required-1.json"
+  },
+  "pep-2019-selective-4": {
+    "id": "pep-2019-selective-4",
+    "publisher": "人民教育出版社",
+    "name": "人教版",
+    "subject": "高中英语",
+    "series": "2019新教材",
+    "volume": "选择性必修第四册",
+    "dataFile": "pep-2019-selective-4.json"
+  },
+  "pep-2019-required-2": {
+    "id": "pep-2019-required-2",
+    "publisher": "人民教育出版社",
+    "name": "人教版",
+    "subject": "高中英語",
+    "series": "2019新教材",
+    "volume": "必修第二冊",
+    "dataFile": "pep-2019-required-2.json"
+  },
+  "pep-2019-required-3": {
+    "id": "pep-2019-required-3",
+    "publisher": "人民教育出版社",
+    "name": "人教版",
+    "subject": "高中英語",
+    "series": "2019新教材",
+    "volume": "必修第三冊",
+    "dataFile": "pep-2019-required-3.json"
+  },
+  "pep-2019-selective-1": {
+    "id": "pep-2019-selective-1",
+    "publisher": "人民教育出版社",
+    "name": "人教版",
+    "subject": "高中英語",
+    "series": "2019新教材",
+    "volume": "選擇性必修第一冊",
+    "dataFile": "pep-2019-selective-1.json"
+  },
+  "pep-2019-selective-2": {
+    "id": "pep-2019-selective-2",
+    "publisher": "人民教育出版社",
+    "name": "人教版",
+    "subject": "高中英語",
+    "series": "2019新教材",
+    "volume": "選擇性必修第二冊",
+    "dataFile": "pep-2019-selective-2.json"
+  },
+  "pep-2019-selective-3": {
+    "id": "pep-2019-selective-3",
+    "publisher": "人民教育出版社",
+    "name": "人教版",
+    "subject": "高中英語",
+    "series": "2019新教材",
+    "volume": "選擇性必修第三冊",
+    "dataFile": "pep-2019-selective-3.json"
+  }
+}

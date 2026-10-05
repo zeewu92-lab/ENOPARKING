@@ -1,0 +1,1639 @@
+{
+  "textbook": {
+    "id": "pep-2019-required-1",
+    "publisher": "人民教育出版社",
+    "name": "人教版",
+    "subject": "高中英语",
+    "series": "2019新教材",
+    "volume": "必修第一册",
+    "dataFile": "pep-2019-required-1.json"
+  },
+  "units": {
+    "welcome": {
+      "id": "welcome",
+      "name": "Welcome Unit",
+      "words": [
+        {
+          "id": "welcome-1",
+          "word": "exchange",
+          "phonetic": "/ɪksˈtʃeɪndʒ/",
+          "meaning": "n. 交换；交流；兑换；【熟词生义】交易所；vt. 交换；交流；兑换"
+        },
+        {
+          "id": "welcome-2",
+          "word": "lecture",
+          "phonetic": "/ˈlektʃə(r)/",
+          "meaning": "n. 讲座；演讲；训斥；vt. 讲授；训斥"
+        },
+        {
+          "id": "welcome-3",
+          "word": "registration",
+          "phonetic": "/ˌredʒɪˈstreɪʃn/",
+          "meaning": "n. 登记；注册；报名；挂号"
+        },
+        {
+          "id": "welcome-4",
+          "word": "register",
+          "phonetic": "/ˈredʒɪstə(r)/",
+          "meaning": "vt. & vi. 登记；注册；报名；记录；n. 登记簿；注册表"
+        },
+        {
+          "id": "welcome-5",
+          "word": "sex",
+          "phonetic": "/seks/",
+          "meaning": "n. 性别；生理性别"
+        },
+        {
+          "id": "welcome-6",
+          "word": "female",
+          "phonetic": "/ˈfiːmeɪl/",
+          "meaning": "adj. 女性的；雌性的；n. 女性；雌性动物或植物"
+        },
+        {
+          "id": "welcome-7",
+          "word": "male",
+          "phonetic": "/meɪl/",
+          "meaning": "adj. 男性的；雄性的；n. 男性；雄性动物或植物"
+        },
+        {
+          "id": "welcome-8",
+          "word": "nationality",
+          "phonetic": "/ˌnæʃəˈnæləti/",
+          "meaning": "n. 国籍；民族"
+        },
+        {
+          "id": "welcome-9",
+          "word": "nation",
+          "phonetic": "/ˈneɪʃn/",
+          "meaning": "n. 国家；民族；国民"
+        },
+        {
+          "id": "welcome-10",
+          "word": "designer",
+          "phonetic": "/dɪˈzaɪnə(r)/",
+          "meaning": "n. 设计师；设计者"
+        },
+        {
+          "id": "welcome-11",
+          "word": "design",
+          "phonetic": "/dɪˈzaɪn/",
+          "meaning": "n. 设计；设计方案；vt. 设计；规划；构思；打算；意欲"
+        },
+        {
+          "id": "welcome-12",
+          "word": "campus",
+          "phonetic": "/ˈkæmpəs/",
+          "meaning": "n. 校园；校区"
+        },
+        {
+          "id": "welcome-13",
+          "word": "formal",
+          "phonetic": "/ˈfɔːml/",
+          "meaning": "adj. 正式的；正规的；庄重的；形式上的；表面的"
+        },
+        {
+          "id": "welcome-14",
+          "word": "anxious",
+          "phonetic": "/ˈæŋkʃəs/",
+          "meaning": "adj. 焦虑的；担心的；【熟词生义】渴望的；急切的"
+        },
+        {
+          "id": "welcome-15",
+          "word": "annoyed",
+          "phonetic": "/əˈnɔɪd/",
+          "meaning": "adj. 恼怒的；烦恼的"
+        },
+        {
+          "id": "welcome-16",
+          "word": "annoy",
+          "phonetic": "/əˈnɔɪ/",
+          "meaning": "vt. 使恼怒；使烦恼；打扰"
+        },
+        {
+          "id": "welcome-17",
+          "word": "frightened",
+          "phonetic": "/ˈfraɪtnd/",
+          "meaning": "adj. 害怕的；受惊的"
+        },
+        {
+          "id": "welcome-18",
+          "word": "senior",
+          "phonetic": "/ˈsiːniə(r)/",
+          "meaning": "adj. 级别较高的；资历较深的；n. 较年长者；高年级学生"
+        },
+        {
+          "id": "welcome-19",
+          "word": "outgoing",
+          "phonetic": "/ˈaʊtɡəʊɪŋ/",
+          "meaning": "adj. 外向的；开朗的；善于交际的；【熟词生义】即将离任的"
+        },
+        {
+          "id": "welcome-20",
+          "word": "impression",
+          "phonetic": "/ɪmˈpreʃn/",
+          "meaning": "n. 印象；感受；【熟词生义】印记；压痕"
+        },
+        {
+          "id": "welcome-21",
+          "word": "impress",
+          "phonetic": "/ɪmˈpres/",
+          "meaning": "vt. 给……留下深刻印象；使钦佩；使铭记"
+        },
+        {
+          "id": "welcome-22",
+          "word": "concentrate",
+          "phonetic": "/ˈkɒnsəntreɪt/",
+          "meaning": "vi. & vt. 集中注意力；集中；聚集；n. 【熟词生义】浓缩物；浓缩液"
+        },
+        {
+          "id": "welcome-23",
+          "word": "experiment",
+          "phonetic": "/ɪkˈsperɪmənt/",
+          "meaning": "n. 实验；试验；vi. 做实验；进行尝试"
+        },
+        {
+          "id": "welcome-24",
+          "word": "awkward",
+          "phonetic": "/ˈɔːkwəd/",
+          "meaning": "adj. 尴尬的；难处理的；笨拙的；不方便的；棘手的"
+        },
+        {
+          "id": "welcome-25",
+          "word": "junior",
+          "phonetic": "/ˈdʒuːniə(r)/",
+          "meaning": "adj. 级别较低的；初级的；n. 职位较低者；青少年运动员；大学低年级学生"
+        },
+        {
+          "id": "welcome-26",
+          "word": "explore",
+          "phonetic": "/ɪkˈsplɔː(r)/",
+          "meaning": "vt. & vi. 探索；探究；勘探"
+        },
+        {
+          "id": "welcome-27",
+          "word": "confident",
+          "phonetic": "/ˈkɒnfɪdənt/",
+          "meaning": "adj. 自信的；有把握的"
+        },
+        {
+          "id": "welcome-28",
+          "word": "confidence",
+          "phonetic": "/ˈkɒnfɪdəns/",
+          "meaning": "n. 信心；自信；信任"
+        },
+        {
+          "id": "welcome-29",
+          "word": "forward",
+          "phonetic": "/ˈfɔːwəd/",
+          "meaning": "adv. 向前；向前进；adj. 向前的；前进的；vt. 【熟词生义】转交；转发"
+        },
+        {
+          "id": "welcome-30",
+          "word": "flash",
+          "phonetic": "/flæʃ/",
+          "meaning": "n. 闪光；闪现；信号；瞬间；一刹那；vi. 闪光；闪耀；vt. 使闪光；发出信号"
+        },
+        {
+          "id": "welcome-31",
+          "word": "organise",
+          "phonetic": "/ˈɔːɡənaɪz/",
+          "meaning": "vt. 组织；安排；筹办；组建；vi. 组织起来；成立"
+        },
+        {
+          "id": "welcome-32",
+          "word": "organisation",
+          "phonetic": "/ˌɔːɡənaɪˈzeɪʃn/",
+          "meaning": "n. 组织；机构；团体；组织工作"
+        },
+        {
+          "id": "welcome-33",
+          "word": "goal",
+          "phonetic": "/ɡəʊl/",
+          "meaning": "n. 目标；目的；球门；进球"
+        },
+        {
+          "id": "welcome-34",
+          "word": "strategy",
+          "phonetic": "/ˈstrætədʒi/",
+          "meaning": "n. 策略；战略；行动方案"
+        },
+        {
+          "id": "welcome-35",
+          "word": "partner",
+          "phonetic": "/ˈpɑːtnə(r)/",
+          "meaning": "n. 伙伴；搭档；配偶；合伙人；vt. 与……合作"
+        },
+        {
+          "id": "welcome-36",
+          "word": "improve",
+          "phonetic": "/ɪmˈpruːv/",
+          "meaning": "vi. & vt. 改进；改善；提高"
+        }
+      ]
+    },
+    "unit-1": {
+      "id": "unit-1",
+      "name": "Teenage Life",
+      "words": [
+        {
+          "id": "unit-1-1",
+          "word": "teenage",
+          "phonetic": "/ˈtiːneɪdʒ/",
+          "meaning": "adj. 十几岁的；青少年的"
+        },
+        {
+          "id": "unit-1-2",
+          "word": "teenager",
+          "phonetic": "/ˈtiːneɪdʒə(r)/",
+          "meaning": "n. 青少年；十三至十九岁的人"
+        },
+        {
+          "id": "unit-1-3",
+          "word": "ballet",
+          "phonetic": "/ˈbæleɪ/",
+          "meaning": "n. 芭蕾舞；芭蕾舞剧"
+        },
+        {
+          "id": "unit-1-4",
+          "word": "volunteer",
+          "phonetic": "/ˌvɒlənˈtɪə(r)/",
+          "meaning": "n. 志愿者；志愿参加者；vi. 自愿参加；主动提出；vt. 自愿提供"
+        },
+        {
+          "id": "unit-1-5",
+          "word": "debate",
+          "phonetic": "/dɪˈbeɪt/",
+          "meaning": "n. 辩论；争论；vt. & vi. 辩论；讨论；仔细考虑；权衡"
+        },
+        {
+          "id": "unit-1-6",
+          "word": "prefer",
+          "phonetic": "/prɪˈfɜː(r)/",
+          "meaning": "vt. 更喜欢；偏爱；宁愿"
+        },
+        {
+          "id": "unit-1-7",
+          "word": "content",
+          "phonetic": "/ˈkɒntent/",
+          "meaning": "n. 内容；目录；主题；含量"
+        },
+        {
+          "id": "unit-1-8",
+          "word": "movement",
+          "phonetic": "/ˈmuːvmənt/",
+          "meaning": "n. 动作；运动；活动；移动；【熟词生义】社会运动；乐章"
+        },
+        {
+          "id": "unit-1-9",
+          "word": "greenhouse",
+          "phonetic": "/ˈɡriːnhaʊs/",
+          "meaning": "n. 温室；暖房"
+        },
+        {
+          "id": "unit-1-10",
+          "word": "suitable",
+          "phonetic": "/ˈsuːtəbl/",
+          "meaning": "adj. 合适的；适宜的；适用的"
+        },
+        {
+          "id": "unit-1-11",
+          "word": "actually",
+          "phonetic": "/ˈæktʃuəli/",
+          "meaning": "adv. 实际上；事实上；确实"
+        },
+        {
+          "id": "unit-1-12",
+          "word": "challenge",
+          "phonetic": "/ˈtʃælɪndʒ/",
+          "meaning": "n. 挑战；艰巨任务；vt. 向……挑战；质疑；对……提出异议"
+        },
+        {
+          "id": "unit-1-13",
+          "word": "title",
+          "phonetic": "/ˈtaɪtl/",
+          "meaning": "n. 标题；名称；头衔；职称；vt. 加标题；把……称为"
+        },
+        {
+          "id": "unit-1-14",
+          "word": "topic",
+          "phonetic": "/ˈtɒpɪk/",
+          "meaning": "n. 话题；主题；议题"
+        },
+        {
+          "id": "unit-1-15",
+          "word": "freshman",
+          "phonetic": "/ˈfreʃmən/",
+          "meaning": "n. 一年级新生"
+        },
+        {
+          "id": "unit-1-16",
+          "word": "confusing",
+          "phonetic": "/kənˈfjuːzɪŋ/",
+          "meaning": "adj. 难以理解的；令人困惑的"
+        },
+        {
+          "id": "unit-1-17",
+          "word": "confuse",
+          "phonetic": "/kənˈfjuːz/",
+          "meaning": "vt. 使困惑；使迷惑"
+        },
+        {
+          "id": "unit-1-18",
+          "word": "confused",
+          "phonetic": "/kənˈfjuːzd/",
+          "meaning": "adj. 感到困惑的；迷惑的"
+        },
+        {
+          "id": "unit-1-19",
+          "word": "fluent",
+          "phonetic": "/ˈfluːənt/",
+          "meaning": "adj. （尤指外语）流利的；熟练的"
+        },
+        {
+          "id": "unit-1-20",
+          "word": "graduate",
+          "phonetic": "/ˈɡrædʒueɪt/",
+          "meaning": "vi. & vt. 毕业；获得学位；n. 毕业生"
+        },
+        {
+          "id": "unit-1-21",
+          "word": "recommend",
+          "phonetic": "/ˌrekəˈmend/",
+          "meaning": "vt. 建议；推荐；介绍"
+        },
+        {
+          "id": "unit-1-22",
+          "word": "advanced",
+          "phonetic": "/ədˈvɑːnst/",
+          "meaning": "adj. 高级的；高等的；先进的"
+        },
+        {
+          "id": "unit-1-23",
+          "word": "advance",
+          "phonetic": "/ədˈvɑːns/",
+          "meaning": "n. 前进；发展；vi. 前进；发展；vt. 发展；促进"
+        },
+        {
+          "id": "unit-1-24",
+          "word": "literature",
+          "phonetic": "/ˈlɪtrətʃə(r)/",
+          "meaning": "n. 文学；文学作品"
+        },
+        {
+          "id": "unit-1-25",
+          "word": "extra-curricular",
+          "phonetic": "/ˌekstrəkəˈrɪkjələ(r)/",
+          "meaning": "adj. 课外的；课程以外的"
+        },
+        {
+          "id": "unit-1-26",
+          "word": "extra",
+          "phonetic": "/ˈekstrə/",
+          "meaning": "adj. 额外的；附加的"
+        },
+        {
+          "id": "unit-1-27",
+          "word": "obviously",
+          "phonetic": "/ˈɒbviəsli/",
+          "meaning": "adv. 显然；明显地"
+        },
+        {
+          "id": "unit-1-28",
+          "word": "quit",
+          "phonetic": "/kwɪt/",
+          "meaning": "vi. & vt. 停止；戒掉；离开（工作职位、学校等）"
+        },
+        {
+          "id": "unit-1-29",
+          "word": "responsible",
+          "phonetic": "/rɪˈspɒnsəbl/",
+          "meaning": "adj. 负责的；有责任的"
+        },
+        {
+          "id": "unit-1-30",
+          "word": "responsibility",
+          "phonetic": "/rɪˌspɒnsəˈbɪləti/",
+          "meaning": "n. 责任；义务"
+        },
+        {
+          "id": "unit-1-31",
+          "word": "solution",
+          "phonetic": "/səˈluːʃn/",
+          "meaning": "n. 解决办法；答案"
+        },
+        {
+          "id": "unit-1-32",
+          "word": "schedule",
+          "phonetic": "/ˈʃedjuːl/",
+          "meaning": "n. 工作计划；日程安排；vt. 安排；预定"
+        },
+        {
+          "id": "unit-1-33",
+          "word": "editor",
+          "phonetic": "/ˈedɪtə(r)/",
+          "meaning": "n. 主编；编辑；编者"
+        },
+        {
+          "id": "unit-1-34",
+          "word": "plate",
+          "phonetic": "/pleɪt/",
+          "meaning": "n. 盘子；碟子"
+        },
+        {
+          "id": "unit-1-35",
+          "word": "adventure",
+          "phonetic": "/ədˈventʃə(r)/",
+          "meaning": "n. 冒险；奇遇"
+        },
+        {
+          "id": "unit-1-36",
+          "word": "youth",
+          "phonetic": "/juːθ/",
+          "meaning": "n. 青年时期；青春"
+        },
+        {
+          "id": "unit-1-37",
+          "word": "survival",
+          "phonetic": "/səˈvaɪvl/",
+          "meaning": "n. 生存；幸存；幸存事物"
+        },
+        {
+          "id": "unit-1-38",
+          "word": "expert",
+          "phonetic": "/ˈekspɜːt/",
+          "meaning": "n. 专家；行家；adj. 熟练的；内行的；专家的"
+        },
+        {
+          "id": "unit-1-39",
+          "word": "behaviour",
+          "phonetic": "/bɪˈheɪvjə(r)/",
+          "meaning": "n. 行为；举止"
+        },
+        {
+          "id": "unit-1-40",
+          "word": "generation",
+          "phonetic": "/ˌdʒenəˈreɪʃn/",
+          "meaning": "n. 一代（人）"
+        },
+        {
+          "id": "unit-1-41",
+          "word": "attract",
+          "phonetic": "/əˈtrækt/",
+          "meaning": "vt. 吸引；引起……的注意（或兴趣）"
+        },
+        {
+          "id": "unit-1-42",
+          "word": "focus",
+          "phonetic": "/ˈfəʊkəs/",
+          "meaning": "vi. & vt. 集中（精力、注意力等）；n. 中心；重点；焦点"
+        },
+        {
+          "id": "unit-1-43",
+          "word": "addicted",
+          "phonetic": "/əˈdɪktɪd/",
+          "meaning": "adj. 有瘾的；上瘾的；入迷的"
+        },
+        {
+          "id": "unit-1-44",
+          "word": "addict",
+          "phonetic": "/ˈædɪkt/",
+          "meaning": "n. 对……入迷的人；吸毒成瘾的人"
+        },
+        {
+          "id": "unit-1-45",
+          "word": "adult",
+          "phonetic": "/ˈædʌlt/",
+          "meaning": "n. 成年人；adj. 成年的；成熟的"
+        }
+      ]
+    },
+    "unit-2": {
+      "id": "unit-2",
+      "name": "Travelling Around",
+      "words": [
+        {
+          "id": "unit-2-1",
+          "word": "castle",
+          "phonetic": "/ˈkɑːsl/",
+          "meaning": "n. 城堡；堡垒"
+        },
+        {
+          "id": "unit-2-2",
+          "word": "apply",
+          "phonetic": "/əˈplaɪ/",
+          "meaning": "vi. & vt. 申请；请求；vt. 应用；涂"
+        },
+        {
+          "id": "unit-2-3",
+          "word": "visa",
+          "phonetic": "/ˈviːzə/",
+          "meaning": "n. 签证"
+        },
+        {
+          "id": "unit-2-4",
+          "word": "rent",
+          "phonetic": "/rent/",
+          "meaning": "vt. 租用；出租；vi. 租用；n. 租金"
+        },
+        {
+          "id": "unit-2-5",
+          "word": "pack",
+          "phonetic": "/pæk/",
+          "meaning": "vi. & vt. 收拾（行李）；vt. 包装；n. 纸包；纸袋；大包"
+        },
+        {
+          "id": "unit-2-6",
+          "word": "amazing",
+          "phonetic": "/əˈmeɪzɪŋ/",
+          "meaning": "adj. 令人惊奇的；令人惊喜的"
+        },
+        {
+          "id": "unit-2-7",
+          "word": "amazed",
+          "phonetic": "/əˈmeɪzd/",
+          "meaning": "adj. 惊奇的；惊喜的"
+        },
+        {
+          "id": "unit-2-8",
+          "word": "arrangement",
+          "phonetic": "/əˈreɪndʒmənt/",
+          "meaning": "n. 安排；筹备"
+        },
+        {
+          "id": "unit-2-9",
+          "word": "extremely",
+          "phonetic": "/ɪkˈstriːmli/",
+          "meaning": "adv. 极其；非常"
+        },
+        {
+          "id": "unit-2-10",
+          "word": "source",
+          "phonetic": "/sɔːs/",
+          "meaning": "n. 来源；出处"
+        },
+        {
+          "id": "unit-2-11",
+          "word": "narrow",
+          "phonetic": "/ˈnærəʊ/",
+          "meaning": "adj. 狭窄的；vi. & vt. （使）变窄"
+        },
+        {
+          "id": "unit-2-12",
+          "word": "flat",
+          "phonetic": "/flæt/",
+          "meaning": "adj. 平坦的；扁平的；n. 公寓；单元房"
+        },
+        {
+          "id": "unit-2-13",
+          "word": "powerful",
+          "phonetic": "/ˈpaʊəfl/",
+          "meaning": "adj. 强有力的；有权势的；有影响力的"
+        },
+        {
+          "id": "unit-2-14",
+          "word": "empire",
+          "phonetic": "/ˈempaɪə(r)/",
+          "meaning": "n. 帝国"
+        },
+        {
+          "id": "unit-2-15",
+          "word": "emperor",
+          "phonetic": "/ˈempərər/",
+          "meaning": "n. 皇帝"
+        },
+        {
+          "id": "unit-2-16",
+          "word": "site",
+          "phonetic": "/saɪt/",
+          "meaning": "n. 地点；位置；现场"
+        },
+        {
+          "id": "unit-2-17",
+          "word": "official",
+          "phonetic": "/əˈfɪʃl/",
+          "meaning": "adj. 官方的；正式的；公务的；n. 官员；要员"
+        },
+        {
+          "id": "unit-2-18",
+          "word": "recognise",
+          "phonetic": "/ˈrekəɡnaɪz/",
+          "meaning": "vt. 辨别出；承认；认可"
+        },
+        {
+          "id": "unit-2-19",
+          "word": "type",
+          "phonetic": "/taɪp/",
+          "meaning": "n. 类型；种类；vi. & vt. 打字"
+        },
+        {
+          "id": "unit-2-20",
+          "word": "flight",
+          "phonetic": "/flaɪt/",
+          "meaning": "n. 飞行；航班；航程"
+        },
+        {
+          "id": "unit-2-21",
+          "word": "accommodation",
+          "phonetic": "/əˌkɒməˈdeɪʃn/",
+          "meaning": "n. 住处；住宿；膳宿"
+        },
+        {
+          "id": "unit-2-22",
+          "word": "unique",
+          "phonetic": "/juˈniːk/",
+          "meaning": "adj. 唯一的；独特的；特有的"
+        },
+        {
+          "id": "unit-2-23",
+          "word": "path",
+          "phonetic": "/pɑːθ/",
+          "meaning": "n. 小路；路线；道路；途径"
+        },
+        {
+          "id": "unit-2-24",
+          "word": "destination",
+          "phonetic": "/ˌdestɪˈneɪʃn/",
+          "meaning": "n. 目的地；终点"
+        },
+        {
+          "id": "unit-2-25",
+          "word": "admire",
+          "phonetic": "/ədˈmaɪə(r)/",
+          "meaning": "v. 钦佩；赞赏；欣赏"
+        },
+        {
+          "id": "unit-2-26",
+          "word": "architecture",
+          "phonetic": "/ˈɑːkɪtektʃə(r)/",
+          "meaning": "n. 建筑设计；建筑学"
+        },
+        {
+          "id": "unit-2-27",
+          "word": "architect",
+          "phonetic": "/ˈɑːkɪtekt/",
+          "meaning": "n. 建筑师；建筑设计师"
+        },
+        {
+          "id": "unit-2-28",
+          "word": "brochure",
+          "phonetic": "/ˈbrəʊʃə(r)/",
+          "meaning": "n. 资料手册；宣传册"
+        },
+        {
+          "id": "unit-2-29",
+          "word": "package",
+          "phonetic": "/ˈpækɪdʒ/",
+          "meaning": "n. 包裹；包装盒；v. 包装"
+        },
+        {
+          "id": "unit-2-30",
+          "word": "contact",
+          "phonetic": "/ˈkɒntækt/",
+          "meaning": "v. 联系；联络；n. 联系；接触"
+        },
+        {
+          "id": "unit-2-31",
+          "word": "civilisation",
+          "phonetic": "/ˌsɪvəlaɪˈzeɪʃn/",
+          "meaning": "n. 文明；文明世界"
+        },
+        {
+          "id": "unit-2-32",
+          "word": "soldier",
+          "phonetic": "/ˈsəʊldʒə(r)/",
+          "meaning": "n. 士兵；军人"
+        },
+        {
+          "id": "unit-2-33",
+          "word": "transport",
+          "phonetic": "/ˈtrænspɔːt/",
+          "meaning": "n. 交通运输系统；v. 运输；运送"
+        },
+        {
+          "id": "unit-2-34",
+          "word": "hike",
+          "phonetic": "/haɪk/",
+          "meaning": "v. 徒步旅行；去远足；n. 远足；徒步旅行"
+        },
+        {
+          "id": "unit-2-35",
+          "word": "economy",
+          "phonetic": "/ɪˈkɒnəmi/",
+          "meaning": "n. 经济；节约"
+        },
+        {
+          "id": "unit-2-36",
+          "word": "economic",
+          "phonetic": "/ˌiːkəˈnɒmɪk/",
+          "meaning": "adj. 经济的；经济学的"
+        },
+        {
+          "id": "unit-2-37",
+          "word": "credit",
+          "phonetic": "/ˈkredɪt/",
+          "meaning": "n. 借款；信用；称赞；学分"
+        },
+        {
+          "id": "unit-2-38",
+          "word": "detail",
+          "phonetic": "/ˈdiːteɪl/",
+          "meaning": "n. 细节；详情；细微之处"
+        },
+        {
+          "id": "unit-2-39",
+          "word": "request",
+          "phonetic": "/rɪˈkwest/",
+          "meaning": "n. 要求；请求；v. 要求；请求"
+        },
+        {
+          "id": "unit-2-40",
+          "word": "view",
+          "phonetic": "/vjuː/",
+          "meaning": "n. 视野；景色；看法"
+        },
+        {
+          "id": "unit-2-41",
+          "word": "sight",
+          "phonetic": "/saɪt/",
+          "meaning": "n. 景象；视野；视力"
+        },
+        {
+          "id": "unit-2-42",
+          "word": "statue",
+          "phonetic": "/ˈstætʃuː/",
+          "meaning": "n. 雕像；雕塑"
+        },
+        {
+          "id": "unit-2-43",
+          "word": "tomb",
+          "phonetic": "/tuːm/",
+          "meaning": "n. 坟墓"
+        },
+        {
+          "id": "unit-2-44",
+          "word": "unearth",
+          "phonetic": "/ʌnˈɜːθ/",
+          "meaning": "v. 挖掘；发掘"
+        },
+        {
+          "id": "unit-2-45",
+          "word": "comment",
+          "phonetic": "/ˈkɒment/",
+          "meaning": "n. 评论；议论；v. 发表评论；评论"
+        }
+      ]
+    },
+    "unit-3": {
+      "id": "unit-3",
+      "name": "Sports and Fitness",
+      "words": [
+        {
+          "id": "unit-3-1",
+          "word": "fitness",
+          "phonetic": "/ˈfɪtnəs/",
+          "meaning": "n. 健康；健壮；适合"
+        },
+        {
+          "id": "unit-3-2",
+          "word": "soccer",
+          "phonetic": "/ˈsɒkə(r)/",
+          "meaning": "n. 足球；足球运动"
+        },
+        {
+          "id": "unit-3-3",
+          "word": "stadium",
+          "phonetic": "/ˈsteɪdiəm/",
+          "meaning": "n. 体育场；运动场"
+        },
+        {
+          "id": "unit-3-4",
+          "word": "boxing",
+          "phonetic": "/ˈbɒksɪŋ/",
+          "meaning": "n. 拳击运动"
+        },
+        {
+          "id": "unit-3-5",
+          "word": "badminton",
+          "phonetic": "/ˈbædmɪntən/",
+          "meaning": "n. 羽毛球运动"
+        },
+        {
+          "id": "unit-3-6",
+          "word": "marathon",
+          "phonetic": "/ˈmærəθən/",
+          "meaning": "n. 马拉松赛跑"
+        },
+        {
+          "id": "unit-3-7",
+          "word": "event",
+          "phonetic": "/ɪˈvent/",
+          "meaning": "n. 比赛项目；大事；公开活动"
+        },
+        {
+          "id": "unit-3-8",
+          "word": "ski",
+          "phonetic": "/skiː/",
+          "meaning": "adj. 滑雪的；v. 滑雪"
+        },
+        {
+          "id": "unit-3-9",
+          "word": "host",
+          "phonetic": "/həʊst/",
+          "meaning": "v. 主办；主持；n. 主人；东道主；节目主持人"
+        },
+        {
+          "id": "unit-3-10",
+          "word": "track",
+          "phonetic": "/træk/",
+          "meaning": "n. 跑道；足迹；铁路轨道；v. 追踪；跟踪"
+        },
+        {
+          "id": "unit-3-11",
+          "word": "gym",
+          "phonetic": "/dʒɪm/",
+          "meaning": "n. 健身房；体育馆"
+        },
+        {
+          "id": "unit-3-12",
+          "word": "gymnastics",
+          "phonetic": "/dʒɪmˈnæstɪks/",
+          "meaning": "n. 体操；体操训练"
+        },
+        {
+          "id": "unit-3-13",
+          "word": "sweat",
+          "phonetic": "/swet/",
+          "meaning": "v. 使出汗；出汗；n. 汗水；出汗"
+        },
+        {
+          "id": "unit-3-14",
+          "word": "legend",
+          "phonetic": "/ˈledʒənd/",
+          "meaning": "n. 传奇故事；传奇人物；传说"
+        },
+        {
+          "id": "unit-3-15",
+          "word": "athlete",
+          "phonetic": "/ˈæθliːt/",
+          "meaning": "n. 运动员；运动健儿"
+        },
+        {
+          "id": "unit-3-16",
+          "word": "master",
+          "phonetic": "/ˈmɑːstə(r)/",
+          "meaning": "n. 高手；主人；v. 精通；掌握"
+        },
+        {
+          "id": "unit-3-17",
+          "word": "honour",
+          "phonetic": "/ˈɒnə(r)/",
+          "meaning": "n. 荣誉；尊敬；荣幸"
+        },
+        {
+          "id": "unit-3-18",
+          "word": "glory",
+          "phonetic": "/ˈɡlɔːri/",
+          "meaning": "n. 荣誉；光荣；赞美"
+        },
+        {
+          "id": "unit-3-19",
+          "word": "medal",
+          "phonetic": "/ˈmedl/",
+          "meaning": "n. 奖章；勋章"
+        },
+        {
+          "id": "unit-3-20",
+          "word": "championship",
+          "phonetic": "/ˈtʃæmpiənʃɪp/",
+          "meaning": "n. 锦标赛；冠军赛；冠军称号"
+        },
+        {
+          "id": "unit-3-21",
+          "word": "champion",
+          "phonetic": "/ˈtʃæmpiən/",
+          "meaning": "n. 冠军；优胜者"
+        },
+        {
+          "id": "unit-3-22",
+          "word": "determination",
+          "phonetic": "/dɪˌtɜːmɪˈneɪʃn/",
+          "meaning": "n. 决心；决定"
+        },
+        {
+          "id": "unit-3-23",
+          "word": "injure",
+          "phonetic": "/ˈɪndʒə(r)/",
+          "meaning": "v. 使受伤；损害"
+        },
+        {
+          "id": "unit-3-24",
+          "word": "injured",
+          "phonetic": "/ˈɪndʒəd/",
+          "meaning": "adj. 受伤的；有伤的"
+        },
+        {
+          "id": "unit-3-25",
+          "word": "injury",
+          "phonetic": "/ˈɪndʒəri/",
+          "meaning": "n. 伤害；损伤"
+        },
+        {
+          "id": "unit-3-26",
+          "word": "captain",
+          "phonetic": "/ˈkæptɪn/",
+          "meaning": "n. 队长；船长；机长"
+        },
+        {
+          "id": "unit-3-27",
+          "word": "graceful",
+          "phonetic": "/ˈɡreɪsfl/",
+          "meaning": "adj. 优美的；优雅的"
+        },
+        {
+          "id": "unit-3-28",
+          "word": "strength",
+          "phonetic": "/streŋθ/",
+          "meaning": "n. 力量；体力"
+        },
+        {
+          "id": "unit-3-29",
+          "word": "failure",
+          "phonetic": "/ˈfeɪljə(r)/",
+          "meaning": "n. 失败；失败的人或事物"
+        },
+        {
+          "id": "unit-3-30",
+          "word": "compete",
+          "phonetic": "/kəmˈpiːt/",
+          "meaning": "v. 竞争；对抗"
+        },
+        {
+          "id": "unit-3-31",
+          "word": "pretend",
+          "phonetic": "/prɪˈtend/",
+          "meaning": "v. 假装；装扮"
+        },
+        {
+          "id": "unit-3-32",
+          "word": "million",
+          "phonetic": "/ˈmɪljən/",
+          "meaning": "num. 一百万"
+        },
+        {
+          "id": "unit-3-33",
+          "word": "cheat",
+          "phonetic": "/tʃiːt/",
+          "meaning": "v. 作弊；舞弊；欺骗；蒙骗；n. 欺骗手段；骗子"
+        },
+        {
+          "id": "unit-3-34",
+          "word": "audience",
+          "phonetic": "/ˈɔːdiəns/",
+          "meaning": "n. 观众；听众"
+        },
+        {
+          "id": "unit-3-35",
+          "word": "positive",
+          "phonetic": "/ˈpɒzətɪv/",
+          "meaning": "adj. 积极的；正面的；乐观的；肯定的"
+        },
+        {
+          "id": "unit-3-36",
+          "word": "slim",
+          "phonetic": "/slɪm/",
+          "meaning": "adj. 苗条的；单薄的"
+        },
+        {
+          "id": "unit-3-37",
+          "word": "diet",
+          "phonetic": "/ˈdaɪət/",
+          "meaning": "n. 规定饮食；日常饮食；v. 节食"
+        },
+        {
+          "id": "unit-3-38",
+          "word": "rather",
+          "phonetic": "/ˈrɑːðə(r)/",
+          "meaning": "adv. 相当；有点儿"
+        },
+        {
+          "id": "unit-3-39",
+          "word": "jog",
+          "phonetic": "/dʒɒɡ/",
+          "meaning": "v. 慢跑；n. 慢跑"
+        },
+        {
+          "id": "unit-3-40",
+          "word": "stress",
+          "phonetic": "/stres/",
+          "meaning": "n. 压力；紧张；重音；v. 强调；使焦虑不安；焦虑不安"
+        },
+        {
+          "id": "unit-3-41",
+          "word": "error",
+          "phonetic": "/ˈerə(r)/",
+          "meaning": "n. 错误；差错"
+        }
+      ]
+    },
+    "unit-4": {
+      "id": "unit-4",
+      "name": "Natural Disasters",
+      "words": [
+        {
+          "id": "unit-4-1",
+          "word": "disaster",
+          "phonetic": "/dɪˈzɑːstə(r)/",
+          "meaning": "n. 灾难；灾害"
+        },
+        {
+          "id": "unit-4-2",
+          "word": "tornado",
+          "phonetic": "/tɔːˈneɪdəʊ/",
+          "meaning": "n. 龙卷风；旋风"
+        },
+        {
+          "id": "unit-4-3",
+          "word": "drought",
+          "phonetic": "/draʊt/",
+          "meaning": "n. 旱灾；久旱"
+        },
+        {
+          "id": "unit-4-4",
+          "word": "landslide",
+          "phonetic": "/ˈlændslaɪd/",
+          "meaning": "n. 山体滑坡；崩塌"
+        },
+        {
+          "id": "unit-4-5",
+          "word": "slide",
+          "phonetic": "/slaɪd/",
+          "meaning": "v. 滑行；滑动"
+        },
+        {
+          "id": "unit-4-6",
+          "word": "tsunami",
+          "phonetic": "/tsuːˈnɑːmi/",
+          "meaning": "n. 海啸"
+        },
+        {
+          "id": "unit-4-7",
+          "word": "flood",
+          "phonetic": "/flʌd/",
+          "meaning": "n. 洪水；大量；v. 淹没；大量涌入"
+        },
+        {
+          "id": "unit-4-8",
+          "word": "volcanic eruption",
+          "phonetic": "/vɒlˈkænɪk ɪˈrʌpʃn/",
+          "meaning": "n. 火山喷发"
+        },
+        {
+          "id": "unit-4-9",
+          "word": "magnitude",
+          "phonetic": "/ˈmæɡnɪtjuːd/",
+          "meaning": "n. 震级；重大"
+        },
+        {
+          "id": "unit-4-10",
+          "word": "rescue",
+          "phonetic": "/ˈreskjuː/",
+          "meaning": "n. 营救；救援；v. 营救；救援"
+        },
+        {
+          "id": "unit-4-11",
+          "word": "damage",
+          "phonetic": "/ˈdæmɪdʒ/",
+          "meaning": "v. 损害；破坏；n. 损坏；损失"
+        },
+        {
+          "id": "unit-4-12",
+          "word": "destroy",
+          "phonetic": "/dɪˈstrɔɪ/",
+          "meaning": "v. 摧毁；毁灭"
+        },
+        {
+          "id": "unit-4-13",
+          "word": "evacuate",
+          "phonetic": "/ɪˈvækjueɪt/",
+          "meaning": "v. 疏散；撤出；撤离"
+        },
+        {
+          "id": "unit-4-14",
+          "word": "helicopter",
+          "phonetic": "/ˈhelɪkɒptə(r)/",
+          "meaning": "n. 直升机"
+        },
+        {
+          "id": "unit-4-15",
+          "word": "death",
+          "phonetic": "/deθ/",
+          "meaning": "n. 死；死亡"
+        },
+        {
+          "id": "unit-4-16",
+          "word": "affect",
+          "phonetic": "/əˈfekt/",
+          "meaning": "v. 影响；侵袭；深深打动"
+        },
+        {
+          "id": "unit-4-17",
+          "word": "shelter",
+          "phonetic": "/ˈʃeltə(r)/",
+          "meaning": "n. 避难处；居所；庇护；v. 保护；掩蔽；躲避"
+        },
+        {
+          "id": "unit-4-18",
+          "word": "crack",
+          "phonetic": "/kræk/",
+          "meaning": "n. 裂纹；裂缝；v. 破裂"
+        },
+        {
+          "id": "unit-4-19",
+          "word": "gas",
+          "phonetic": "/ɡæs/",
+          "meaning": "n. 气体；燃气；汽油"
+        },
+        {
+          "id": "unit-4-20",
+          "word": "ruin",
+          "phonetic": "/ˈruːɪn/",
+          "meaning": "n. 破坏；毁坏；v. 破坏；毁坏"
+        },
+        {
+          "id": "unit-4-21",
+          "word": "percent",
+          "phonetic": "/pəˈsent/",
+          "meaning": "n. 百分之……；adj. 每一百中的；adv. 每一百中"
+        },
+        {
+          "id": "unit-4-22",
+          "word": "brick",
+          "phonetic": "/brɪk/",
+          "meaning": "n. 砖；砖块"
+        },
+        {
+          "id": "unit-4-23",
+          "word": "metal",
+          "phonetic": "/ˈmetl/",
+          "meaning": "n. 金属"
+        },
+        {
+          "id": "unit-4-24",
+          "word": "shock",
+          "phonetic": "/ʃɒk/",
+          "meaning": "n. 震惊；令人震惊的事；休克；v. 使震惊"
+        },
+        {
+          "id": "unit-4-25",
+          "word": "electricity",
+          "phonetic": "/ɪˌlekˈtrɪsəti/",
+          "meaning": "n. 电；电能"
+        },
+        {
+          "id": "unit-4-26",
+          "word": "trap",
+          "phonetic": "/træp/",
+          "meaning": "v. 使落入险境；使陷入圈套；n. 险境；陷阱"
+        },
+        {
+          "id": "unit-4-27",
+          "word": "bury",
+          "phonetic": "/ˈberi/",
+          "meaning": "v. 埋葬；安葬"
+        },
+        {
+          "id": "unit-4-28",
+          "word": "breathe",
+          "phonetic": "/briːð/",
+          "meaning": "v. 呼吸"
+        },
+        {
+          "id": "unit-4-29",
+          "word": "revive",
+          "phonetic": "/rɪˈvaɪv/",
+          "meaning": "v. 复活；使苏醒；苏醒"
+        },
+        {
+          "id": "unit-4-30",
+          "word": "revival",
+          "phonetic": "/rɪˈvaɪvl/",
+          "meaning": "n. 振兴；复苏"
+        },
+        {
+          "id": "unit-4-31",
+          "word": "effort",
+          "phonetic": "/ˈefət/",
+          "meaning": "n. 努力；艰难的尝试；尽力"
+        },
+        {
+          "id": "unit-4-32",
+          "word": "unify",
+          "phonetic": "/ˈjuːnɪfaɪ/",
+          "meaning": "v. 统一；使成一体"
+        },
+        {
+          "id": "unit-4-33",
+          "word": "wisdom",
+          "phonetic": "/ˈwɪzdəm/",
+          "meaning": "n. 智慧；才智"
+        },
+        {
+          "id": "unit-4-34",
+          "word": "context",
+          "phonetic": "/ˈkɒntekst/",
+          "meaning": "n. 上下文；语境；背景"
+        },
+        {
+          "id": "unit-4-35",
+          "word": "suffer",
+          "phonetic": "/ˈsʌfə(r)/",
+          "meaning": "v. 遭受；蒙受；受苦"
+        },
+        {
+          "id": "unit-4-36",
+          "word": "volcano",
+          "phonetic": "/vɒlˈkeɪnəʊ/",
+          "meaning": "n. 火山"
+        },
+        {
+          "id": "unit-4-37",
+          "word": "erupt",
+          "phonetic": "/ɪˈrʌpt/",
+          "meaning": "v. （火山）爆发；喷出"
+        },
+        {
+          "id": "unit-4-38",
+          "word": "supply",
+          "phonetic": "/səˈplaɪ/",
+          "meaning": "n. 供应；补给；v. 供应；供给"
+        },
+        {
+          "id": "unit-4-39",
+          "word": "typhoon",
+          "phonetic": "/taɪˈfuːn/",
+          "meaning": "n. 台风"
+        },
+        {
+          "id": "unit-4-40",
+          "word": "hurricane",
+          "phonetic": "/ˈhʌrɪkən/",
+          "meaning": "n. 飓风"
+        },
+        {
+          "id": "unit-4-41",
+          "word": "survive",
+          "phonetic": "/səˈvaɪv/",
+          "meaning": "v. 生存；存活；幸存；艰难度过"
+        },
+        {
+          "id": "unit-4-42",
+          "word": "power",
+          "phonetic": "/ˈpaʊə(r)/",
+          "meaning": "n. 电力供应；能量；力量；控制力"
+        },
+        {
+          "id": "unit-4-43",
+          "word": "tap",
+          "phonetic": "/tæp/",
+          "meaning": "v. 轻叩；轻敲；轻拍；n. 水龙头"
+        },
+        {
+          "id": "unit-4-44",
+          "word": "pipe",
+          "phonetic": "/paɪp/",
+          "meaning": "n. 管子；管道"
+        },
+        {
+          "id": "unit-4-45",
+          "word": "whistle",
+          "phonetic": "/ˈwɪsl/",
+          "meaning": "v. 吹口哨；发出笛声；n. 哨子；哨声；呼啸声"
+        },
+        {
+          "id": "unit-4-46",
+          "word": "emergency",
+          "phonetic": "/ɪˈmɜːdʒənsi/",
+          "meaning": "n. 突发事件；紧急情况"
+        },
+        {
+          "id": "unit-4-47",
+          "word": "calm",
+          "phonetic": "/kɑːm/",
+          "meaning": "adj. 镇静的；沉着的；v. 使平静；使镇静"
+        },
+        {
+          "id": "unit-4-48",
+          "word": "aid",
+          "phonetic": "/eɪd/",
+          "meaning": "n. 援助；帮助；救援物资；v. 帮助；援助"
+        },
+        {
+          "id": "unit-4-49",
+          "word": "kit",
+          "phonetic": "/kɪt/",
+          "meaning": "n. 成套工具；成套设备"
+        },
+        {
+          "id": "unit-4-50",
+          "word": "crash",
+          "phonetic": "/kræʃ/",
+          "meaning": "v. 碰撞；撞击；n. 撞车；碰撞"
+        },
+        {
+          "id": "unit-4-51",
+          "word": "sweep",
+          "phonetic": "/swiːp/",
+          "meaning": "v. 打扫；清扫"
+        },
+        {
+          "id": "unit-4-52",
+          "word": "wave",
+          "phonetic": "/weɪv/",
+          "meaning": "n. 海浪；波浪；v. 挥手；招手"
+        },
+        {
+          "id": "unit-4-53",
+          "word": "strike",
+          "phonetic": "/straɪk/",
+          "meaning": "v. 侵袭；突击；击打；n. 罢工；罢课；袭击"
+        },
+        {
+          "id": "unit-4-54",
+          "word": "deliver",
+          "phonetic": "/dɪˈlɪvə(r)/",
+          "meaning": "v. 递送；传达；发表"
+        },
+        {
+          "id": "unit-4-55",
+          "word": "summary",
+          "phonetic": "/ˈsʌməri/",
+          "meaning": "n. 总结；概括；概要"
+        },
+        {
+          "id": "unit-4-56",
+          "word": "effect",
+          "phonetic": "/ɪˈfekt/",
+          "meaning": "n. 影响；结果；效果"
+        },
+        {
+          "id": "unit-4-57",
+          "word": "length",
+          "phonetic": "/leŋθ/",
+          "meaning": "n. 长；长度"
+        }
+      ]
+    },
+    "unit-5": {
+      "id": "unit-5",
+      "name": "Languages Around the World",
+      "words": [
+        {
+          "id": "unit-5-1",
+          "word": "calligraphy",
+          "phonetic": "/kəˈlɪɡrəfi/",
+          "meaning": "n. 书法；书法艺术"
+        },
+        {
+          "id": "unit-5-2",
+          "word": "global",
+          "phonetic": "/ˈɡləʊbl/",
+          "meaning": "adj. 全球的；全世界的"
+        },
+        {
+          "id": "unit-5-3",
+          "word": "affair",
+          "phonetic": "/əˈfeə(r)/",
+          "meaning": "n. 公共事务；事件；关系"
+        },
+        {
+          "id": "unit-5-4",
+          "word": "appreciate",
+          "phonetic": "/əˈpriːʃieɪt/",
+          "meaning": "v. 欣赏；重视；感激；领会；增值"
+        },
+        {
+          "id": "unit-5-5",
+          "word": "specific",
+          "phonetic": "/spəˈsɪfɪk/",
+          "meaning": "adj. 特定的；明确的；具体的"
+        },
+        {
+          "id": "unit-5-6",
+          "word": "struggle",
+          "phonetic": "/ˈstrʌɡl/",
+          "meaning": "n. 斗争；奋斗；搏斗；v. 斗争；奋斗；搏斗"
+        },
+        {
+          "id": "unit-5-7",
+          "word": "tongue",
+          "phonetic": "/tʌŋ/",
+          "meaning": "n. 舌头；语言"
+        },
+        {
+          "id": "unit-5-8",
+          "word": "semester",
+          "phonetic": "/sɪˈmestə(r)/",
+          "meaning": "n. 学期"
+        },
+        {
+          "id": "unit-5-9",
+          "word": "petrol",
+          "phonetic": "/ˈpetrəl/",
+          "meaning": "n. 汽油"
+        },
+        {
+          "id": "unit-5-10",
+          "word": "subway",
+          "phonetic": "/ˈsʌbweɪ/",
+          "meaning": "n. 地铁"
+        },
+        {
+          "id": "unit-5-11",
+          "word": "apartment",
+          "phonetic": "/əˈpɑːtmənt/",
+          "meaning": "n. 公寓套房"
+        },
+        {
+          "id": "unit-5-12",
+          "word": "pants",
+          "phonetic": "/pænts/",
+          "meaning": "n. 内裤；短裤；裤子"
+        },
+        {
+          "id": "unit-5-13",
+          "word": "beg",
+          "phonetic": "/beɡ/",
+          "meaning": "v. 恳求；祈求；哀求"
+        },
+        {
+          "id": "unit-5-14",
+          "word": "equal",
+          "phonetic": "/ˈiːkwəl/",
+          "meaning": "n. 同等的人；相等物；adj. 相同的；同样的"
+        },
+        {
+          "id": "unit-5-15",
+          "word": "gap",
+          "phonetic": "/ɡæp/",
+          "meaning": "n. 间隔；开口；差距"
+        },
+        {
+          "id": "unit-5-16",
+          "word": "demand",
+          "phonetic": "/dɪˈmɑːnd/",
+          "meaning": "n. 要求；需求；v. 强烈要求；需要；查问"
+        },
+        {
+          "id": "unit-5-17",
+          "word": "vocabulary",
+          "phonetic": "/vəˈkæbjələri/",
+          "meaning": "n. 词汇"
+        },
+        {
+          "id": "unit-5-18",
+          "word": "description",
+          "phonetic": "/dɪˈskrɪpʃn/",
+          "meaning": "n. 描写；形容"
+        },
+        {
+          "id": "unit-5-19",
+          "word": "relate",
+          "phonetic": "/rɪˈleɪt/",
+          "meaning": "v. 联系；讲述"
+        },
+        {
+          "id": "unit-5-24",
+          "word": "billion",
+          "phonetic": "/ˈbɪljən/",
+          "meaning": "num. 十亿"
+        },
+        {
+          "id": "unit-5-25",
+          "word": "native",
+          "phonetic": "/ˈneɪtɪv/",
+          "meaning": "adj. 出生地的；本地的；土著的；n. 本地人"
+        },
+        {
+          "id": "unit-5-26",
+          "word": "attitude",
+          "phonetic": "/ˈætɪtjuːd/",
+          "meaning": "n. 态度；看法"
+        },
+        {
+          "id": "unit-5-27",
+          "word": "reference",
+          "phonetic": "/ˈrefrəns/",
+          "meaning": "n. 指称关系；参考"
+        },
+        {
+          "id": "unit-5-28",
+          "word": "refer",
+          "phonetic": "/rɪˈfɜː(r)/",
+          "meaning": "v. 提到；参考；查阅；查询；叫……求助于"
+        },
+        {
+          "id": "unit-5-29",
+          "word": "system",
+          "phonetic": "/ˈsɪstəm/",
+          "meaning": "n. 体系；制度；系统"
+        },
+        {
+          "id": "unit-5-30",
+          "word": "despite",
+          "phonetic": "/dɪˈspaɪt/",
+          "meaning": "prep. 即使；尽管"
+        },
+        {
+          "id": "unit-5-31",
+          "word": "factor",
+          "phonetic": "/ˈfæktə(r)/",
+          "meaning": "n. 因素；要素"
+        },
+        {
+          "id": "unit-5-32",
+          "word": "based",
+          "phonetic": "/beɪst/",
+          "meaning": "adj. 以……为基础的；以……为重要部分或特征的"
+        },
+        {
+          "id": "unit-5-33",
+          "word": "base",
+          "phonetic": "/beɪs/",
+          "meaning": "v. 以……为据点；以……为基础；n. 底部；根据"
+        },
+        {
+          "id": "unit-5-34",
+          "word": "bone",
+          "phonetic": "/bəʊn/",
+          "meaning": "n. 骨头；骨质"
+        },
+        {
+          "id": "unit-5-35",
+          "word": "shell",
+          "phonetic": "/ʃel/",
+          "meaning": "n. 壳；壳状物"
+        },
+        {
+          "id": "unit-5-36",
+          "word": "symbol",
+          "phonetic": "/ˈsɪmbl/",
+          "meaning": "n. 符号；象征"
+        },
+        {
+          "id": "unit-5-37",
+          "word": "carve",
+          "phonetic": "/kɑːv/",
+          "meaning": "v. 雕刻"
+        },
+        {
+          "id": "unit-5-38",
+          "word": "dynasty",
+          "phonetic": "/ˈdɪnəsti/",
+          "meaning": "n. 王朝；朝代"
+        },
+        {
+          "id": "unit-5-39",
+          "word": "variety",
+          "phonetic": "/vəˈraɪəti/",
+          "meaning": "n. 变体；异体；多样化"
+        },
+        {
+          "id": "unit-5-40",
+          "word": "major",
+          "phonetic": "/ˈmeɪdʒə(r)/",
+          "meaning": "adj. 主要的；重要的；大的；n. 主修课程；主修学生；v. 主修；专门研究"
+        },
+        {
+          "id": "unit-5-41",
+          "word": "dialect",
+          "phonetic": "/ˈdaɪəlekt/",
+          "meaning": "n. 地方话；方言"
+        },
+        {
+          "id": "unit-5-42",
+          "word": "means",
+          "phonetic": "/miːnz/",
+          "meaning": "n. 方式；方法；途径"
+        },
+        {
+          "id": "unit-5-43",
+          "word": "classic",
+          "phonetic": "/ˈklæsɪk/",
+          "meaning": "adj. 传统的；最优秀的；典型的；n. 经典作品；名著"
+        },
+        {
+          "id": "unit-5-44",
+          "word": "regard",
+          "phonetic": "/rɪˈɡɑːd/",
+          "meaning": "n. 尊重；关注；v. 把……视为；看待"
+        },
+        {
+          "id": "unit-5-45",
+          "word": "character",
+          "phonetic": "/ˈkærəktə(r)/",
+          "meaning": "n. 文字；符号；角色；品质；特点"
+        }
+      ]
+    }
+  }
+}
