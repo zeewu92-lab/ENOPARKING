@@ -1,0 +1,38 @@
+{
+  "人教版高中英语1 - 必修": {
+    "Unit 1 Friendship": [
+      { "w": "survey", "p": "/ˈsɜːveɪ/", "m": "n. 调查；测验", "e": "We conducted a survey of students.", "c": "我们对学生做了一项调查。" },
+      { "w": "upset", "p": "/ʌpˈset/", "m": "adj. 心烦意乱的；不安的", "e": "She was upset about the news.", "c": "她对这个消息感到不安。" },
+      { "w": "ignore", "p": "/ɪɡˈnɔː/", "m": "vt. 不理睬；忽视", "e": "He ignored my advice.", "c": "他无视了我的建议。" },
+      { "w": "calm", "p": "/kɑːm/", "m": "adj. 平静的；镇静的", "e": "Stay calm and think.", "c": "保持冷静并思考。" },
+      { "w": "concern", "p": "/kənˈsɜːn/", "m": "vt. 涉及；使担忧", "e": "This concerns everyone.", "c": "这关系到每个人。" }
+    ],
+    "Unit 2 English around the world": [
+      { "w": "official", "p": "/əˈfɪʃl/", "m": "adj. 官方的；正式的", "e": "English is an official language.", "c": "英语是一门官方语言。" },
+      { "w": "native", "p": "/ˈneɪtɪv/", "m": "adj. 本国的；本地的", "e": "He is a native speaker.", "c": "他是母语使用者。" },
+      { "w": "actually", "p": "/ˈæktʃuəli/", "m": "adv. 实际上；事实上", "e": "Actually, I disagree.", "c": "实际上，我不同意。" },
+      { "w": "gradual", "p": "/ˈɡrædʒuəl/", "m": "adj. 逐渐的；逐步的", "e": "There was a gradual change.", "c": "发生了渐变。" }
+    ],
+    "Unit 3 Travel journal": [
+      { "w": "journal", "p": "/ˈdʒɜːnl/", "m": "n. 日记；杂志", "e": "She kept a travel journal.", "c": "她记了一本旅行日记。" },
+      { "w": "transport", "p": "/ˈtrænspɔːt/", "m": "n. 运输；交通工具", "e": "Public transport is cheap here.", "c": "这里的公共交通很便宜。" },
+      { "w": "prefer", "p": "/prɪˈfɜː/", "m": "vt. 更喜欢；宁愿", "e": "I prefer tea to coffee.", "c": "比起咖啡我更喜欢茶。" }
+    ]
+  },
+  "人教版高中英语2 - 必修": {
+    "Unit 1 Cultural relics": [
+      { "w": "relic", "p": "/ˈrelɪk/", "m": "n. 遗物；遗迹", "e": "The museum holds ancient relics.", "c": "博物馆藏有古代遗物。" },
+      { "w": "rare", "p": "/reə/", "m": "adj. 稀有的；罕见的", "e": "This is a rare bird.", "c": "这是一种稀有的鸟。" }
+    ],
+    "Unit 2 The Olympic Games": [
+      { "w": "compete", "p": "/kəmˈpiːt/", "m": "vi. 比赛；竞争", "e": "Athletes compete for gold.", "c": "运动员为金牌而竞争。" },
+      { "w": "host", "p": "/həʊst/", "m": "vt. 主办；n. 主人", "e": "Beijing hosted the Olympics.", "c": "北京主办了奥运会。" }
+    ]
+  },
+  "外研版高中英语1": {
+    "Module 1 My First Day at Senior High": [
+      { "w": "enthusiastic", "p": "/ɪnˌθjuːziˈæstɪk/", "m": "adj. 热心的；热情的", "e": "She is enthusiastic about music.", "c": "她对音乐充满热情。" },
+      { "w": "amazing", "p": "/əˈmeɪzɪŋ/", "m": "adj. 令人惊奇的", "e": "What an amazing view!", "c": "多么令人惊奇的景色！" }
+    ]
+  }
+}
