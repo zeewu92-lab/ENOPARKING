@@ -65,6 +65,10 @@ export default function AppShell() {
     setView('home');
   }
 
+  function updateGoal(goal) {
+    setConfig(current => ({ ...current, goal: Number(goal) || 10 }));
+  }
+
   async function logout() {
     try { await tuichuZhanghu(); } catch {}
     setUser(null);
@@ -77,10 +81,6 @@ export default function AppShell() {
 
   if (!user) {
     return <AccountScreen onAuthenticated={result => setUser(result?.user || result)} />;
-  }
-
-  if (!config.selectedUnits.length) {
-    return <SetupPage onDone={refreshConfig} onBack={() => setView('home')} />;
   }
 
   if (view === 'setup') {
@@ -110,12 +110,12 @@ export default function AppShell() {
           <HomePage
             wordCount={words.length}
             goal={config.goal}
-            onStart={() => setView('learning')}
+            onStart={() => setView(config.selectedUnits.length ? 'learning' : 'setup')}
             onSetup={() => setView('setup')}
           />
         )}
         {view === 'archive' && <ArchivePage />}
-        {view === 'profile' && <ProfilePage user={user} onLogout={logout} />}
+        {view === 'profile' && <ProfilePage user={user} onGoalChange={updateGoal} onLogout={logout} />}
         {error && <p className="v2-global-error">{error}</p>}
         {loadingWords && <div className="v2-loading-strip">正在整理词库…</div>}
       </div>
