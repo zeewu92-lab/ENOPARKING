@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { storage } from '../../utils/storage.js';
 
-export default function ProfilePage({ user, onLogout }) {
+export default function ProfilePage({ user, onGoalChange, onLogout }) {
   const [goal, setGoal] = useState(() => Number(localStorage.getItem('engnocrazy:dailyGoal')) || 10);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('engnocrazy:dailyGoal', String(goal));
-  }, [goal]);
+    const value = Math.max(5, Math.min(100, Number(goal) || 10));
+    localStorage.setItem('engnocrazy:dailyGoal', String(value));
+    onGoalChange?.(value);
+  }, [goal, onGoalChange]);
 
   return (
     <main className="v2-page">
