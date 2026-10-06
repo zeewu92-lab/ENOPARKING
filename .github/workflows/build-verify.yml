@@ -1,0 +1,38 @@
+name: build-verify
+
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'api/**'
+      - 'server/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
+      - '.github/workflows/build-verify.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'api/**'
+      - 'server/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
+      - '.github/workflows/build-verify.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
