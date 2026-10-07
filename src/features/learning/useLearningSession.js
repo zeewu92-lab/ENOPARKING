@@ -168,7 +168,7 @@ export function useLearningSession(wordList, sourceKey, requestedGoal = null) {
         wordId: currentWord.id ?? currentWord.word ?? currentWord.w,
         day: getTodayDay(),
         verification: verification.verification,
-        result: correct ? 'correct' : 'error',
+        result: correct ? 'correct' : 'wrong',
         hintLevel: 'none'
       });
 

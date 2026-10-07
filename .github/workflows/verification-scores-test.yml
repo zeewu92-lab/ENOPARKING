@@ -1,0 +1,28 @@
+name: verification-scores-test
+
+on:
+  push:
+    paths:
+      - 'shared/learning/**'
+      - 'simulator/DimensionUpdater.js'
+      - 'src/features/learning/unitOutcomeProcessor.js'
+      - 'src/features/learning/unitOutcomeProcessor.test.js'
+      - '.github/workflows/verification-scores-test.yml'
+  pull_request:
+    paths:
+      - 'shared/learning/**'
+      - 'simulator/DimensionUpdater.js'
+      - 'src/features/learning/unitOutcomeProcessor.js'
+      - 'src/features/learning/unitOutcomeProcessor.test.js'
+      - '.github/workflows/verification-scores-test.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node shared/learning/verificationScores.test.js
+      - run: node src/features/learning/unitOutcomeProcessor.test.js
