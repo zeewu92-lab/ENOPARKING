@@ -16,6 +16,13 @@ const RESULT_VALUES = Object.freeze(['correct', 'weak', 'wrong']);
 const STABILITY_BANDS = Object.freeze([
   0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
 ]);
+const REQUIRED_RECOVERY = Object.freeze({
+  '0.5->0.6': 2,
+  '0.6->0.7': 4,
+  '0.7->0.8': 8,
+  '0.8->0.9': 16,
+  '0.9->1.0': 32,
+});
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -41,6 +48,18 @@ function stabilityBandIndex(stability) {
   }
 
   return bestIndex;
+}
+
+function requiredFor(stability) {
+  const value = normalizeStability(stability);
+  if (value < 0.5) return 0;
+
+  const index = stabilityBandIndex(value);
+  if (index >= STABILITY_BANDS.length - 1) return 0;
+
+  return REQUIRED_RECOVERY[
+    value.toFixed(1) + '->' + STABILITY_BANDS[index + 1].toFixed(1)
+  ] || 0;
 }
 
 function normalizeActions(actionSummary) {
@@ -106,38 +125,26 @@ function updateCorrectStability(stabilityState, correctActionCount) {
   const current = normalizeStability(stabilityState?.stability);
   const progress = Math.max(0, Number(stabilityState?.progress) || 0);
   const currentIndex = stabilityBandIndex(current);
-  const required = Number(stabilityState?.requiredRecovery) || 0;
+  const required = requiredFor(current);
 
   // 暂行 Unit 规则：每个正确 Action 提供 1 点恢复证据，
   // 只在 Unit 结束时结算一次，最多跨越一个稳定度区间。
-  if (correctActionCount <= 0) {
+  if (correctActionCount <= 0 || required === 0) {
     return {
       stability: current,
-      progress,
+      progress: current >= 1 ? 0 : progress,
       requiredRecovery: required,
       transitions: 0,
     };
   }
 
-  if (currentIndex >= STABILITY_BANDS.length - 1) {
-    return {
-      stability: current,
-      progress: 0,
-      requiredRecovery: 0,
-      transitions: 0,
-    };
-  }
-
-  const targetRequired = Number.isFinite(required) && required > 0
-    ? required
-    : 1;
   const nextProgress = progress + correctActionCount;
 
-  if (nextProgress < targetRequired) {
+  if (nextProgress < required) {
     return {
       stability: current,
       progress: nextProgress,
-      requiredRecovery: targetRequired,
+      requiredRecovery: required,
       transitions: 0,
     };
   }
@@ -146,8 +153,8 @@ function updateCorrectStability(stabilityState, correctActionCount) {
 
   return {
     stability: nextStability,
-    progress: Math.min(nextProgress - targetRequired, 1),
-    requiredRecovery: 1,
+    progress: Math.min(nextProgress - required, requiredFor(nextStability)),
+    requiredRecovery: requiredFor(nextStability),
     transitions: 1,
   };
 }
@@ -160,7 +167,7 @@ function updateWrongStability(stabilityState) {
   return {
     stability: nextStability,
     progress: 0,
-    requiredRecovery: nextIndex < STABILITY_BANDS.length - 1 ? 1 : 0,
+    requiredRecovery: requiredFor(nextStability),
     transitions: currentIndex === nextIndex ? 0 : -1,
   };
 }
@@ -235,4 +242,5 @@ export const __testing__ = {
   updateWrongStability,
   buildErrorEpisode,
   penaltyFor,
+  requiredFor,
 };
