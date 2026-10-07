@@ -1,32 +1,38 @@
 /**
- * Step 3a-6：逐 error rate、逐 day、逐 word、逐字段比对快照。
+ * Step 3a-6：逐 error rate、逐 day、逐 word、逐字段比对 NDJSON 快照。
  */
 
 import fs from 'fs';
+import readline from 'readline';
 
 const [,, beforePath, afterPath] = process.argv;
 
 if (!beforePath || !afterPath) {
   console.error(
-    '用法: node verify-365-equivalence-compare.js <before.json> <after.json>'
+    '用法: node verify-365-equivalence-compare.js <before.jsonl> <after.jsonl>'
   );
   process.exit(1);
 }
 
-const before = JSON.parse(fs.readFileSync(beforePath, 'utf8'));
-const after = JSON.parse(fs.readFileSync(afterPath, 'utf8'));
+const beforeInput = fs.createReadStream(beforePath, { encoding: 'utf8' });
+const afterInput = fs.createReadStream(afterPath, { encoding: 'utf8' });
 
-const beforeRates = Object.keys(before);
-const afterRates = Object.keys(after);
+const beforeLines = readline.createInterface({
+  input: beforeInput,
+  crlfDelay: Infinity,
+});
+const afterLines = readline.createInterface({
+  input: afterInput,
+  crlfDelay: Infinity,
+});
 
-if (JSON.stringify(beforeRates) !== JSON.stringify(afterRates)) {
-  console.error('❌ error rate 集合不同');
-  process.exit(1);
-}
+const beforeIterator = beforeLines[Symbol.asyncIterator]();
+const afterIterator = afterLines[Symbol.asyncIterator]();
 
 let totalChecks = 0;
 let divergenceCount = 0;
 let firstDivergence = null;
+let lineNumber = 0;
 
 function compareValue(rate, day, wordId, field, beforeValue, afterValue) {
   totalChecks += 1;
@@ -49,57 +55,63 @@ function compareValue(rate, day, wordId, field, beforeValue, afterValue) {
   }
 }
 
-console.log(`开始比对 ${beforeRates.length} 个 error rate...`);
+while (true) {
+  const [beforeResult, afterResult] = await Promise.all([
+    beforeIterator.next(),
+    afterIterator.next(),
+  ]);
 
-for (const rate of beforeRates) {
-  const beforeDays = before[rate];
-  const afterDays = after[rate];
+  if (beforeResult.done || afterResult.done) {
+    if (beforeResult.done !== afterResult.done) {
+      console.error('❌ 两份快照行数不同');
+      process.exit(1);
+    }
+    break;
+  }
 
-  if (beforeDays.length !== afterDays.length) {
+  lineNumber += 1;
+
+  const beforeDay = JSON.parse(beforeResult.value);
+  const afterDay = JSON.parse(afterResult.value);
+
+  if (beforeDay.rate !== afterDay.rate || beforeDay.day !== afterDay.day) {
     console.error(
-      `❌ rate=${rate} 天数不同: ${beforeDays.length} vs ${afterDays.length}`
+      `❌ 第 ${lineNumber} 行的 rate/day 不一致: ` +
+      `${beforeDay.rate}%/day${beforeDay.day} vs ` +
+      `${afterDay.rate}%/day${afterDay.day}`
     );
     process.exit(1);
   }
 
-  for (let index = 0; index < beforeDays.length; index += 1) {
-    const beforeDay = beforeDays[index];
-    const afterDay = afterDays[index];
+  const wordIds = new Set([
+    ...Object.keys(beforeDay.words),
+    ...Object.keys(afterDay.words),
+  ]);
 
-    if (beforeDay.day !== afterDay.day) {
-      console.error(
-        `❌ rate=${rate} day 索引不同: ${beforeDay.day} vs ${afterDay.day}`
-      );
-      process.exit(1);
-    }
+  for (const wordId of wordIds) {
+    const beforeWord = beforeDay.words[wordId];
+    const afterWord = afterDay.words[wordId];
 
-    const wordIds = new Set([
-      ...Object.keys(beforeDay.words),
-      ...Object.keys(afterDay.words),
+    const fields = new Set([
+      ...Object.keys(beforeWord || {}),
+      ...Object.keys(afterWord || {}),
     ]);
 
-    for (const wordId of wordIds) {
-      const beforeWord = beforeDay.words[wordId];
-      const afterWord = afterDay.words[wordId];
-
-      const fields = new Set([
-        ...Object.keys(beforeWord || {}),
-        ...Object.keys(afterWord || {}),
-      ]);
-
-      for (const field of fields) {
-        compareValue(
-          rate,
-          beforeDay.day,
-          wordId,
-          field,
-          beforeWord?.[field],
-          afterWord?.[field]
-        );
-      }
+    for (const field of fields) {
+      compareValue(
+        beforeDay.rate,
+        beforeDay.day,
+        wordId,
+        field,
+        beforeWord?.[field],
+        afterWord?.[field]
+      );
     }
   }
 }
+
+beforeLines.close();
+afterLines.close();
 
 console.log(`\n总共比对 ${totalChecks} 个字段`);
 

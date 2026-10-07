@@ -1,8 +1,7 @@
 /**
  * Step 3a-6：逐日保存 365 天 × 6 error rate 的学习状态快照。
  *
- * 这份 harness 保持与 simulator/run365.js 相同的模拟循环与辅助函数。
- * 如果 run365.js 的冻结契约发生变化，先更新 HARNESS_CONTRACT 与本文件。
+ * 使用 NDJSON 流式写入，避免 900 × 365 × 6 的完整快照一次性进入内存。
  */
 
 import fs from 'fs';
@@ -210,7 +209,7 @@ function snapshotWord(word) {
   };
 }
 
-function runScenarioWithSnapshots(errorRate) {
+function runScenarioWithSnapshots(errorRate, output) {
   const words = Array.from(
     { length: WORD_COUNT },
     (_, index) => createWord('w' + (index + 1))
@@ -221,8 +220,6 @@ function runScenarioWithSnapshots(errorRate) {
     reviewCap: CONFIG.reviewCap,
     dailyMax: CONFIG.dailyMax,
   });
-
-  const snapshots = [];
 
   for (let day = 1; day <= DAYS; day += 1) {
     for (const word of words) {
@@ -244,25 +241,29 @@ function runScenarioWithSnapshots(errorRate) {
       dailyWords[word.wordId] = snapshotWord(word);
     }
 
-    snapshots.push({
-      day,
-      words: dailyWords,
-    });
+    output.write(
+      JSON.stringify({
+        rate: errorRate,
+        day,
+        words: dailyWords,
+      }) + '\n'
+    );
   }
-
-  return snapshots;
 }
 
-const outputFile = process.argv[2] || 'snapshots.json';
-
-const result = {};
+const outputFile = process.argv[2] || 'snapshots.jsonl';
+const output = fs.createWriteStream(outputFile, { encoding: 'utf8' });
 
 for (const rate of ERROR_RATES) {
   console.log(`▶ 跑 error rate = ${rate}%`);
-  result[String(rate)] = runScenarioWithSnapshots(rate);
+  runScenarioWithSnapshots(rate, output);
 }
 
-fs.writeFileSync(outputFile, JSON.stringify(result));
+await new Promise((resolve, reject) => {
+  output.on('finish', resolve);
+  output.on('error', reject);
+  output.end();
+});
 
 console.log(`\n已输出至 ${outputFile}`);
 console.log(

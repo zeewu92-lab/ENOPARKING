@@ -50,20 +50,20 @@ jobs:
 
       - name: Snapshot legacy
         working-directory: legacy
-        run: node scripts/verify-365-equivalence-snapshot.js before.json
+        run: node scripts/verify-365-equivalence-snapshot.js before.jsonl
 
       - name: Snapshot current
         working-directory: current
-        run: node scripts/verify-365-equivalence-snapshot.js after.json
+        run: node scripts/verify-365-equivalence-snapshot.js after.jsonl
 
       - name: Compare
         working-directory: current
-        run: node scripts/verify-365-equivalence-compare.js ../legacy/before.json after.json
+        run: node scripts/verify-365-equivalence-compare.js ../legacy/before.jsonl after.jsonl
 
       - name: Record snapshot hashes
         if: always()
         run: |
-          sha256sum legacy/before.json current/after.json | tee 365-snapshot-sha256.txt
+          sha256sum legacy/before.jsonl current/after.jsonl | tee 365-snapshot-sha256.txt
 
       - name: Upload equivalence evidence
         if: always()
@@ -72,6 +72,4 @@ jobs:
           name: step-3a6-equivalence-evidence
           path: |
             365-snapshot-sha256.txt
-            legacy/before.json
-            current/after.json
           retention-days: 7
