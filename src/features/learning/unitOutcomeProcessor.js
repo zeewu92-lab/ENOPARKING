@@ -8,12 +8,14 @@
 import {
   DIMENSION_SETS,
   penaltyFor,
-  STABILITY_BANDS,
 } from '../../../shared/learning/constants.js';
 import { applyVerificationToScores } from '../../../shared/learning/verificationScores.js';
 import { MasteryCalculator } from '../../../simulator/MasteryCalculator.js';
 
 const RESULT_VALUES = Object.freeze(['correct', 'weak', 'wrong']);
+const STABILITY_BANDS = Object.freeze([
+  0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
+]);
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
