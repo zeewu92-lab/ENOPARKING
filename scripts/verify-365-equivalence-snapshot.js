@@ -1,3 +1,10 @@
+/**
+ * Step 3a-6：逐日保存 365 天 × 6 error rate 的学习状态快照。
+ *
+ * 这份 harness 保持与 simulator/run365.js 相同的模拟循环与辅助函数。
+ * 如果 run365.js 的冻结契约发生变化，先更新 HARNESS_CONTRACT 与本文件。
+ */
+
 import fs from 'fs';
 
 import { DailyBatch } from '../simulator/DailyBatch.js';
@@ -26,18 +33,25 @@ const CONFIG = {
   dailyMax: HARNESS_CONTRACT.dailyMax,
   eventMultiplier: HARNESS_CONTRACT.eventMultiplier,
 };
-const INITIAL_SCORES = { meaning: 0, spelling: 0, listening: 0, usage: 0 };
+const INITIAL_SCORES = {
+  meaning: 0,
+  spelling: 0,
+  listening: 0,
+  usage: 0,
+};
 
 const masteryCalculator = new MasteryCalculator();
 const scheduler = new Scheduler();
 
 function fnv1a32(input) {
   let hash = 0x811c9dc5;
+
   for (let i = 0; i < input.length; i += 1) {
     hash ^= input.charCodeAt(i);
     hash = Math.imul(hash, 0x01000193);
     hash >>>= 0;
   }
+
   return hash >>> 0;
 }
 
@@ -52,6 +66,7 @@ function createWord(wordId) {
     initialStability: 0.5,
     initialProgress: 0,
   });
+
   return {
     wordId,
     isNew: true,
@@ -73,6 +88,102 @@ function createWord(wordId) {
     errorStreakWindow: 0,
     lowestDimension: 0,
   };
+}
+
+function updateBatchFields(word, day) {
+  word.overdueDays =
+    word.nextReviewAt == null
+      ? 0
+      : Math.max(0, day - word.nextReviewAt);
+
+  word.lowestDimension = Math.min(
+    word.scores.meaning,
+    word.scores.spelling,
+    word.scores.listening,
+    word.scores.usage
+  );
+}
+
+function scheduleWord(word, state, stability, day) {
+  const schedule = scheduler.schedule({
+    state,
+    stability,
+    reviewedAtDay: day,
+  });
+
+  word.nextReviewAt = schedule.nextReviewDay;
+  return schedule;
+}
+
+function closeEpisode(word, episode) {
+  const scores = episode.closedEpisodeScores ?? word.scores;
+  const mastery = masteryCalculator.calculate(scores);
+  scheduleWord(word, mastery.state, episode.newStability, episode.day);
+}
+
+function processWord(word, day, errorRate) {
+  const selector = word.processor.selectorFor(word.wordId);
+  const selected = selector.select(day);
+  const isFirstEvent = selector.reviewCount === 0;
+  const isError = shouldInjectError(word.wordId, day, errorRate);
+
+  const result = word.processor.process({
+    wordId: word.wordId,
+    day,
+    verification: selected.verification,
+    result: isError ? 'incorrect' : 'correct',
+    hintLevel: 'none',
+    scores: word.scores,
+  });
+
+  word.scores = result.scores;
+  word.eventCount += 1;
+  word.lastSeenAt = day;
+
+  if (isError) {
+    word.errorCount += 1;
+
+    if (result.event.errorStrength === 'weak') {
+      word.weakEventCount += 1;
+    }
+
+    word.errorStreakWindow += 1;
+  } else {
+    word.errorStreakWindow = 0;
+  }
+
+  if (!isFirstEvent) {
+    word.reviewCount += 1;
+    word.firstReviewReceived = true;
+  }
+
+  if (result.closedEpisode) {
+    closeEpisode(word, {
+      ...result.closedEpisode,
+      closedEpisodeScores: result.closedEpisodeScores,
+    });
+  }
+
+  if (isFirstEvent) {
+    scheduleWord(
+      word,
+      '初識',
+      word.stabilityEngine.stability,
+      day
+    );
+    word.isNew = false;
+    return;
+  }
+
+  if (result.kind === 'correct') {
+    const mastery = masteryCalculator.calculate(word.scores);
+    scheduleWord(
+      word,
+      mastery.state,
+      result.recovery.after.stability,
+      day
+    );
+  }
 }
 
 function snapshotWord(word) {
@@ -99,94 +210,61 @@ function snapshotWord(word) {
   };
 }
 
-function scheduleWord(word, state, stability, day) {
-  const schedule = scheduler.schedule({ state, stability, reviewedAtDay: day });
-  word.nextReviewAt = schedule.nextReviewDay;
-  return schedule;
-}
-
-function closeEpisode(word, episode) {
-  const scores = episode.closedEpisodeScores ?? word.scores;
-  const mastery = masteryCalculator.calculate(scores);
-  scheduleWord(word, mastery.state, episode.newStability, episode.day);
-}
-
-function processWord(word, day, errorRate) {
-  const selector = word.processor.selectorFor(word.wordId);
-  const selected = selector.select(day);
-  const isFirstEvent = selector.reviewCount === 0;
-  const isError = shouldInjectError(word.wordId, day, errorRate);
-  const result = word.processor.process({
-    wordId: word.wordId,
-    day,
-    verification: selected.verification,
-    result: isError ? 'incorrect' : 'correct',
-    hintLevel: 'none',
-    scores: word.scores,
-  });
-
-  word.scores = result.scores;
-  word.eventCount += 1;
-  word.lastSeenAt = day;
-
-  if (isError) {
-    word.errorCount += 1;
-    if (result.event.errorStrength === 'weak') word.weakEventCount += 1;
-    word.errorStreakWindow += 1;
-  } else {
-    word.errorStreakWindow = 0;
-  }
-
-  if (!isFirstEvent) {
-    word.reviewCount += 1;
-    word.firstReviewReceived = true;
-  }
-
-  if (result.closedEpisode) {
-    closeEpisode(word, {
-      ...result.closedEpisode,
-      closedEpisodeScores: result.closedEpisodeScores,
-    });
-  }
-
-  if (isFirstEvent) {
-    scheduleWord(word, '初識', word.stabilityEngine.stability, day);
-    word.isNew = false;
-    return;
-  }
-
-  if (result.kind === 'correct') {
-    const mastery = masteryCalculator.calculate(word.scores);
-    scheduleWord(word, mastery.state, result.recovery.after.stability, day);
-  }
-}
-
 function runScenarioWithSnapshots(errorRate) {
-  const words = Array.from({ length: WORD_COUNT }, (_, index) => createWord('w' + (index + 1)));
+  const words = Array.from(
+    { length: WORD_COUNT },
+    (_, index) => createWord('w' + (index + 1))
+  );
+
   const batch = new DailyBatch({
     newTarget: CONFIG.newTarget,
     reviewCap: CONFIG.reviewCap,
     dailyMax: CONFIG.dailyMax,
   });
+
   const snapshots = [];
 
   for (let day = 1; day <= DAYS; day += 1) {
-    const selectedWords = batch.generate({ words, today: day });
-    for (const word of selectedWords) processWord(word, day, errorRate);
+    for (const word of words) {
+      updateBatchFields(word, day);
+    }
+
+    const selectedWords = batch.generate({
+      words,
+      today: day,
+    });
+
+    for (const word of selectedWords) {
+      processWord(word, day, errorRate);
+    }
 
     const dailyWords = {};
-    for (const word of words) dailyWords[word.wordId] = snapshotWord(word);
-    snapshots.push({ day, words: dailyWords });
+
+    for (const word of words) {
+      dailyWords[word.wordId] = snapshotWord(word);
+    }
+
+    snapshots.push({
+      day,
+      words: dailyWords,
+    });
   }
+
   return snapshots;
 }
 
 const outputFile = process.argv[2] || 'snapshots.json';
+
 const result = {};
+
 for (const rate of ERROR_RATES) {
   console.log(`▶ 跑 error rate = ${rate}%`);
   result[String(rate)] = runScenarioWithSnapshots(rate);
 }
-fs.writeFileSync(outputFile, JSON.stringify(result, null, 2));
-console.log(`\n✅ 已輸出至 ${outputFile}`);
-console.log(`   ${ERROR_RATES.length} 個 error rate × ${DAYS} 天 × ${WORD_COUNT} words`);
+
+fs.writeFileSync(outputFile, JSON.stringify(result));
+
+console.log(`\n已输出至 ${outputFile}`);
+console.log(
+  `   ${ERROR_RATES.length} 个 error rate × ${DAYS} 天 × ${WORD_COUNT} words`
+);
