@@ -1,0 +1,61 @@
+name: step-3a6-365-equivalence
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/verification-selector
+    paths:
+      - 'shared/learning/**'
+      - 'simulator/DimensionUpdater.js'
+      - 'scripts/verify-365-equivalence-*.js'
+      - '.github/workflows/step-3a6-365-equivalence.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout current
+        uses: actions/checkout@v4
+        with:
+          ref: feature/verification-selector
+          path: current
+          fetch-depth: 0
+      - name: Checkout legacy
+        uses: actions/checkout@v4
+        with:
+          ref: 565ffaa727a9be52257dad58f6eddd6df3647797
+          path: legacy
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install current deps
+        working-directory: current
+        run: npm ci || npm install
+      - name: Install legacy deps
+        working-directory: legacy
+        run: npm ci || npm install
+      - name: Copy harness to legacy
+        run: |
+          mkdir -p legacy/scripts
+          cp current/scripts/verify-365-equivalence-snapshot.js legacy/scripts/
+          cp current/scripts/verify-365-equivalence-compare.js legacy/scripts/
+      - name: Snapshot legacy (before)
+        working-directory: legacy
+        run: node scripts/verify-365-equivalence-snapshot.js before.json
+      - name: Snapshot current (after)
+        working-directory: current
+        run: node scripts/verify-365-equivalence-snapshot.js after.json
+      - name: Compare
+        working-directory: current
+        run: node scripts/verify-365-equivalence-compare.js ../legacy/before.json after.json
+      - name: Upload snapshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 365-snapshots
+          path: |
+            legacy/before.json
+            current/after.json
+          retention-days: 7
