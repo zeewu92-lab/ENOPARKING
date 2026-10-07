@@ -153,6 +153,7 @@ export function getNextVerification(wordId, day = dayFromDate()) {
 
 export function recordLearningEvent({
   wordId,
+  unitId = null,
   day = dayFromDate(),
   verification,
   result = 'correct',
@@ -186,8 +187,10 @@ export function recordLearningEvent({
   ) + 1;
 
   events.push({
+    type: 'action',
     sequence,
     eventId: processed.event.eventId,
+    unitId: unitId || null,
     wordId: normalizedId,
     day: Number(day),
     date: dateFromDay(Number(day)),
