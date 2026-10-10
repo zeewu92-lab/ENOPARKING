@@ -192,3 +192,30 @@ test('discardPending refuses to remove an event after server confirmation', () =
   queue.reconcile([{ eventId: event.eventId, syncStatus: 'confirmed', serverSequence: 1 }]);
   assert.throws(() => queue.discardPending(event.eventId), /EVENT_ALREADY_SYNCED/);
 });
+
+
+test('enqueue rolls back the queue and applied marker if the marker write fails', () => {
+  const values = new Map();
+  let failAppliedWrite = true;
+  const storage = {
+    getItem(key) { return values.has(key) ? values.get(key) : null; },
+    setItem(key, value) {
+      if (failAppliedWrite && key.includes('event-applied-ids')) {
+        failAppliedWrite = false;
+        throw new Error('quota exceeded');
+      }
+      values.set(key, String(value));
+    },
+    removeItem(key) { values.delete(key); }
+  };
+  const queue = new EventQueue({ accountId: 'test-user', storage, createId: makeIds() });
+
+  assert.throws(() => queue.enqueue({
+    type: 'action',
+    payload: { wordId: 'word-1', day: 20637, verification: 'choice', result: 'correct', hintLevel: 'none' }
+  }), /EVENT_QUEUE_STORAGE_UNAVAILABLE/);
+
+  assert.equal(queue.list().length, 0);
+  assert.equal(queue.readState().localCounter, 0);
+  assert.equal(queue.hasApplied(queue.list()[0]?.eventId || 'unused-event'), false);
+});
