@@ -18,7 +18,7 @@ test('native SQLite schema enforces valid sync state and unique server sequence'
   assert.match(schema, /sync_status IN \('pending', 'confirmed', 'failed'\)/);
   assert.match(schema, /sync_status = 'confirmed' AND server_sequence IS NOT NULL/);
   assert.match(schema, /CREATE UNIQUE INDEX IF NOT EXISTS enop_learning_events_server_sequence/);
-  assert.match(schema, /UNIQUE \(account_id, server_sequence\)/);
+  assert.match(schema, /CREATE UNIQUE INDEX IF NOT EXISTS enop_applied_events_sequence[\s\S]*WHERE server_sequence IS NOT NULL/);
   assert.match(schema, /json_valid\(payload_json\)/);
 });
 
