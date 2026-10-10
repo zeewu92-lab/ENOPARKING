@@ -52,3 +52,16 @@ test('Event Sync SQL retains fail-closed gates and transactional constraints', (
   assert.match(statements, /ON CONFLICT \(account_id\) DO NOTHING/);
   assert.match(statements, /server_sequence/);
 });
+
+test('idempotent retries are resolved before per-event rate limiting', () => {
+  const statements = migration002.up(fakeSql).map(statement => statement.text).join('\n');
+  const duplicateLookup = statements.indexOf('SELECT server_sequence, fingerprint INTO v_existing');
+  const rateLimitBranch = statements.indexOf("IF v_event_index > v_allowed_events THEN");
+  assert.ok(duplicateLookup >= 0);
+  assert.ok(rateLimitBranch > duplicateLookup);
+});
+
+test('event pull rejects cursors beyond the account high-water mark', () => {
+  const statements = migration005.up(fakeSql).map(statement => statement.text).join('\n');
+  assert.match(statements, /IF p_after_sequence > v_high_water THEN[\s\S]*REQUEST_INVALID/);
+});
