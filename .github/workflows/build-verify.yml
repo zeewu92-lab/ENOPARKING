@@ -20,6 +20,8 @@ on:
       - 'src/**'
       - 'api/**'
       - 'server/**'
+      - 'shared/**'
+      - 'docs/**'
       - 'tests/**'
       - 'public/**'
       - 'index.html'
