@@ -1,6 +1,7 @@
 import { createLearningAlgorithm } from './algorithm.js';
 
 const KEY = 'v2:learning-events';
+const ACCOUNT_KEY_PREFIX = KEY + ':account:';
 const DIMENSIONS = ['meaning', 'spelling', 'listening', 'usage'];
 const DEFAULT_SCORES = Object.freeze({
   meaning: 0,
@@ -8,6 +9,11 @@ const DEFAULT_SCORES = Object.freeze({
   listening: 0,
   usage: 0
 });
+
+function storageKey(accountId) {
+  const account = String(accountId || '').trim();
+  return account ? ACCOUNT_KEY_PREFIX + encodeURIComponent(account) : KEY;
+}
 
 function todayKey() {
   const now = new Date();
@@ -17,7 +23,7 @@ function todayKey() {
 }
 
 function dayFromDate(value = todayKey()) {
-  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const match = String(value).match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
   if (!match) return dayFromDate(todayKey());
   return Math.floor(Date.UTC(
     Number(match[1]),
@@ -31,21 +37,35 @@ function dateFromDay(day) {
   return date.toISOString().slice(0, 10);
 }
 
-function readEvents() {
+function readEvents(accountId) {
   if (typeof window === 'undefined') return [];
   try {
-    const saved = JSON.parse(window.localStorage.getItem(KEY) || '[]');
+    const saved = JSON.parse(window.localStorage.getItem(storageKey(accountId)) || '[]');
     return Array.isArray(saved) ? saved : [];
   } catch {
     return [];
   }
 }
 
-function writeEvents(events) {
+function writeEvents(events, accountId) {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem(KEY, JSON.stringify(events));
-  } catch {}
+    window.localStorage.setItem(storageKey(accountId), JSON.stringify(events));
+  } catch {
+    throw new Error('LEARNING_EVENT_STORAGE_UNAVAILABLE');
+  }
+}
+
+function compareEvents(a, b) {
+  const dayDifference = Number(a.day) - Number(b.day);
+  if (dayDifference) return dayDifference;
+
+  const aServer = Number.isSafeInteger(a.serverSequence) ? a.serverSequence : null;
+  const bServer = Number.isSafeInteger(b.serverSequence) ? b.serverSequence : null;
+  if (aServer !== null && bServer !== null) return aServer - bServer;
+  if (aServer !== null) return -1;
+  if (bServer !== null) return 1;
+  return (Number(a.sequence) || 0) - (Number(b.sequence) || 0);
 }
 
 function normalizeScores(scores) {
@@ -62,7 +82,7 @@ function getHistory(wordId, events = readEvents()) {
   const normalizedId = String(wordId ?? '').trim().toLowerCase();
   return events
     .filter(event => String(event.wordId ?? '').trim().toLowerCase() === normalizedId)
-    .sort((a, b) => (Number(a.day) - Number(b.day)) || (Number(a.sequence) - Number(b.sequence)));
+    .sort(compareEvents);
 }
 
 function replayWord(wordId, events = readEvents()) {
@@ -79,7 +99,8 @@ function replayWord(wordId, events = readEvents()) {
       verification: event.verification,
       result: event.result,
       hintLevel: event.hintLevel || 'none',
-      scores
+      scores,
+      enforceVerification: false
     });
     scores = result.scores;
     lastResult = result;
@@ -120,28 +141,26 @@ function replayForVerification(wordId, events = readEvents()) {
       verification: event.verification,
       result: event.result,
       hintLevel: event.hintLevel || 'none',
-      scores
+      scores,
+      enforceVerification: false
     }).scores;
   }
 
-  return {
-    algorithm,
-    scores,
-    history
-  };
+  return { algorithm, scores, history };
 }
 
-export function getLearningEvents() {
-  return readEvents();
+export function getLearningEvents(accountId = null) {
+  return readEvents(accountId);
 }
 
-export function getWordLearningState(wordId) {
-  return replayWord(wordId);
+export function getWordLearningState(wordId, accountId = null) {
+  return replayWord(wordId, readEvents(accountId));
 }
 
-export function getNextVerification(wordId, day = dayFromDate()) {
-  const state = replayWord(wordId);
-  const { algorithm } = replayForVerification(wordId);
+export function getNextVerification(wordId, day = dayFromDate(), accountId = null) {
+  const events = readEvents(accountId);
+  const state = replayWord(wordId, events);
+  const { algorithm } = replayForVerification(wordId, events);
   const selected = algorithm.processor.selectorFor(state.wordId).select(day);
 
   return {
@@ -157,14 +176,16 @@ export function recordLearningEvent({
   day = dayFromDate(),
   verification,
   result = 'correct',
-  hintLevel = 'none'
+  hintLevel = 'none',
+  accountId = null,
+  syncEventId = null
 } = {}) {
   const normalizedId = String(wordId ?? '').trim().toLowerCase();
   if (!normalizedId || !verification) {
     throw new Error('缺少有效的学习事件参数');
   }
 
-  const events = readEvents();
+  const events = readEvents(accountId);
   const { algorithm, scores } = replayForVerification(normalizedId, events);
   const selected = algorithm.processor.selectorFor(normalizedId).select(Number(day));
 
@@ -190,6 +211,8 @@ export function recordLearningEvent({
     type: 'action',
     sequence,
     eventId: processed.event.eventId,
+    syncEventId: syncEventId || null,
+    serverSequence: null,
     unitId: unitId || null,
     wordId: normalizedId,
     day: Number(day),
@@ -200,21 +223,85 @@ export function recordLearningEvent({
     recordedAt: new Date().toISOString()
   });
 
-  writeEvents(events);
+  writeEvents(events, accountId);
 
   return {
     ...processed,
-    state: getWordLearningState(normalizedId)
+    state: replayWord(normalizedId, events)
   };
+}
+
+export function applyRemoteLearningEvent(event, accountId) {
+  if (!String(accountId || '').trim()) throw new Error('LEARNING_EVENT_ACCOUNT_REQUIRED');
+  if (event?.type !== 'action') throw new Error('EVENT_APPLY_UNSUPPORTED_TYPE');
+
+  const payload = event.payload;
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new Error('EVENT_PAYLOAD_INVALID');
+  }
+  const wordId = String(payload.wordId || '').trim().toLowerCase();
+  const day = Number(payload.day);
+  const serverSequence = Number(event.serverSequence);
+  if (!wordId || !Number.isSafeInteger(day) || day < 0 ||
+      !['choice', 'spelling', 'dictation', 'usage'].includes(payload.verification) ||
+      !['correct', 'wrong'].includes(payload.result) ||
+      payload.hintLevel !== 'none' ||
+      (payload.unitId != null && (typeof payload.unitId !== 'string' || !payload.unitId.trim())) ||
+      !Number.isSafeInteger(serverSequence) || serverSequence < 1 ||
+      typeof event.eventId !== 'string' || !event.eventId) {
+    throw new Error('EVENT_PAYLOAD_INVALID');
+  }
+
+  const events = readEvents(accountId);
+  if (events.some(item => item.syncEventId === event.eventId)) return false;
+
+  const sequence = events.reduce(
+    (max, item) => Math.max(max, Number(item.sequence) || 0),
+    0
+  ) + 1;
+  events.push({
+    type: 'action',
+    sequence,
+    eventId: 'sync-' + event.eventId,
+    syncEventId: event.eventId,
+    serverSequence,
+    unitId: payload.unitId || null,
+    wordId,
+    day,
+    date: dateFromDay(day),
+    verification: payload.verification,
+    result: payload.result,
+    hintLevel: payload.hintLevel,
+    recordedAt: new Date().toISOString()
+  });
+  writeEvents(events, accountId);
+  return true;
+}
+
+export function setLearningEventServerSequence(accountId, syncEventId, serverSequence) {
+  if (!String(accountId || '').trim() ||
+      !String(syncEventId || '').trim() ||
+      !Number.isSafeInteger(serverSequence) || serverSequence < 1) {
+    throw new Error('LEARNING_EVENT_SEQUENCE_INVALID');
+  }
+  const events = readEvents(accountId);
+  let changed = false;
+  const next = events.map(event => {
+    if (event.syncEventId !== syncEventId || event.serverSequence === serverSequence) return event;
+    changed = true;
+    return { ...event, serverSequence };
+  });
+  if (changed) writeEvents(next, accountId);
+  return changed;
 }
 
 export function getTodayDay() {
   return dayFromDate();
 }
 
-export function clearLearningEventsForTest() {
+export function clearLearningEventsForTest(accountId = null) {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.removeItem(KEY);
+    window.localStorage.removeItem(storageKey(accountId));
   } catch {}
 }
