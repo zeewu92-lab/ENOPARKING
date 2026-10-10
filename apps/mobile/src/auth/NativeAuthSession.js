@@ -1,7 +1,6 @@
 import { NativeAuthApi } from './NativeAuthApi.js';
-import { nativeCredentialVault } from './nativeCredentialVault';
-
-export function createNativeAuthSession({ baseUrl, api = new NativeAuthApi({ baseUrl }), vault = nativeCredentialVault } = {}) {
+export function createNativeAuthSession({ baseUrl, api, vault } = {}) {
+  if (!api) api = new NativeAuthApi({ baseUrl });
   if (!api || typeof api.login !== 'function' || typeof api.refresh !== 'function' || typeof api.revoke !== 'function') {
     throw new Error('NATIVE_AUTH_API_REQUIRED');
   }
