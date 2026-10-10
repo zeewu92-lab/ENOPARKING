@@ -44,8 +44,22 @@ function newQueueState() {
   return { version: 1, localCounter: 0, events: [] };
 }
 
+export function getEventQueueStorageKeys(accountId) {
+  const account = String(accountId || '').trim();
+  if (!account) throw new Error('EVENT_QUEUE_ACCOUNT_REQUIRED');
+  const scope = encodeURIComponent(account);
+  return {
+    queue: `${QUEUE_KEY}:${scope}`,
+    device: DEVICE_KEY,
+    cursor: `${CURSOR_KEY}:${scope}`,
+    applied: `${APPLIED_KEY}:${scope}`
+  };
+}
+
 export class EventQueue {
-  constructor({ storage, now = () => Date.now(), createId = createEventId } = {}) {
+  constructor({ accountId, storage, now = () => Date.now(), createId = createEventId } = {}) {
+    this.keys = getEventQueueStorageKeys(accountId);
+    this.accountId = String(accountId).trim();
     this.storage = getStorage(storage);
     this.now = now;
     this.createId = createId;
@@ -61,7 +75,7 @@ export class EventQueue {
   }
 
   readState() {
-    const state = readJson(this.storage, QUEUE_KEY, newQueueState());
+    const state = readJson(this.storage, this.keys.queue, newQueueState());
     if (state?.version !== 1 || !Array.isArray(state.events)) return newQueueState();
     return {
       version: 1,
@@ -71,7 +85,7 @@ export class EventQueue {
   }
 
   saveState(state) {
-    writeJson(this.storage, QUEUE_KEY, state);
+    writeJson(this.storage, this.keys.queue, state);
   }
 
   enqueue({ type, payload, createdAt = this.now() }) {
@@ -145,17 +159,17 @@ export class EventQueue {
   }
 
   getReplayCursor() {
-    const value = Number(this.storage.getItem(CURSOR_KEY) || 0);
+    const value = Number(this.storage.getItem(this.keys.cursor) || 0);
     return Number.isSafeInteger(value) && value >= 0 ? value : 0;
   }
 
   setReplayCursor(value) {
     if (!Number.isSafeInteger(value) || value < this.getReplayCursor()) throw new Error('EVENT_REPLAY_CURSOR_INVALID');
-    this.storage.setItem(CURSOR_KEY, String(value));
+    this.storage.setItem(this.keys.cursor, String(value));
   }
 
   hasApplied(eventId) {
-    const ids = readJson(this.storage, APPLIED_KEY, []);
+    const ids = readJson(this.storage, this.keys.applied, []);
     return Array.isArray(ids) && ids.includes(eventId);
   }
 
@@ -163,13 +177,13 @@ export class EventQueue {
     const ids = readJson(this.storage, APPLIED_KEY, []);
     const next = Array.isArray(ids) ? ids : [];
     if (!next.includes(eventId)) next.push(eventId);
-    writeJson(this.storage, APPLIED_KEY, next.slice(-5000));
+    writeJson(this.storage, this.keys.applied, next.slice(-5000));
   }
 }
 
 export const eventQueueStorageKeys = Object.freeze({
-  queue: QUEUE_KEY,
+  queuePrefix: QUEUE_KEY,
   device: DEVICE_KEY,
-  cursor: CURSOR_KEY,
-  applied: APPLIED_KEY
+  cursorPrefix: CURSOR_KEY,
+  appliedPrefix: APPLIED_KEY
 });
