@@ -94,7 +94,7 @@ export function up(sql) {
         v_next := p_after_sequence;
       END IF;
       IF NOT v_has_more THEN
-        v_next := GREATEST(v_next, v_high_water);
+        v_next := GREATEST(v_next, p_after_sequence, v_high_water);
       END IF;
 
       RETURN jsonb_build_object(
