@@ -255,6 +255,32 @@ test('PostgreSQL migrations, event sync concurrency, idempotency, pull paginatio
     );
     assert.equal(tombstones.rows[0].access_saved, true);
     assert.equal(tombstones.rows[0].refresh_saved, true);
+
+    const sessionDeleteUserId = 'integration-session-delete-user';
+    const sessionDeleteHash = crypto.createHash('sha256').update('integration-session-delete').digest('hex');
+    const sessionDeleteFamilyId = crypto.randomUUID();
+    await pool.query(
+      'INSERT INTO eng_users(id, username, password_hash) VALUES ($1, $2, $3)',
+      [sessionDeleteUserId, sessionDeleteUserId, 'test-only-hash']
+    );
+    await pool.query(
+      'INSERT INTO eng_sessions(token_hash, user_id, expires_at) VALUES ($1, $2, NOW() + INTERVAL \'1 day\')',
+      [sessionDeleteHash, sessionDeleteUserId]
+    );
+    await pool.query(
+      `INSERT INTO eng_token_families(id, user_id, session_token_hash, expires_at)
+       VALUES ($1, $2, $3, NOW() + INTERVAL '1 day')`,
+      [sessionDeleteFamilyId, sessionDeleteUserId, sessionDeleteHash]
+    );
+    await pool.query('DELETE FROM eng_sessions WHERE token_hash = $1', [sessionDeleteHash]);
+
+    const sessionFamily = await pool.query(
+      'SELECT revoked_at, revoke_reason FROM eng_token_families WHERE id = $1',
+      [sessionDeleteFamilyId]
+    );
+    assert.equal(sessionFamily.rowCount, 1, 'session deletion must preserve the Token Family audit row');
+    assert.ok(sessionFamily.rows[0].revoked_at);
+    assert.equal(sessionFamily.rows[0].revoke_reason, 'session_revoked');
   } finally {
     await pool.end();
   }
