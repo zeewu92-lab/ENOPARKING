@@ -7,7 +7,7 @@ This change adds a staged backend foundation. It is intentionally inert until op
 - `DATABASE_URL`: existing Neon connection string.
 - `TOKEN_AUTH_ENABLED=true`: enables Cookie Session to Bearer-token exchange and refresh.
 - `VITE_EVENT_SYNC_ENABLED=true`: enables client-side token bootstrap and exposes the Event Sync client wrappers at build time. Leave unset or `false` until all release blockers pass.
-- `EVENT_SYNC_ENABLED=true`: enables the HTTP Event Sync routes. Keep this unset or set to `false` until payload schemas and client queue integration pass acceptance tests.
+- `EVENT_SYNC_ENABLED=true`: enables the HTTP Event Sync routes. Keep this unset or set to `false` until strict per-type payload schemas and application-level queue integration pass acceptance tests.
 - Database flag `eng_event_sync_settings.enabled` must also be explicitly set to `TRUE` after acceptance. The environment flag and database flag are both required; the database flag defaults to `FALSE` and is locked for the duration of each sync/pull transaction.
 - `TOKEN_RECOVERY_ENCRYPTION_KEY`: exactly 64 hexadecimal characters representing 32 random bytes. Generate it with a secure secret manager. Never commit it or log it.
 
@@ -20,7 +20,7 @@ Token exchange returns the short-lived Access Token in the response `Authorizati
 3. Run `npm run db:migrate` once from a trusted environment with `DATABASE_URL` configured.
 4. Verify all versions in `eng_schema_migrations`, inspect indexes and functions, and run the test suite.
 5. Enable `TOKEN_AUTH_ENABLED=true` only in a non-production environment first.
-6. Keep `EVENT_SYNC_ENABLED=false` and the database flag disabled until the per-type payload schemas and client Event Queue / Replay implementation are complete and validated.
+6. Keep `EVENT_SYNC_ENABLED=false` and the database flag disabled until strict per-type payload schemas and application-level queue integration are complete and validated. The queue and Replay modules exist, but the learning-action pipeline is not yet wired to them.
 7. After all hard gates pass, enable both switches in a test environment; then enable for a test account.
 
 The migration runner is explicit; application startup does not run these migrations. The legacy schema initializer still runs as part of the existing application behavior.
@@ -32,7 +32,7 @@ The migration runner is explicit; application startup does not run these migrati
 - `POST /api/events/sync`: requires `Authorization: Bearer <access-token>`, `deviceId` UUID v4, SemVer `clientVersion`, and up to 100 Events.
 - `GET /api/events/pull`: requires `Authorization: Bearer <access-token>`, `afterSequence` (default 0), and `limit` (1–100).
 
-Event Sync currently validates envelope fields, size, Event ID, type, and idempotency fingerprint. The exact strict per-type payload schemas, Event download endpoint, client-side durable queue, localCounter/deviceId persistence, and full Replay integration remain release blockers. Do not enable `EVENT_SYNC_ENABLED` until those are implemented and tested.
+Event Sync currently validates envelope fields, size, Event ID, event type, and idempotency fingerprint. The client-side queue and Replay modules now persist per-account event state, device ID, local counters, retry status, applied IDs, and replay cursor. They are unit-tested, but they are not yet wired into the actual learning-action pipeline. Strict per-type payload schemas and end-to-end application integration remain release blockers. Do not enable `EVENT_SYNC_ENABLED` until those are implemented and tested.
 
 The database rate-limit defaults are 60 sync requests per account per minute and 300 submitted Events per account per minute. Operators can adjust `eng_event_sync_settings.max_requests_per_minute` and `max_events_per_minute` after observing real traffic. Whole-request limits return HTTP 429 with `Retry-After`; per-event limits return HTTP 200 with an individual `RATE_LIMITED` result.
 
@@ -53,10 +53,11 @@ A duplicate Event ID with identical canonical content returns its original seque
 - Password change and logout clear the Refresh Token cookie; deleting a Session marks its associated Token Family revoked and preserves the Family/Refresh Token audit records. Account deletion separately records token tombstones before account-owned rows are removed.
 - New endpoints are disabled by default. Database migration success alone never enables them.
 
-## Known limitations before production
+## Validation and remaining production gates
 
-- The client token bootstrap, cross-tab refresh lock, refreshRequestId persistence, and Event Sync / Pull request wrappers are present. Persistent per-account Event Queues, stable device ID/localCounter, partial ACK persistence, retry policy, and Replay are not yet integrated.
-- Type-specific payload schemas need to be fixed before the sync endpoint is enabled.
-- Account-deletion tombstones are recorded by migration, but deletion/revocation concurrency tests must pass before release.
-- Strict type-specific payload schemas, client Event Queue / Replay integration, and end-to-end concurrency tests remain release blockers.
-- The current local server imports `server/admin.js`, which was not present in the inspected `main` branch; local API startup requires that pre-existing repository issue to be resolved separately.
+- GitHub Actions runs the migrations against an ephemeral PostgreSQL 16 service and verifies concurrent Event Sync writes, contiguous server sequences, duplicate-event idempotency, conflicting-payload rejection, Event Pull pagination, refresh-token replay revocation, account-deletion tombstones, and session-deletion Token Family preservation/revocation.
+- Client queue and Replay unit tests cover persistent state, per-account isolation, ACK reconciliation, bounded retry backoff, duplicate suppression, cursor persistence, apply failure, and sequence gaps.
+- The queue and Replay modules are not yet wired into the actual learning-action pipeline. Complete that application integration before enabling Event Sync.
+- Strict per-type payload schemas still need to be defined and tested before the sync endpoint is enabled.
+- The PostgreSQL integration tests run only against the disposable CI service. No production database migration has been executed.
+- The local API admin handler has been restored and its route module is tested; verify the intended ENOPARKING admin bootstrap secret/configuration before enabling admin operations.
