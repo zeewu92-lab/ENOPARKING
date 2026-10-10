@@ -178,6 +178,8 @@ export async function requestWithEventSyncAuth(path, options = {}) {
     ? await readJson(response.clone())
     : null;
   if (response.status === 401 && body?.error?.code === 'TOKEN_EXPIRED') {
+    accessToken = null;
+    accessTokenExpiresAt = 0;
     const freshToken = await refreshEventSyncToken();
     response = await send(freshToken);
     return response;
