@@ -6,6 +6,7 @@ This change adds a staged backend foundation. It is intentionally inert until op
 
 - `DATABASE_URL`: existing Neon connection string.
 - `TOKEN_AUTH_ENABLED=true`: enables Cookie Session to Bearer-token exchange and refresh.
+- `VITE_EVENT_SYNC_ENABLED=true`: enables client-side token bootstrap and exposes the Event Sync client wrappers at build time. Leave unset or `false` until all release blockers pass.
 - `EVENT_SYNC_ENABLED=true`: enables the HTTP Event Sync routes. Keep this unset or set to `false` until payload schemas and client queue integration pass acceptance tests.
 - Database flag `eng_event_sync_settings.enabled` must also be explicitly set to `TRUE` after acceptance. The environment flag and database flag are both required; the database flag defaults to `FALSE` and is locked for the duration of each sync/pull transaction.
 - `TOKEN_RECOVERY_ENCRYPTION_KEY`: exactly 64 hexadecimal characters representing 32 random bytes. Generate it with a secure secret manager. Never commit it or log it.
@@ -29,6 +30,7 @@ The migration runner is explicit; application startup does not run these migrati
 - `POST /api/token/exchange`: requires a valid existing Cookie Session; rejects a second active Family for the same Session.
 - `POST /api/token/refresh`: requires the HttpOnly Refresh Token cookie and a body containing `refreshRequestId` (UUID v4). Persist and reuse the same request ID until a successful response is received and saved.
 - `POST /api/events/sync`: requires `Authorization: Bearer <access-token>`, `deviceId` UUID v4, SemVer `clientVersion`, and up to 100 Events.
+- `GET /api/events/pull`: requires `Authorization: Bearer <access-token>`, `afterSequence` (default 0), and `limit` (1–100).
 
 Event Sync currently validates envelope fields, size, Event ID, type, and idempotency fingerprint. The exact strict per-type payload schemas, Event download endpoint, client-side durable queue, localCounter/deviceId persistence, and full Replay integration remain release blockers. Do not enable `EVENT_SYNC_ENABLED` until those are implemented and tested.
 
@@ -53,7 +55,7 @@ A duplicate Event ID with identical canonical content returns its original seque
 
 ## Known limitations before production
 
-- The client must implement persistent per-account Event Queues, stable device ID/localCounter, single-flight refresh, refreshRequestId persistence, partial ACK persistence, retry policy, and Replay.
+- The client token bootstrap, cross-tab refresh lock, refreshRequestId persistence, and Event Sync / Pull request wrappers are present. Persistent per-account Event Queues, stable device ID/localCounter, partial ACK persistence, retry policy, and Replay are not yet integrated.
 - Type-specific payload schemas need to be fixed before the sync endpoint is enabled.
 - Account-deletion tombstones are recorded by migration, but deletion/revocation concurrency tests must pass before release.
 - Strict type-specific payload schemas, client Event Queue / Replay integration, and end-to-end concurrency tests remain release blockers.
