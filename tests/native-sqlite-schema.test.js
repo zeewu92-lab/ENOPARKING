@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const schema = readFileSync(fileURLToPath(new URL('../shared/learning/sqlite-schema-v1.sql', import.meta.url)), 'utf8');
+const contract = readFileSync(fileURLToPath(new URL('../docs/native-storage-contract.md', import.meta.url)), 'utf8');
 
 test('native SQLite schema scopes all mutable event state by account', () => {
   assert.match(schema, /CREATE TABLE IF NOT EXISTS enop_event_store_meta[\s\S]*account_id TEXT PRIMARY KEY NOT NULL/);
@@ -28,5 +29,5 @@ test('native storage contract requires atomic enqueue, ACK reconciliation and re
     'Pull and Replay',
     'Account isolation',
     'Schema upgrade'
-  ]) assert.ok(schema.includes(phrase) || phrase === 'Schema upgrade');
+  ]) assert.ok(contract.includes(phrase), phrase);
 });
