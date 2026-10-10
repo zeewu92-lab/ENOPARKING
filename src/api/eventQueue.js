@@ -177,8 +177,11 @@ export class EventQueue {
     state.events = state.events.map(event => {
       const result = byId.get(event.eventId);
       if (!result) return event;
-      if (result.syncStatus === 'confirmed' && Number.isSafeInteger(Number(result.serverSequence))) {
-        return { ...event, syncStatus: 'confirmed', serverSequence: Number(result.serverSequence), error: null, nextAttemptAt: null };
+      const serverSequence = result.serverSequence;
+      if (result.syncStatus === 'confirmed' &&
+          Number.isSafeInteger(serverSequence) &&
+          serverSequence > 0) {
+        return { ...event, syncStatus: 'confirmed', serverSequence, error: null, nextAttemptAt: null };
       }
       if (result.syncStatus === 'dead' || result.syncStatus === 'failed') {
         const error = result.error && typeof result.error === 'object'
