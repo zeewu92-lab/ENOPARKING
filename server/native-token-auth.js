@@ -163,6 +163,7 @@ export async function chuliNativeTokenAuth(req, res, action) {
         accountId: String(tokenRow.user_id),
         accessToken: pair.accessToken,
         refreshToken: pair.refreshToken,
+        accessExpiresAt: pair.accessExpiresAt,
         familyExpiresAt: new Date(familyExpiresAt).toISOString()
       };
       const ciphertext = encryptRecovery(recoveryResponse);
@@ -189,7 +190,7 @@ export async function chuliNativeTokenAuth(req, res, action) {
       const pairResult = {
         accessToken: recovered.accessToken,
         refreshToken: recovered.refreshToken,
-        accessExpiresAt: new Date(Math.min(Date.now() + ACCESS_TTL_MS, new Date(recovered.familyExpiresAt).getTime())).toISOString()
+        accessExpiresAt: recovered.accessExpiresAt
       };
       return sendJson(res, 200, responsePair(recovered.accountId, pairResult, recovered.familyExpiresAt));
     }
