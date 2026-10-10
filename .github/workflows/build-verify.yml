@@ -18,6 +18,7 @@ on:
       - 'src/**'
       - 'api/**'
       - 'server/**'
+      - 'tests/**'
       - 'public/**'
       - 'index.html'
       - 'package.json'
