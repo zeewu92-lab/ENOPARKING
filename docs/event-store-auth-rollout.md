@@ -56,5 +56,5 @@ A duplicate Event ID with identical canonical content returns its original seque
 - The client must implement persistent per-account Event Queues, stable device ID/localCounter, single-flight refresh, refreshRequestId persistence, partial ACK persistence, retry policy, and Replay.
 - Type-specific payload schemas need to be fixed before the sync endpoint is enabled.
 - Account-deletion tombstones are recorded by migration, but deletion/revocation concurrency tests must pass before release.
-- Server-side rate limiting and strict type-specific payload schemas remain release blockers.
+- Strict type-specific payload schemas, client Event Queue / Replay integration, and end-to-end concurrency tests remain release blockers.
 - The current local server imports `server/admin.js`, which was not present in the inspected `main` branch; local API startup requires that pre-existing repository issue to be resolved separately.
