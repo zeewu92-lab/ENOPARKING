@@ -1,8 +1,8 @@
 import crypto from 'node:crypto';
 import { huoquSql } from './db.js';
 
-const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+export const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
 function sendJson(res, status, body) {
   res.statusCode = status;
@@ -17,7 +17,7 @@ function readBearer(req) {
   return match ? match[1] : null;
 }
 
-function stableStringify(value) {
+export function stableStringify(value) {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return '[' + value.map(item => stableStringify(item) ?? 'null').join(',') + ']';
   const keys = Object.keys(value).sort();
@@ -26,7 +26,7 @@ function stableStringify(value) {
     .join(',') + '}';
 }
 
-function fingerprint(event) {
+export function fingerprint(event) {
   const canonical = stableStringify({
     type: event?.type,
     localCounter: event?.localCounter,
