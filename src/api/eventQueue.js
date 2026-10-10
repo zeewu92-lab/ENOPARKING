@@ -111,9 +111,26 @@ export class EventQueue {
       error: null
     };
     state.events.push(event);
-    this.saveState(state);
-    // 本地事件已即时生效，Replay 拉回同一事件时只推进游标，不重复应用。
-    this.markApplied(event.eventId);
+    const previousApplied = readJson(this.storage, this.keys.applied, []);
+    try {
+      this.saveState(state);
+      // 本地事件已即时生效，Replay 拉回同一事件时只推进游标，不重复应用。
+      this.markApplied(event.eventId);
+    } catch (error) {
+      // Queue insertion and the applied marker form one logical local transaction.
+      // If either write fails, restore both keys so the caller never loses track
+      // of a queued event that was not returned to it.
+      try {
+        const rollback = this.readState();
+        rollback.events = rollback.events.filter(item => item.eventId !== event.eventId);
+        rollback.localCounter = Math.max(0, rollback.localCounter - 1);
+        this.saveState(rollback);
+      } catch {}
+      try {
+        writeJson(this.storage, this.keys.applied, Array.isArray(previousApplied) ? previousApplied : []);
+      } catch {}
+      throw error;
+    }
     return { ...event };
   }
 
