@@ -19,7 +19,7 @@ function readJson(storage, key, fallback) {
   } catch {
     throw new Error('EVENT_QUEUE_STORAGE_UNAVAILABLE');
   }
-  if (value === null || value === undefined || value === '') return fallback;
+  if (value === null || value === undefined) return fallback;
   try {
     return JSON.parse(value);
   } catch {
@@ -228,7 +228,7 @@ export class EventQueue {
     } catch {
       throw new Error('EVENT_QUEUE_STORAGE_UNAVAILABLE');
     }
-    if (raw === null || raw === undefined || raw === '') return 0;
+    if (raw === null || raw === undefined) return 0;
     if (!/^(0|[1-9]\d*)$/.test(raw)) throw new Error('EVENT_QUEUE_STORAGE_CORRUPT');
     const value = Number(raw);
     if (!Number.isSafeInteger(value) || value < 0) throw new Error('EVENT_QUEUE_STORAGE_CORRUPT');
