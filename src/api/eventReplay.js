@@ -24,10 +24,12 @@ export async function replayEvents({
       events: pending
     });
     if (!Array.isArray(response?.results)) throw new Error('EVENT_SYNC_RESPONSE_INVALID');
-    queue.reconcile(response.results);
+    const reconciled = queue.reconcile(response.results);
+    const pushedIds = new Set(pending.map(event => event.eventId));
+    const reconciledById = new Map(reconciled.map(event => [event.eventId, event]));
     report.pushed = pending.length;
-    report.confirmed = response.results.filter(item => item?.syncStatus === 'confirmed').length;
-    report.failed = response.results.filter(item => item?.syncStatus === 'failed' || item?.syncStatus === 'dead').length;
+    report.confirmed = [...pushedIds].filter(eventId => reconciledById.get(eventId)?.syncStatus === 'confirmed').length;
+    report.failed = [...pushedIds].filter(eventId => reconciledById.get(eventId)?.syncStatus === 'failed').length;
   }
 
   let batches = 0;
