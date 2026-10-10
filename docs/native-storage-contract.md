@@ -9,7 +9,7 @@ This contract is shared by Android and iOS. Web is a transition adapter only and
 1. **Enqueue**: create the event, allocate its monotonically increasing account-local counter, update local optimistic learning state, and record the local event as already applied in one transaction. If any write fails, none of those writes may remain.
 2. **ACK reconciliation**: validate every ACK and reject duplicate IDs, unknown IDs, malformed sequence numbers, or inconsistent status/sequence pairs before changing persistent state. Commit the full valid ACK set in one transaction.
 3. **Pull and Replay**: enforce contiguous server sequences. Apply domain state, persist the applied-event ledger, and advance the cursor atomically. A crash must result in either all or none of each transaction's effects.
-4. **Retry**: keep the original event ID and payload across retries. Retry scheduling metadata can change, but event identity and canonical content cannot.
+4. **Retry**: keep the original event ID and payload across retries. Retry scheduling metadata can change, but event identity and canonical content cannot. Use bounded exponential backoff with an upper delay cap; validate the entire failed-event set before mutating retry metadata.
 5. **Account isolation**: all queue, cursor, and applied-event keys are account-scoped. Device identity is installation-scoped. A logout must not silently transfer queued events to the next account.
 6. **Schema upgrade**: migrations are numbered and transactional where SQLite permits. A failed migration leaves the previous schema usable; do not clear event data to recover from migration errors.
 
