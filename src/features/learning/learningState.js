@@ -39,12 +39,24 @@ function dateFromDay(day) {
 
 function readEvents(accountId) {
   if (typeof window === 'undefined') return [];
+  let raw;
   try {
-    const saved = JSON.parse(window.localStorage.getItem(storageKey(accountId)) || '[]');
-    return Array.isArray(saved) ? saved : [];
+    raw = window.localStorage.getItem(storageKey(accountId));
   } catch {
-    return [];
+    throw new Error('LEARNING_EVENT_STORAGE_UNAVAILABLE');
   }
+  if (raw === null || raw === undefined) return [];
+
+  let saved;
+  try {
+    saved = JSON.parse(raw);
+  } catch {
+    throw new Error('LEARNING_EVENT_STORAGE_CORRUPT');
+  }
+  if (!Array.isArray(saved) || saved.some(event => !event || typeof event !== 'object' || Array.isArray(event))) {
+    throw new Error('LEARNING_EVENT_STORAGE_CORRUPT');
+  }
+  return saved;
 }
 
 function writeEvents(events, accountId) {
