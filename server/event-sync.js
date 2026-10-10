@@ -99,8 +99,14 @@ export async function chuliEventSync(req, res) {
     const status = Number(result.httpStatus);
     if (status !== 200) {
       const code = String(result.errorCode || 'INTERNAL_ERROR');
-      const retryable = ['TOKEN_EXPIRED', 'SERVICE_UNAVAILABLE', 'DB_TIMEOUT', 'INTERNAL_ERROR'].includes(code);
-      return sendJson(res, status, { error: { code, retryable } });
+      const retryable = ['TOKEN_EXPIRED', 'SERVICE_UNAVAILABLE', 'DB_TIMEOUT', 'INTERNAL_ERROR', 'RATE_LIMITED'].includes(code);
+      const retryAfterMs = Number.isFinite(Number(result.retryAfterMs)) ? Math.max(0, Number(result.retryAfterMs)) : undefined;
+      if (status === 429 && retryAfterMs !== undefined) {
+        res.setHeader('Retry-After', String(Math.ceil(retryAfterMs / 1000)));
+      }
+      return sendJson(res, status, {
+        error: { code, retryable, ...(retryAfterMs === undefined ? {} : { retryAfterMs }) }
+      });
     }
     return sendJson(res, 200, {
       results: Array.isArray(result.results) ? result.results : [],
