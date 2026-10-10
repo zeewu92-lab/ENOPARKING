@@ -7,6 +7,7 @@ on:
       - 'api/**'
       - 'server/**'
       - 'shared/**'
+      - 'apps/mobile/**'
       - 'docs/**'
       - 'tests/**'
       - 'public/**'
@@ -56,6 +57,7 @@ jobs:
       - run: npm install
       - run: npm install --no-save pg
       - run: npm run check:server
+      - run: npm run check:mobile-store
       - run: npm run test:event-sync
       - name: Run real PostgreSQL integration tests
         run: npm run test:postgres
