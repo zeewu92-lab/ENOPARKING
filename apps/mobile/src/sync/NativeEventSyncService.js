@@ -72,7 +72,7 @@ export class NativeEventSyncService {
           accessToken: credentials.accessToken,
           deviceId,
           clientVersion: this.clientVersion,
-          events: pending,
+          events: pending.map(({ attemptCount, ...event }) => event),
         });
       } catch (error) {
         await this.store.recordSyncFailure(accountId, pending.map(event => event.eventId), error?.code || 'NETWORK_UNAVAILABLE');
