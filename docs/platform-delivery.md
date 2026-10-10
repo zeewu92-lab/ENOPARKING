@@ -32,3 +32,11 @@ Android 與 iOS 是同等優先的正式客戶端，必須並線設計、並線�
 - `shared/learning/event-contract-v1.json` 是 Android、iOS 與過渡 Web 端共同使用的有效／無效事件測試資料。
 - `tests/shared-event-contract.test.js` 會用服務端目前的 v1 schema 驗證這份資料，避免跨端各自實作時逐漸偏離。
 - 新增事件型別或改動 payload 時，必須同步更新 fixture 與服務端 schema，並在 Android、iOS 的測試套件中重用相同案例。不得只在 Web 測試中驗證新契約。
+
+## 原生 SQLite 儲存契約
+
+- 共用 SQL schema：`shared/learning/sqlite-schema-v1.sql`。
+- 交易、重試、ACK 與 Replay 的必要邊界：`docs/native-storage-contract.md`。
+- 本輪只建立共用 schema 與契約檢查，尚未宣稱 Android Room/SQLiteOpenHelper 或 iOS SQLite adapter 已完成。
+- 本機即時生效的事件可以先有 applied marker 而尚無 server sequence；收到服務端事件後，再將序號與 Replay cursor 在同一交易中持久化。這能避免把尚未同步的本機事件誤認為已取得服務端序號。
+- 原生端正式開發時必須將共用 schema 納入各平台 migration，並用真實 SQLite 執行測試，而非只依賴靜態檢查。
