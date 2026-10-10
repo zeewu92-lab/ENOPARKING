@@ -31,8 +31,9 @@ function getGoal() {
 }
 
 function sessionKey(sourceKey, accountId = null) {
-  const accountScope = accountId ? ':account:' + encodeURIComponent(accountId) : '';
-  return SESSION_PREFIX + accountScope + ':' + encodeURIComponent(todayKey() + ':' + sourceKey);
+  const session = encodeURIComponent(todayKey() + ':' + sourceKey);
+  if (!accountId) return SESSION_PREFIX + session;
+  return SESSION_PREFIX + 'account:' + encodeURIComponent(accountId) + ':' + session;
 }
 
 function readSession(sourceKey, accountId = null) {
