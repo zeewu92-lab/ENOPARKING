@@ -10,6 +10,7 @@ This change adds a staged backend foundation. It is intentionally inert until op
 - `EVENT_SYNC_ENABLED=true`: enables the HTTP Event Sync routes. Keep this unset or set to `false` until strict per-type payload schemas and application-level queue integration pass acceptance tests.
 - Database flag `eng_event_sync_settings.enabled` must also be explicitly set to `TRUE` after acceptance. The environment flag and database flag are both required; the database flag defaults to `FALSE` and is locked for the duration of each sync/pull transaction.
 - `TOKEN_RECOVERY_ENCRYPTION_KEY`: exactly 64 hexadecimal characters representing 32 random bytes. Generate it with a secure secret manager. Never commit it or log it.
+- `ENOPARKING_ADMIN_SETUP_KEY`: a high-entropy, one-time administrator bootstrap secret. Supply it only through the deployment secret manager and the `x-admin-setup-key` request header; never commit it or log it. The bootstrap endpoint rejects requests before touching the database when this key is missing or incorrect, and the database's `eng_admin_setup.used_at` guard prevents a second successful claim.
 
 Token exchange returns the short-lived Access Token in the response `Authorization` header. The Refresh Token is set only as an HttpOnly, Secure (outside development), SameSite=Lax cookie scoped to `/api/token`. Neither token is returned in JSON.
 
