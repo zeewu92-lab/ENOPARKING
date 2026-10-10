@@ -23,9 +23,9 @@ Android 與 iOS 是同等優先的正式客戶端，必須並線設計、並線�
 
 ## 現況與限制
 
-目前此分支已建立 React Web 過渡端的事件佇列、Replay、重試與服務端事件序號基礎。尚未建立 Android/iOS 原生執行目標，也未完成原生 SQLite adapter、App lifecycle 同步排程與雙平台整合測試。因此目前的成果只代表同步協定基礎已開始驗證，不能宣稱 Android/iOS 客戶端已完成。
+目前分支已建立 React Web 過渡端，以及共用 Expo/React Native Android 與 iOS 執行目標的初始骨架。原生端已加入 SQLite event store、帳戶隔離資料表、交易式 enqueue、ACK reconciliation 與 Replay cursor 基礎，並建立原生端 bundle/typecheck CI。這是原生基礎階段，尚未完成登入、API transport、原生背景同步排程、正式學習 reducer、舊資料遷移與真機整合驗收，因此不得宣稱行動端功能已完成。
 
-下一階段應先確立共用領域模組與平台儲存介面，再並線建立 Android 與 iOS 執行目標，避免繼續擴大 Web-only 實作而增加後續移植成本。
+後續必須在同一迭代補上 Android 與 iOS 的 lifecycle adapter、可靠同步排程、領域狀態 reducer、資料遷移和實機驗收，避免只完成其中一端。
 
 ## 共用事件契約測試素材
 
@@ -37,6 +37,6 @@ Android 與 iOS 是同等優先的正式客戶端，必須並線設計、並線�
 
 - 共用 SQL schema：`shared/learning/sqlite-schema-v1.sql`。
 - 交易、重試、ACK 與 Replay 的必要邊界：`docs/native-storage-contract.md`。
-- 本輪只建立共用 schema 與契約檢查，尚未宣稱 Android Room/SQLiteOpenHelper 或 iOS SQLite adapter 已完成。
+- `apps/mobile/` 已建立共用 Expo/React Native 原生目標，並提供以 SQLite transaction API 實作的事件儲存基礎。此為 Android/iOS 共用實作，尚未代表兩端已完成原生編譯或真機驗收。
 - 本機即時生效的事件可以先有 applied marker 而尚無 server sequence；收到服務端事件後，再將序號與 Replay cursor 在同一交易中持久化。這能避免把尚未同步的本機事件誤認為已取得服務端序號。
 - 原生端正式開發時必須將共用 schema 納入各平台 migration，並用真實 SQLite 執行測試，而非只依賴靜態檢查。
