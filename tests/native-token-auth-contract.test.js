@@ -33,6 +33,8 @@ test('native refresh requires durable UUID idempotency key and shared rotation p
   assert.match(source, /accessExpiresAt: recovered\.accessExpiresAt/);
   assert.match(source, /REFRESH_REPLAY/);
   assert.match(source, /REFRESH_RECOVERY_EXPIRED/);
+  assert.match(source, /eng_deleted_refresh_tokens/);
+  assert.match(source, /ACCOUNT_DELETED/);
 });
 
 test('native logout revokes only the matched family and clears its access tokens', () => {
