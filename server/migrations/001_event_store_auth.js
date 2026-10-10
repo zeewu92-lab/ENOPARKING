@@ -89,6 +89,12 @@ export function up(sql) {
       request_count INTEGER NOT NULL DEFAULT 0 CHECK (request_count >= 0),
       event_count INTEGER NOT NULL DEFAULT 0 CHECK (event_count >= 0),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )`
+    )`,
+    sql`CREATE TABLE IF NOT EXISTS eng_deleted_access_tokens (
+      token_hash TEXT PRIMARY KEY,
+      deleted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    sql`CREATE INDEX IF NOT EXISTS eng_deleted_access_tokens_age_idx
+      ON eng_deleted_access_tokens(deleted_at)`
   ];
 }
