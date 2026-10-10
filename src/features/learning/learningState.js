@@ -100,7 +100,7 @@ function replayWord(wordId, events = readEvents()) {
       result: event.result,
       hintLevel: event.hintLevel || 'none',
       scores,
-      enforceVerification: false
+      enforceVerification: !event.syncEventId
     });
     scores = result.scores;
     lastResult = result;
@@ -142,7 +142,7 @@ function replayForVerification(wordId, events = readEvents()) {
       result: event.result,
       hintLevel: event.hintLevel || 'none',
       scores,
-      enforceVerification: false
+      enforceVerification: !event.syncEventId
     }).scores;
   }
 
