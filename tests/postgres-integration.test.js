@@ -118,6 +118,7 @@ test('PostgreSQL migrations, event sync concurrency, idempotency, pull paginatio
     const accessHash = crypto.createHash('sha256').update(accessToken).digest('hex');
     const familyId = crypto.randomUUID();
     const deviceId = crypto.randomUUID();
+    const secondDeviceId = crypto.randomUUID();
 
     await pool.query(
       'INSERT INTO eng_users(id, username, password_hash) VALUES ($1, $2, $3)',
@@ -141,7 +142,9 @@ test('PostgreSQL migrations, event sync concurrency, idempotency, pull paginatio
 
     const concurrentEvents = Array.from({ length: 20 }, (_, index) => makeEvent(index + 1));
     const concurrentResults = await Promise.all(
-      concurrentEvents.map(event => callSync(pool, accessHash, deviceId, [event]))
+      concurrentEvents.map((event, index) =>
+        callSync(pool, accessHash, index % 2 === 0 ? deviceId : secondDeviceId, [event])
+      )
     );
     assert.ok(concurrentResults.every(result => result.httpStatus === 200));
     const acknowledgedSequences = concurrentResults.flatMap(result =>
