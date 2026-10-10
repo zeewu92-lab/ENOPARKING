@@ -42,7 +42,7 @@ async function readBody(req) {
     let raw = '';
     req.on('data', chunk => {
       raw += chunk;
-      if (raw.length > 2 * 1024 * 1024) reject(new Error('REQUEST_TOO_LARGE'));
+      if (raw.length > 4 * 1024 * 1024) reject(new Error('REQUEST_TOO_LARGE'));
     });
     req.on('end', () => {
       try {
@@ -108,7 +108,7 @@ export async function chuliEventSync(req, res) {
     });
   } catch (error) {
     console.error('[event-sync] request failed:', error?.message || 'unknown error');
-    if (error?.message === 'REQUEST_INVALID') {
+    if (error?.message === 'REQUEST_INVALID' || error?.message === 'REQUEST_TOO_LARGE') {
       return sendJson(res, 400, { error: { code: 'REQUEST_INVALID', retryable: false } });
     }
     return sendJson(res, 503, { error: { code: 'SERVICE_UNAVAILABLE', retryable: true } });
