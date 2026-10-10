@@ -13,6 +13,7 @@ test('native target uses persistent SQLite and has account-scoped learning state
   assert.match(NATIVE_EVENT_STORE_SCHEMA, /CREATE TABLE IF NOT EXISTS enop_learning_state/);
   assert.match(canonicalSchema, /CREATE TABLE IF NOT EXISTS enop_learning_state/);
   assert.match(nativeSource, /withExclusiveTransactionAsync/);
+  assert.match(nativeSource, /NATIVE_EVENT_PAYLOAD_INVALID/);
 });
 
 test('native database initialization enables foreign keys and WAL', async () => {
@@ -36,6 +37,9 @@ test('native event store rejects missing account and invalid event before openin
   await assert.rejects(store.enqueue('account-a', {
     eventId: 'event-1', type: 'unknown', payload: {}, createdAt: 1
   }), /NATIVE_EVENT_TYPE_INVALID/);
+  await assert.rejects(store.enqueue('account-a', {
+    eventId: 'event-2', type: 'action', payload: { verification: 'guess' }, createdAt: 1
+  }), /NATIVE_EVENT_PAYLOAD_INVALID/);
   assert.equal(transactions, 0);
 });
 
