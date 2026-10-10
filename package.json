@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "db:migrate": "node server/migrate.js",
-    "test": "node --test"
+    "test": "node --test",
+    "check:server": "find server api -name '*.js' -print0 | xargs -0 -n1 node --check"
   },
   "dependencies": {
     "cors": "^2.8.5",
