@@ -140,10 +140,22 @@ export class EventQueue {
     if (event.syncStatus !== 'pending' || event.serverSequence !== null) {
       throw new Error('EVENT_ALREADY_SYNCED');
     }
-    state.events = state.events.filter(item => item.eventId !== eventId);
-    this.saveState(state);
+    const previousState = {
+      version: 1,
+      localCounter: state.localCounter,
+      events: state.events.map(item => ({ ...item }))
+    };
     const applied = readJson(this.storage, this.keys.applied, []);
-    writeJson(this.storage, this.keys.applied, (Array.isArray(applied) ? applied : []).filter(id => id !== eventId));
+    const previousApplied = Array.isArray(applied) ? applied : [];
+    state.events = state.events.filter(item => item.eventId !== eventId);
+    try {
+      this.saveState(state);
+      writeJson(this.storage, this.keys.applied, previousApplied.filter(id => id !== eventId));
+    } catch (error) {
+      try { this.saveState(previousState); } catch {}
+      try { writeJson(this.storage, this.keys.applied, previousApplied); } catch {}
+      throw error;
+    }
     return true;
   }
 
