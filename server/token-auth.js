@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { huoquSql } from './db.js';
+import { chuliNativeTokenAuth } from './native-token-auth.js';
 
 const ACCESS_TTL_MS = 15 * 60 * 1000;
 const FAMILY_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -111,6 +112,7 @@ function makePair(familyExpiresAt) {
 }
 
 export async function chuliTokenAuth(req, res, action) {
+  if (action.startsWith('native-')) return chuliNativeTokenAuth(req, res, action);
   if (process.env.TOKEN_AUTH_ENABLED !== 'true') {
     return sendJson(res, 503, { error: { code: 'TOKEN_AUTH_DISABLED', retryable: false } });
   }
