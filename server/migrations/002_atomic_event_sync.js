@@ -85,13 +85,18 @@ export function up(sql) {
 
         IF v_error IS NULL THEN
           BEGIN
-            v_local_counter := (v_item->>'localCounter')::BIGINT;
-            v_created_at := (v_item->>'createdAt')::BIGINT;
-            v_payload := v_item->'payload';
-            IF v_local_counter <= 0 OR v_local_counter > 9007199254740991
-              OR jsonb_typeof(v_payload) <> 'object'
-              OR octet_length(v_payload::TEXT) > 65536
-              THEN
+            IF jsonb_typeof(v_item->'localCounter') IS DISTINCT FROM 'number'
+              OR jsonb_typeof(v_item->'createdAt') IS DISTINCT FROM 'number'
+              OR jsonb_typeof(v_item->'payload') IS DISTINCT FROM 'object' THEN
+              v_error := 'SCHEMA_INVALID';
+            ELSE
+              v_local_counter := (v_item->>'localCounter')::BIGINT;
+              v_created_at := (v_item->>'createdAt')::BIGINT;
+              v_payload := v_item->'payload';
+            END IF;
+            IF v_error IS NULL AND (v_local_counter IS NULL OR v_created_at IS NULL
+              OR v_local_counter <= 0 OR v_local_counter > 9007199254740991
+              OR octet_length(v_payload::TEXT) > 65536) THEN
               v_error := 'SCHEMA_INVALID';
             END IF;
           EXCEPTION WHEN OTHERS THEN
