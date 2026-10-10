@@ -211,6 +211,48 @@ export class NativeEventStore {
     }));
   }
 
+  async recordSyncFailure(accountId, eventIds, errorCode) {
+    requireAccountId(accountId);
+    if (!Array.isArray(eventIds) || eventIds.length === 0 ||
+        eventIds.some(id => typeof id !== 'string' || !id.trim()) ||
+        new Set(eventIds).size !== eventIds.length) {
+      throw new Error('NATIVE_RETRY_EVENT_IDS_INVALID');
+    }
+    if (typeof errorCode !== 'string' || !errorCode.trim() || errorCode.length > 128) {
+      throw new Error('NATIVE_RETRY_ERROR_CODE_INVALID');
+    }
+
+    const now = this.clock();
+    assertSafeInteger(now, 'NATIVE_EVENT_CLOCK_INVALID');
+    await this.db.withExclusiveTransactionAsync(async tx => {
+      const pending = [];
+      for (const eventId of eventIds) {
+        const row = await tx.getFirstAsync(
+          `SELECT sync_status AS syncStatus, attempt_count AS attemptCount
+           FROM enop_learning_events WHERE account_id = ? AND event_id = ?`,
+          accountId, eventId
+        );
+        if (!row) throw new Error('NATIVE_RETRY_UNKNOWN_EVENT');
+        if (row.syncStatus !== 'confirmed') pending.push({ eventId, attemptCount: row.attemptCount });
+      }
+
+      for (const event of pending) {
+        const nextAttemptCount = event.attemptCount + 1;
+        const delay = Math.min(1000 * (2 ** Math.min(event.attemptCount, 20)), 300000);
+        await tx.runAsync(
+          `UPDATE enop_learning_events
+           SET attempt_count = ?, next_attempt_at = ?, error_code = ?
+           WHERE account_id = ? AND event_id = ? AND sync_status = 'pending'`,
+          nextAttemptCount, now + delay, errorCode.trim(), accountId, event.eventId
+        );
+      }
+      await tx.runAsync(
+        'UPDATE enop_event_store_meta SET updated_at = ? WHERE account_id = ?',
+        now, accountId
+      );
+    });
+  }
+
   async reconcileAcks(accountId, acknowledgements) {
     requireAccountId(accountId);
     if (!Array.isArray(acknowledgements)) throw new Error('NATIVE_ACK_BATCH_INVALID');
