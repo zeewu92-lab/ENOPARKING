@@ -394,3 +394,16 @@ test('Replay report does not count malformed ACKs as confirmed', async () => {
   assert.equal(report.failed, 0);
   assert.equal(queue.list()[0].syncStatus, 'pending');
 });
+
+
+test('Replay rejects string server sequence values rather than coercing them', async () => {
+  const queue = new EventQueue({ accountId: 'test-user', storage: makeStorage(), createId: makeIds() });
+  await assert.rejects(() => replayEvents({
+    queue,
+    clientVersion: '1.0.0',
+    push: async () => ({ results: [] }),
+    pull: async () => ({ events: [{ eventId: 'remote-1', type: 'action', payload: {}, serverSequence: '1' }], nextSequence: 1, hasMore: false }),
+    applyEvent: async () => {}
+  }), /EVENT_PULL_SEQUENCE_INVALID/);
+  assert.equal(queue.getReplayCursor(), 0);
+});
