@@ -40,6 +40,8 @@ export class NativeSyncCoordinator {
     });
     if (appStateSubscription && typeof appStateSubscription.remove === 'function') {
       this.subscriptions.push(() => appStateSubscription.remove());
+    } else if (typeof appStateSubscription === 'function') {
+      this.subscriptions.push(appStateSubscription);
     }
 
     if (typeof subscribeNetwork === 'function') {
@@ -70,7 +72,7 @@ export class NativeSyncCoordinator {
       return Promise.reject(new Error('NATIVE_SYNC_REASON_INVALID'));
     }
     this.pendingReasons.add(reason);
-    const promise = new Promise((resolve, reject) => this.waiters.push({ resolve, reject }));
+    const promise = new Promise(resolve => this.waiters.push({ resolve, reason }));
     if (!this.running) void this.drain();
     return promise;
   }
@@ -82,6 +84,7 @@ export class NativeSyncCoordinator {
       while (!this.stopped && this.pendingReasons.size > 0) {
         const reasons = [...this.pendingReasons];
         this.pendingReasons.clear();
+        const batchWaiters = this.waiters.splice(0);
         let result = { status: 'skipped' };
         try {
           if (!this.isOnline()) {
@@ -107,8 +110,7 @@ export class NativeSyncCoordinator {
           result = { status: 'error', reasons, error };
           try { this.onError(error, reasons); } catch { /* error reporting must not wedge the queue */ }
         }
-        const completed = this.waiters.splice(0);
-        for (const waiter of completed) waiter.resolve(result);
+        for (const waiter of batchWaiters) waiter.resolve(result);
       }
     } finally {
       this.running = false;
