@@ -23,7 +23,7 @@ test('native credential vault keeps access tokens in memory and refresh tokens a
   assert.equal(await vault.getRefreshToken('account_a'), token('r'));
   assert.deepEqual(await vault.getAccessCredentials('account_a'), { accountId: 'account_a', accessToken: token('a') });
   assert.equal(await vault.getAccessCredentials('account_b'), null);
-  assert.equal(secureStore.values.get('enoparking.native.session.v1.'), JSON.stringify({ accountId: 'account_a' }));
+  assert.equal(secureStore.values.get('enoparking.native.session.v1'), JSON.stringify({ accountId: 'account_a' }));
   assert.equal([...secureStore.values.values()].includes(token('a')), false);
 });
 
