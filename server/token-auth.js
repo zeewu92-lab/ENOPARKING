@@ -3,7 +3,6 @@ import { huoquSql } from './db.js';
 
 const ACCESS_TTL_MS = 15 * 60 * 1000;
 const FAMILY_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-const RECOVERY_WINDOW_MS = 2 * 60 * 1000;
 const REFRESH_COOKIE = 'enoparking_refresh';
 
 function sendJson(res, status, body) {
@@ -118,6 +117,9 @@ export async function chuliTokenAuth(req, res, action) {
 
   try {
     const sql = huoquSql();
+    try { encryptionKey(); } catch {
+      return sendJson(res, 503, { error: { code: 'TOKEN_AUTH_NOT_CONFIGURED', retryable: false } });
+    }
 
     if (action === 'exchange' && req.method === 'POST') {
       const cookies = parseCookies(req);
