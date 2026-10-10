@@ -53,16 +53,14 @@ async function readBody(req) {
   });
 }
 
-function secureCookie(req) {
-  return process.env.NODE_ENV === 'development' || req.headers?.['x-forwarded-proto'] === 'http'
-    ? ''
-    : '; Secure';
+function secureCookie() {
+  return process.env.NODE_ENV === 'development' ? '' : '; Secure';
 }
 
-function refreshCookie(req, value, maxAge) {
+function refreshCookie(_req, value, maxAge) {
   return REFRESH_COOKIE + '=' + encodeURIComponent(value) +
     '; Path=/api/token; Max-Age=' + Math.max(0, Math.floor(maxAge)) +
-    '; HttpOnly; SameSite=Lax' + secureCookie(req);
+    '; HttpOnly; SameSite=Lax' + secureCookie();
 }
 
 function encryptionKey() {
@@ -138,6 +136,11 @@ export async function chuliTokenAuth(req, res, action) {
       const session = sessions[0];
       if (!session) return sendJson(res, 401, { error: { code: 'SESSION_INVALID', retryable: false } });
       if (session.disabled) return sendJson(res, 403, { error: { code: 'ACCOUNT_LOCKED', retryable: false } });
+
+      await sql`UPDATE eng_token_families
+        SET revoked_at = NOW(), revoke_reason = COALESCE(revoke_reason, 'family_expired')
+        WHERE session_token_hash = ${sessionHash}
+          AND revoked_at IS NULL AND expires_at <= NOW()`;
 
       const existing = await sql`
         SELECT id FROM eng_token_families
