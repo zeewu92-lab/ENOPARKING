@@ -9,9 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "db:migrate": "node server/migrate.js",
-    "test": "node --test tests/event-sync.test.js tests/migration-contract.test.js tests/event-queue-replay.test.js tests/transaction-contract.test.js tests/event-retry-recovery.test.js",
+    "test": "node --test tests/event-sync.test.js tests/migration-contract.test.js tests/event-queue-replay.test.js tests/transaction-contract.test.js tests/event-retry-recovery.test.js tests/event-ordering-convergence.test.js",
     "check:server": "find server api -name '*.js' -print0 | xargs -0 -n1 node --check",
-    "test:event-sync": "node --test tests/event-sync.test.js tests/migration-contract.test.js tests/event-queue-replay.test.js tests/learning-state-sync.test.js tests/transaction-contract.test.js tests/event-retry-recovery.test.js",
+    "test:event-sync": "node --test tests/event-sync.test.js tests/migration-contract.test.js tests/event-queue-replay.test.js tests/learning-state-sync.test.js tests/transaction-contract.test.js tests/event-retry-recovery.test.js tests/event-ordering-convergence.test.js",
     "test:all": "node --test",
     "test:postgres": "node --test tests/postgres-integration.test.js"
   },
