@@ -17,7 +17,7 @@ Android 與 iOS 共用 `NativeCredentialVault` 與 Expo SecureStore adapter。We
 
 ## 服務端整合前提
 
-服務端已新增 `/api/token/native-login`、`/api/token/native-refresh` 與 `/api/token/native-logout`，原生端 `NativeAuthApi` 透過 JSON 傳遞憑證，不使用 Web HttpOnly Cookie。登入會驗證帳號密碼並建立獨立 Token Family；Refresh 使用 SecureStore 持久化的 UUID v4 `refreshRequestId`，共用資料庫輪替與重放偵測程序；登出撤銷目前裝置的 Token Family。這些端點仍受 `TOKEN_AUTH_ENABLED` 控制，預設不可啟用。完整真機、資料庫整合與故障注入驗證完成前，不得打開正式 Token Auth 或事件同步旗標。
+服務端已新增 `/api/token/native-login`、`/api/token/native-refresh` 與 `/api/token/native-logout`，原生端 `NativeAuthApi` 透過 JSON 傳遞憑證，不使用 Web HttpOnly Cookie。`NativeAuthSession` 將 API 與 SecureStore Vault 串接，提供登入、冷啟動恢復、憑證輪替及單裝置登出流程。登入會驗證帳號密碼並建立獨立 Token Family；Refresh 使用 SecureStore 持久化的 UUID v4 `refreshRequestId`，共用資料庫輪替與重放偵測程序；登出撤銷目前裝置的 Token Family。這些端點仍受 `TOKEN_AUTH_ENABLED` 控制，預設不可啟用。目前這是已接線的服務層，尚未接入完整原生登入畫面與應用程式生命週期。完整真機、資料庫整合與故障注入驗證完成前，不得打開正式 Token Auth 或事件同步旗標。
 
 Refresh Token 輪替的服務端操作必須具備單次使用與重放偵測語意。若服務端已成功輪替、但裝置在寫入新 token 前突然終止，客戶端可能無法恢復；服務端應提供明確的 session family 撤銷／重新登入路徑。SecureStore 不提供與服務端交易的原子性，因此此故障窗必須在整合測試與產品流程中處理。
 
