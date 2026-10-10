@@ -137,6 +137,17 @@ export async function chuliTokenAuth(req, res, action) {
       if (!session) return sendJson(res, 401, { error: { code: 'SESSION_INVALID', retryable: false } });
       if (session.disabled) return sendJson(res, 403, { error: { code: 'ACCOUNT_LOCKED', retryable: false } });
 
+      const requiresReauthentication = await sql`
+        SELECT id FROM eng_token_families
+         WHERE session_token_hash = ${sessionHash}
+           AND revoked_at IS NOT NULL
+           AND revoke_reason IN ('refresh_token_replay', 'refresh_recovery_expired')
+         LIMIT 1
+      `;
+      if (requiresReauthentication[0]) {
+        return sendJson(res, 401, { error: { code: 'SESSION_REAUTH_REQUIRED', retryable: false } });
+      }
+
       await sql`UPDATE eng_token_families
         SET revoked_at = NOW(), revoke_reason = COALESCE(revoke_reason, 'family_expired')
         WHERE session_token_hash = ${sessionHash}
