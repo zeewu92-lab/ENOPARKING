@@ -20,6 +20,7 @@ export declare class NativeEventStore {
     event: NativeLearningEvent,
     options?: { applyOptimisticState?: (tx: SQLiteDatabase, event: NativeLearningEvent) => Promise<void> }
   ): Promise<NativeLearningEvent>;
+  getReplayCursor(accountId: string): Promise<number>;
   pendingForSync(
     accountId: string,
     options?: { limit?: number; now?: number }
