@@ -96,3 +96,27 @@ test('native credential vault rejects expired sessions and invalid account ident
   assert.equal(vault.getActiveSession(), null);
   await assert.rejects(vault.getRefreshToken('../other'), /NATIVE_CREDENTIAL_ACCOUNT_INVALID/);
 });
+
+test('native credential vault can refresh an expired access token while session identity remains active', async () => {
+  const secureStore = fakeSecureStore();
+  const vault = new NativeCredentialVault({ secureStore, now: () => 500000 });
+  await vault.saveLogin(session('account_a', token('r'), token('a'), 200000));
+  assert.equal(vault.getActiveSession(), null);
+  const next = await vault.rotateRefreshToken({
+    accountId: 'account_a',
+    refresh: async ({ accountId }) => session(accountId, token('n'), token('b'), 800000),
+  });
+  assert.equal(next.accessToken, token('b'));
+});
+
+test('native credential vault can logout after app restart even before session restoration', async () => {
+  const secureStore = fakeSecureStore();
+  const first = new NativeCredentialVault({ secureStore, now: () => 100000 });
+  await first.saveLogin(session());
+  const restarted = new NativeCredentialVault({ secureStore, now: () => 100000 });
+  let revokedAccount;
+  await restarted.logout({ revoke: async ({ accountId }) => { revokedAccount = accountId; } });
+  assert.equal(revokedAccount, 'account_a');
+  assert.equal(await secureStore.getItemAsync('enoparking.native.refresh.v1.account_a'), null);
+  assert.equal(await secureStore.getItemAsync('enoparking.native.session.v1'), null);
+});
