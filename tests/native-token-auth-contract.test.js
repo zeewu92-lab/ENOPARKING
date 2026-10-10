@@ -29,6 +29,8 @@ test('native refresh requires durable UUID idempotency key and shared rotation p
   assert.match(source, /eng_rotate_refresh_token/);
   assert.match(source, /encryptRecovery\(recoveryResponse\)/);
   assert.match(source, /decryptRecovery\(result\.ciphertext\)/);
+  assert.match(source, /accessExpiresAt: pair\.accessExpiresAt/);
+  assert.match(source, /accessExpiresAt: recovered\.accessExpiresAt/);
   assert.match(source, /REFRESH_REPLAY/);
   assert.match(source, /REFRESH_RECOVERY_EXPIRED/);
 });
