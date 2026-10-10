@@ -1,4 +1,4 @@
-import type { SQLiteDatabase, SQLiteTransaction } from 'expo-sqlite';
+import type { SQLiteDatabase } from 'expo-sqlite';
 
 export declare const NATIVE_EVENT_STORE_SCHEMA: string;
 
@@ -18,7 +18,7 @@ export declare class NativeEventStore {
   enqueue(
     accountId: string,
     event: NativeLearningEvent,
-    options?: { applyOptimisticState?: (tx: SQLiteTransaction, event: NativeLearningEvent) => Promise<void> }
+    options?: { applyOptimisticState?: (tx: SQLiteDatabase, event: NativeLearningEvent) => Promise<void> }
   ): Promise<NativeLearningEvent>;
   pendingForSync(
     accountId: string,
