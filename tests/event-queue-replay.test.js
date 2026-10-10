@@ -150,3 +150,19 @@ test('replay rejects a server cursor gap instead of silently skipping events', a
     applyEvent: async () => {}
   }), /EVENT_PULL_CURSOR_GAP/);
 });
+
+test('applied event IDs accumulate independently for each account', () => {
+  const storage = makeStorage();
+  const first = new EventQueue({ accountId: 'user-a', storage, createId: makeIds() });
+  const second = new EventQueue({ accountId: 'user-b', storage, createId: makeIds() });
+
+  first.markApplied('remote-a-1');
+  first.markApplied('remote-a-2');
+  second.markApplied('remote-b-1');
+
+  assert.equal(first.hasApplied('remote-a-1'), true);
+  assert.equal(first.hasApplied('remote-a-2'), true);
+  assert.equal(first.hasApplied('remote-b-1'), false);
+  assert.equal(second.hasApplied('remote-b-1'), true);
+  assert.equal(second.hasApplied('remote-a-1'), false);
+});
