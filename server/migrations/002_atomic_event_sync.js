@@ -237,6 +237,9 @@ export function up(sql) {
          WHERE account_id = v_token.user_id
          FOR UPDATE;
 
+        IF v_sequence >= 7205759403792792 THEN
+          v_sequence_near_limit := TRUE;
+        END IF;
         IF v_sequence >= 9007199254740991 THEN
           v_results := v_results || jsonb_build_array(jsonb_build_object(
             'eventId', v_event_id,
