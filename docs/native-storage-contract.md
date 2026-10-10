@@ -34,4 +34,4 @@ This contract is shared by Android and iOS. Web is a transition adapter only and
 
 ## Delivery status
 
-This document and SQL contract are shared foundations, not completed native implementations. Android and iOS adapters, native project targets, device-level lifecycle tests, and SQLite integration tests remain required before calling this work complete.
+The shared Expo/React Native target and SQLite event-store implementation now exist under `apps/mobile/`. CI checks TypeScript and bundles both Android and iOS JavaScript targets. Native binary builds, device-level lifecycle tests, transactional fault-injection tests against real SQLite, authentication, transport, background scheduling, and legacy-data migration remain required before calling the mobile clients complete.
