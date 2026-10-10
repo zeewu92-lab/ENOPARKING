@@ -128,19 +128,19 @@ test('re-login under a different account cannot push another account pending eve
     createdAt: 300
   });
 
-  let pushedCount = -1;
+  let pushCalls = 0;
   await replayEvents({
     queue: userB,
     clientVersion: '1.0.0',
-    push: async ({ events }) => {
-      pushedCount = events.length;
+    push: async () => {
+      pushCalls += 1;
       return { results: [] };
     },
     pull: emptyPull,
     applyEvent: async () => {}
   });
 
-  assert.equal(pushedCount, 0);
+  assert.equal(pushCalls, 0);
   assert.equal(userA.list().length, 1);
   assert.equal(userB.list().length, 0);
 });
