@@ -34,6 +34,7 @@ export function up(sql) {
       v_event_index INTEGER := 0;
       v_request_limit INTEGER;
       v_event_limit INTEGER;
+      v_sequence_near_limit BOOLEAN := FALSE;
     BEGIN
       SELECT enabled INTO v_enabled
         FROM eng_event_sync_settings
@@ -250,6 +251,9 @@ export function up(sql) {
         UPDATE eng_event_sequences
            SET last_sequence = v_sequence, updated_at = NOW()
          WHERE account_id = v_token.user_id;
+        IF v_sequence >= 7205759403792792 THEN
+          v_sequence_near_limit := TRUE;
+        END IF;
 
         INSERT INTO eng_events(
           account_id, event_id, event_type, local_counter, payload, created_at_ms,
@@ -270,6 +274,7 @@ export function up(sql) {
       RETURN jsonb_build_object(
         'httpStatus', 200,
         'results', v_results,
+        'sequenceNearLimit', v_sequence_near_limit,
         'serverTime', FLOOR(EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::BIGINT
       );
     END;
