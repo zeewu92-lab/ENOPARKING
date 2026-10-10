@@ -9,9 +9,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "db:migrate": "node server/migrate.js",
-    "test": "node --test",
+    "test": "node --test tests/event-sync.test.js tests/migration-contract.test.js",
     "check:server": "find server api -name '*.js' -print0 | xargs -0 -n1 node --check",
-    "test:event-sync": "node --test tests/event-sync.test.js tests/migration-contract.test.js"
+    "test:event-sync": "node --test tests/event-sync.test.js tests/migration-contract.test.js",
+    "test:all": "node --test"
   },
   "dependencies": {
     "cors": "^2.8.5",
