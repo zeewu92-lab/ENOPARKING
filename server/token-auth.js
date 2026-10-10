@@ -198,7 +198,13 @@ export async function chuliTokenAuth(req, res, action) {
          LIMIT 1
       `;
       if (!lookup[0]) {
+        const deleted = await sql`
+          SELECT token_hash FROM eng_deleted_refresh_tokens WHERE token_hash = ${oldHash} LIMIT 1
+        `;
         res.setHeader('Set-Cookie', refreshCookie(req, '', 0));
+        if (deleted[0]) {
+          return sendJson(res, 401, { error: { code: 'ACCOUNT_DELETED', retryable: false } });
+        }
         return sendJson(res, 401, { error: { code: 'REFRESH_INVALID', retryable: false } });
       }
 
