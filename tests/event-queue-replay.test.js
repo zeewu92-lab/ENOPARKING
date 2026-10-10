@@ -36,8 +36,9 @@ test('invalid events are rejected before entering the queue', () => {
   assert.equal(queue.list().length, 0);
 });
 
-test('sync reconciliation records confirmed sequence and retains retryable failures', () => {
-  const queue = new EventQueue({ storage: makeStorage(), createId: makeIds() });
+test('sync reconciliation records confirmations and schedules retryable failures', () => {
+  let now = 11;
+  const queue = new EventQueue({ storage: makeStorage(), now: () => now, createId: makeIds() });
   const one = queue.enqueue({ type: 'action', payload: { action: 'remember' }, createdAt: 10 });
   const two = queue.enqueue({ type: 'action', payload: { action: 'forget' }, createdAt: 11 });
   queue.reconcile([
@@ -47,6 +48,10 @@ test('sync reconciliation records confirmed sequence and retains retryable failu
 
   assert.equal(queue.list()[0].syncStatus, 'confirmed');
   assert.equal(queue.list()[0].serverSequence, 7);
+  assert.equal(queue.pendingForSync().length, 0);
+  assert.equal(queue.list()[1].attemptCount, 1);
+  assert.equal(queue.list()[1].nextAttemptAt, 1011);
+  now = 1011;
   assert.equal(queue.pendingForSync().length, 1);
   assert.equal(queue.pendingForSync()[0].eventId, two.eventId);
 });
