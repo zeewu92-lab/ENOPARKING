@@ -84,13 +84,14 @@ export class EventQueue {
   readState() {
     const state = readJson(this.storage, this.keys.queue, newQueueState());
     if (state?.version !== 1 || !Array.isArray(state.events) ||
-        !Number.isSafeInteger(state.localCounter) || state.localCounter < 0) {
+        !Number.isSafeInteger(state.localCounter) || state.localCounter < 0 ||
+        state.events.some(event => !event || typeof event.eventId !== 'string')) {
       throw new Error('EVENT_QUEUE_STORAGE_CORRUPT');
     }
     return {
       version: 1,
-      localCounter: Number.isSafeInteger(state.localCounter) && state.localCounter >= 0 ? state.localCounter : 0,
-      events: state.events.filter(event => event && typeof event.eventId === 'string')
+      localCounter: state.localCounter,
+      events: state.events
     };
   }
 
@@ -124,6 +125,9 @@ export class EventQueue {
     };
     state.events.push(event);
     const previousApplied = readJson(this.storage, this.keys.applied, []);
+    if (!Array.isArray(previousApplied) || previousApplied.some(id => typeof id !== 'string')) {
+      throw new Error('EVENT_QUEUE_STORAGE_CORRUPT');
+    }
     try {
       this.saveState(state);
       // 本地事件已即时生效，Replay 拉回同一事件时只推进游标，不重复应用。
@@ -156,7 +160,10 @@ export class EventQueue {
       events: state.events.map(item => ({ ...item }))
     };
     const applied = readJson(this.storage, this.keys.applied, []);
-    const previousApplied = Array.isArray(applied) ? applied : [];
+    if (!Array.isArray(applied) || applied.some(id => typeof id !== 'string')) {
+      throw new Error('EVENT_QUEUE_STORAGE_CORRUPT');
+    }
+    const previousApplied = applied;
     state.events = state.events.filter(item => item.eventId !== eventId);
     try {
       this.saveState(state);
