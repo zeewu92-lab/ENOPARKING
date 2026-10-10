@@ -26,26 +26,5 @@ export function up(sql) {
       BEFORE DELETE ON eng_users
       FOR EACH ROW
       EXECUTE FUNCTION eng_capture_deleted_account_tokens()`,
-    sql`DO $eng_patch$
-    DECLARE
-      v_definition TEXT;
-      v_original TEXT := '      IF NOT FOUND THEN
-        RETURN jsonb_build_object(''httpStatus'', 401, ''errorCode'', ''TOKEN_INVALID'');
-      END IF;';
-      v_replacement TEXT := '      IF NOT FOUND THEN
-        IF EXISTS (SELECT 1 FROM eng_deleted_access_tokens WHERE token_hash = p_access_token_hash) THEN
-          RETURN jsonb_build_object(''httpStatus'', 401, ''errorCode'', ''ACCOUNT_DELETED'');
-        END IF;
-        RETURN jsonb_build_object(''httpStatus'', 401, ''errorCode'', ''TOKEN_INVALID'');
-      END IF;';
-    BEGIN
-      v_definition := pg_get_functiondef('eng_sync_events(text,uuid,text,jsonb)'::regprocedure);
-      IF position(v_original IN v_definition) = 0 THEN
-        RAISE EXCEPTION 'Could not patch eng_sync_events missing-token branch safely';
-      END IF;
-      v_definition := replace(v_definition, v_original, v_replacement);
-      EXECUTE v_definition;
-    END;
-    $eng_patch$`
   ];
 }
