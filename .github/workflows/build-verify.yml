@@ -38,4 +38,9 @@ jobs:
       - run: npm install
       - run: npm run check:server
       - run: npm run test:event-sync
+      - run: npm run test:all
+      - name: Summarize dependency audit
+        run: |
+          npm audit --json > /tmp/npm-audit.json || true
+          node --input-type=commonjs -e "const a=require('/tmp/npm-audit.json'); console.log('Vulnerability counts:', JSON.stringify(a.metadata?.vulnerabilities ?? {})); for (const [name, item] of Object.entries(a.vulnerabilities ?? {})) console.log(JSON.stringify({name, severity:item.severity, range:item.range, fixAvailable:item.fixAvailable, via:(item.via ?? []).map(v => typeof v === 'string' ? v : {title:v.title, url:v.url})}));"
       - run: npm run build
