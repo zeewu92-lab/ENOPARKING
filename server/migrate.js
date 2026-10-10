@@ -3,8 +3,9 @@ import { baozhengSchema, huoquSql } from './db.js';
 import * as migration001 from './migrations/001_event_store_auth.js';
 import * as migration002 from './migrations/002_atomic_event_sync.js';
 import * as migration003 from './migrations/003_refresh_rotation.js';
+import * as migration004 from './migrations/004_account_deletion_tombstones.js';
 
-const migrations = [migration001, migration002, migration003];
+const migrations = [migration001, migration002, migration003, migration004];
 
 export async function runMigrations() {
   await baozhengSchema();
