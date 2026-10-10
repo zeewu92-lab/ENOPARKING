@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { getGardenState, applyHarvestToGarden, 花园_TUNING } from '../../utils/gardenState.js';
+import { getGardenState, applyHarvestToGarden, GARDEN_TUNING } from '../../utils/gardenState.js';
 import { getSeedLedger, settleSeeds } from '../../utils/seedLedger.js';
 
 export default function GardenPage({ onBack }) {
@@ -7,7 +7,7 @@ export default function GardenPage({ onBack }) {
   const state = getGardenState();
   const ledger = getSeedLedger();
   const harvested = Number(state.dailyGarden?.harvestedToday) || 0;
-  const remaining = Math.max(0, 花园_TUNING.dailyHarvestCap - harvested);
+  const remaining = Math.max(0, GARDEN_TUNING.dailyHarvestCap - harvested);
   const count = Math.min(ledger.pendingSeeds, remaining);
   const stage = Number(state.tree?.stage) || 0;
 
