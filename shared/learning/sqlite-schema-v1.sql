@@ -49,15 +49,15 @@ CREATE UNIQUE INDEX IF NOT EXISTS enop_learning_events_server_sequence
 CREATE TABLE IF NOT EXISTS enop_applied_events (
   account_id TEXT NOT NULL,
   event_id TEXT NOT NULL,
-  server_sequence INTEGER NOT NULL CHECK (server_sequence >= 1),
+  server_sequence INTEGER CHECK (server_sequence IS NULL OR server_sequence >= 1),
   applied_at INTEGER NOT NULL CHECK (applied_at >= 0),
   PRIMARY KEY (account_id, event_id),
-  UNIQUE (account_id, server_sequence),
   FOREIGN KEY (account_id) REFERENCES enop_event_store_meta(account_id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS enop_applied_events_sequence
-  ON enop_applied_events(account_id, server_sequence);
+CREATE UNIQUE INDEX IF NOT EXISTS enop_applied_events_sequence
+  ON enop_applied_events(account_id, server_sequence)
+  WHERE server_sequence IS NOT NULL;
 
 -- Atomicity requirements for adapters:
 -- 1. Enqueue: reserve/increment counter + insert event + apply local event marker in one transaction.
