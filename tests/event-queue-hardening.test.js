@@ -13,7 +13,7 @@ function makeStorage() {
 
 function makeIds() {
   let value = 0;
-  return () => `b6d2cfa9-67a7-4e4b-9b0e-0000000005${String(++value).padStart(6, '0')}`;
+  return () => `b6d2cfa9-67a7-4e4b-9b0e-000000${String(++value).padStart(6, '0')}`;
 }
 
 test('retry backoff grows exponentially, is capped, and does not send early', () => {
