@@ -35,13 +35,19 @@ export async function replayEvents({
   let batches = 0;
   while (batches < maxPullBatches) {
     const response = await pull({ afterSequence: report.cursor, limit: batchSize });
-    if (!Array.isArray(response?.events) || !Number.isSafeInteger(Number(response.nextSequence)) || Number(response.nextSequence) < report.cursor) {
+    if (!Array.isArray(response?.events) ||
+        !Number.isSafeInteger(response.nextSequence) ||
+        response.nextSequence < report.cursor ||
+        typeof response.hasMore !== 'boolean') {
       throw new Error('EVENT_PULL_RESPONSE_INVALID');
     }
 
     for (const event of response.events) {
-      const sequence = Number(event.serverSequence);
-      if (!Number.isSafeInteger(sequence) || sequence <= report.cursor) throw new Error('EVENT_PULL_SEQUENCE_INVALID');
+      const sequence = event?.serverSequence;
+      if (typeof event?.eventId !== 'string' || !event.eventId.trim() ||
+          !Number.isSafeInteger(sequence) || sequence <= report.cursor) {
+        throw new Error('EVENT_PULL_SEQUENCE_INVALID');
+      }
       if (sequence !== report.cursor + 1) throw new Error('EVENT_PULL_CURSOR_GAP');
       if (!queue.hasApplied(event.eventId)) {
         await applyEvent(event);
@@ -54,15 +60,11 @@ export async function replayEvents({
       report.cursor = sequence;
     }
 
-    const nextSequence = Number(response.nextSequence);
+    const nextSequence = response.nextSequence;
     if (nextSequence > report.cursor) {
-      // Empty pages may still advance only when the server explicitly provides the next cursor.
-      if (response.events.length === 0 && !response.hasMore) {
-        queue.setReplayCursor(nextSequence);
-        report.cursor = nextSequence;
-      } else {
-        throw new Error('EVENT_PULL_CURSOR_GAP');
-      }
+      // Server sequences are contiguous. Never skip unseen events by jumping
+      // to a high-water cursor, even if a malformed response claims the page is empty.
+      throw new Error('EVENT_PULL_CURSOR_GAP');
     }
 
     batches += 1;
