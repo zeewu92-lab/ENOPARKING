@@ -136,7 +136,20 @@ export async function chuliTokenAuth(req, res, action) {
          LIMIT 1
       `;
       const session = sessions[0];
-      if (!session) return sendJson(res, 401, { error: { code: 'SESSION_INVALID', retryable: false } });
+      if (!session) {
+        const refreshToken = cookies[REFRESH_COOKIE];
+        if (refreshToken) {
+          const deleted = await sql`
+            SELECT token_hash FROM eng_deleted_refresh_tokens
+             WHERE token_hash = ${hashToken(refreshToken)} LIMIT 1
+          `;
+          if (deleted[0]) {
+            res.setHeader('Set-Cookie', refreshCookie(req, '', 0));
+            return sendJson(res, 401, { error: { code: 'ACCOUNT_DELETED', retryable: false } });
+          }
+        }
+        return sendJson(res, 401, { error: { code: 'SESSION_INVALID', retryable: false } });
+      }
       if (session.disabled) return sendJson(res, 403, { error: { code: 'ACCOUNT_LOCKED', retryable: false } });
 
       const requiresReauthentication = await sql`
