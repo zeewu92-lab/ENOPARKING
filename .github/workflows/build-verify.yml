@@ -30,14 +30,33 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: enoparking_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d enoparking_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm install
+      - run: npm install --no-save pg
       - run: npm run check:server
       - run: npm run test:event-sync
+      - name: Run real PostgreSQL integration tests
+        run: npm run test:postgres
+        env:
+          PG_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/enoparking_test
       - run: npm run test:all
       - name: Summarize dependency audit
         run: |
