@@ -64,6 +64,9 @@ export function up(sql) {
       SELECT COALESCE(last_sequence, 0) INTO v_high_water
         FROM eng_event_sequences WHERE account_id = v_token.user_id;
       v_high_water := COALESCE(v_high_water, 0);
+      IF p_after_sequence > v_high_water THEN
+        RETURN jsonb_build_object('httpStatus', 400, 'errorCode', 'REQUEST_INVALID');
+      END IF;
 
       SELECT COUNT(*) INTO v_count
         FROM (
