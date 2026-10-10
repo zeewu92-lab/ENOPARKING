@@ -156,3 +156,74 @@ test('native device identity rejects malformed identifiers before database trans
   await assert.rejects(store.getOrCreateDeviceId(() => 'not-a-uuid'), /NATIVE_DEVICE_ID_INVALID/);
   assert.equal(transactions, 0);
 });
+
+function makeTransactionalMockDatabase() {
+  let committed = { meta: null, events: [], applied: [] };
+  return {
+    snapshot: () => structuredClone(committed),
+    async withExclusiveTransactionAsync(operation) {
+      const working = structuredClone(committed);
+      const tx = {
+        async getFirstAsync(sql, accountId) {
+          if (sql.includes('next_local_counter')) {
+            return working.meta && working.meta.accountId === accountId
+              ? { next_local_counter: working.meta.nextLocalCounter } : null;
+          }
+          return null;
+        },
+        async runAsync(sql, ...params) {
+          if (sql.includes('INSERT INTO enop_event_store_meta')) {
+            if (!working.meta) working.meta = {
+              accountId: params[0], schemaVersion: params[1], nextLocalCounter: 1,
+              replayCursor: 0, updatedAt: params[2]
+            };
+          } else if (sql.includes('INSERT INTO enop_learning_events')) {
+            working.events.push({ accountId: params[0], eventId: params[1], localCounter: params[2] });
+          } else if (sql.includes('UPDATE enop_event_store_meta')) {
+            working.meta.nextLocalCounter = params[0];
+            working.meta.updatedAt = params[1];
+          } else if (sql.includes('INSERT INTO enop_applied_events')) {
+            working.applied.push({ accountId: params[0], eventId: params[1], serverSequence: null });
+          }
+          return { changes: 1 };
+        }
+      };
+      const result = await operation(tx);
+      committed = working;
+      return result;
+    }
+  };
+}
+
+test('native enqueue rolls back event, counter, and applied marker when optimistic state fails', async () => {
+  const db = makeTransactionalMockDatabase();
+  const store = new NativeEventStore(db, { clock: () => 100 });
+  const event = {
+    eventId: 'b6b9e8b4-7d11-4f2d-9a8b-112233445566',
+    type: 'action',
+    payload: { wordId: 'word-1', day: 1, verification: 'choice', result: 'correct', hintLevel: 'none' },
+    createdAt: 100
+  };
+  await assert.rejects(
+    store.enqueue('account-a', event, { applyOptimisticState: async () => { throw new Error('projection failed'); } }),
+    /projection failed/
+  );
+  assert.deepEqual(db.snapshot(), { meta: null, events: [], applied: [] });
+});
+
+test('native enqueue commits event, counter, and applied marker together on success', async () => {
+  const db = makeTransactionalMockDatabase();
+  const store = new NativeEventStore(db, { clock: () => 100 });
+  const event = {
+    eventId: 'c7c9e8b4-7d11-4f2d-9a8b-112233445566',
+    type: 'action',
+    payload: { wordId: 'word-2', day: 2, verification: 'spelling', result: 'wrong', hintLevel: 'none' },
+    createdAt: 100
+  };
+  await store.enqueue('account-a', event, { applyOptimisticState: async () => {} });
+  assert.deepEqual(db.snapshot(), {
+    meta: { accountId: 'account-a', schemaVersion: 1, nextLocalCounter: 2, replayCursor: 0, updatedAt: 100 },
+    events: [{ accountId: 'account-a', eventId: event.eventId, localCounter: 1 }],
+    applied: [{ accountId: 'account-a', eventId: event.eventId, serverSequence: null }]
+  });
+});
