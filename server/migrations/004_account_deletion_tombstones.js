@@ -18,6 +18,12 @@ export function up(sql) {
         FROM eng_access_tokens
        WHERE user_id = OLD.id
       ON CONFLICT (token_hash) DO NOTHING;
+
+      INSERT INTO eng_deleted_refresh_tokens(token_hash, deleted_at)
+      SELECT token_hash, NOW()
+        FROM eng_refresh_tokens
+       WHERE user_id = OLD.id
+      ON CONFLICT (token_hash) DO NOTHING;
       RETURN OLD;
     END;
     $eng_delete$`,
