@@ -95,6 +95,8 @@ export class EventQueue {
     if (!Number.isSafeInteger(createdAt) || createdAt < 0) throw new Error('EVENT_CREATED_AT_INVALID');
 
     const state = this.readState();
+    const previousEvents = state.events.map(item => ({ ...item }));
+    const previousCounter = state.localCounter;
     state.localCounter += 1;
     if (!Number.isSafeInteger(state.localCounter)) throw new Error('EVENT_LOCAL_COUNTER_EXHAUSTED');
 
@@ -121,10 +123,7 @@ export class EventQueue {
       // If either write fails, restore both keys so the caller never loses track
       // of a queued event that was not returned to it.
       try {
-        const rollback = this.readState();
-        rollback.events = rollback.events.filter(item => item.eventId !== event.eventId);
-        rollback.localCounter = Math.max(0, rollback.localCounter - 1);
-        this.saveState(rollback);
+        this.saveState({ version: 1, localCounter: previousCounter, events: previousEvents });
       } catch {}
       try {
         writeJson(this.storage, this.keys.applied, Array.isArray(previousApplied) ? previousApplied : []);
