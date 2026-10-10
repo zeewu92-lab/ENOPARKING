@@ -138,13 +138,15 @@ export class NativeEventStore {
     }
     const now = this.clock();
     assertSafeInteger(now, 'NATIVE_EVENT_CLOCK_INVALID');
-    return this.db.withExclusiveTransactionAsync(async tx => {
+    let deviceId;
+    await this.db.withExclusiveTransactionAsync(async tx => {
       const existing = await tx.getFirstAsync(
         'SELECT device_id AS deviceId FROM enop_device_identity WHERE singleton_id = 1'
       );
       if (existing?.deviceId) {
         if (!UUID_V4.test(existing.deviceId)) throw new Error('NATIVE_DEVICE_ID_CORRUPT');
-        return existing.deviceId;
+        deviceId = existing.deviceId;
+        return;
       }
       await tx.runAsync(
         'INSERT INTO enop_device_identity (singleton_id, device_id, created_at) VALUES (1, ?, ?) ON CONFLICT(singleton_id) DO NOTHING',
@@ -156,8 +158,9 @@ export class NativeEventStore {
       if (!saved?.deviceId || !UUID_V4.test(saved.deviceId)) {
         throw new Error('NATIVE_DEVICE_ID_PERSIST_FAILED');
       }
-      return saved.deviceId;
+      deviceId = saved.deviceId;
     });
+    return deviceId;
   }
 
   async ensureAccount(tx, accountId, now) {
