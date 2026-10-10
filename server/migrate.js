@@ -5,8 +5,9 @@ import * as migration002 from './migrations/002_atomic_event_sync.js';
 import * as migration003 from './migrations/003_refresh_rotation.js';
 import * as migration004 from './migrations/004_account_deletion_tombstones.js';
 import * as migration005 from './migrations/005_event_download.js';
+import * as migration006 from './migrations/006_preserve_revoked_token_families.js';
 
-const migrations = [migration001, migration002, migration003, migration004, migration005];
+const migrations = [migration001, migration002, migration003, migration004, migration005, migration006];
 
 export async function runMigrations() {
   await baozhengSchema();
