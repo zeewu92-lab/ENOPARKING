@@ -166,3 +166,29 @@ test('applied event IDs accumulate independently for each account', () => {
   assert.equal(second.hasApplied('remote-b-1'), true);
   assert.equal(second.hasApplied('remote-a-1'), false);
 });
+
+test('discardPending rolls back an unsynced event and its local applied marker', () => {
+  const queue = new EventQueue({ accountId: 'test-user', storage: makeStorage(), createId: makeIds() });
+  const event = queue.enqueue({
+    eventId: 'b6d2cfa9-67a7-4e4b-9b0e-000000000101',
+    type: 'action',
+    payload: { wordId: 'word-1', day: 20637, verification: 'choice', result: 'correct', hintLevel: 'none' }
+  });
+
+  assert.equal(queue.hasApplied(event.eventId), true);
+  assert.equal(queue.discardPending(event.eventId), true);
+  assert.equal(queue.list().length, 0);
+  assert.equal(queue.hasApplied(event.eventId), false);
+  assert.equal(queue.discardPending(event.eventId), false);
+});
+
+test('discardPending refuses to remove an event after server confirmation', () => {
+  const queue = new EventQueue({ accountId: 'test-user', storage: makeStorage(), createId: makeIds() });
+  const event = queue.enqueue({
+    eventId: 'b6d2cfa9-67a7-4e4b-9b0e-000000000102',
+    type: 'action',
+    payload: { wordId: 'word-1', day: 20637, verification: 'choice', result: 'correct', hintLevel: 'none' }
+  });
+  queue.reconcile([{ eventId: event.eventId, syncStatus: 'confirmed', serverSequence: 1 }]);
+  assert.throws(() => queue.discardPending(event.eventId), /EVENT_ALREADY_SYNCED/);
+});
