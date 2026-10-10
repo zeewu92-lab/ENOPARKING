@@ -17,10 +17,10 @@ Android 與 iOS 共用 `NativeCredentialVault` 與 Expo SecureStore adapter。We
 
 ## 服務端整合前提
 
-目前服務端登入與 Refresh Token API 的原生 Bearer／輪替契約尚未接入。不得在沒有服務端支援與整合測試前，把 Web HttpOnly Cookie 當成原生端認證機制，也不得打開正式 Token Auth 或事件同步旗標。
+服務端已新增 `/api/token/native-login`、`/api/token/native-refresh` 與 `/api/token/native-logout`，原生端 `NativeAuthApi` 透過 JSON 傳遞憑證，不使用 Web HttpOnly Cookie。登入會驗證帳號密碼並建立獨立 Token Family；Refresh 使用 SecureStore 持久化的 UUID v4 `refreshRequestId`，共用資料庫輪替與重放偵測程序；登出撤銷目前裝置的 Token Family。這些端點仍受 `TOKEN_AUTH_ENABLED` 控制，預設不可啟用。完整真機、資料庫整合與故障注入驗證完成前，不得打開正式 Token Auth 或事件同步旗標。
 
 Refresh Token 輪替的服務端操作必須具備單次使用與重放偵測語意。若服務端已成功輪替、但裝置在寫入新 token 前突然終止，客戶端可能無法恢復；服務端應提供明確的 session family 撤銷／重新登入路徑。SecureStore 不提供與服務端交易的原子性，因此此故障窗必須在整合測試與產品流程中處理。
 
 ## 已測試範圍與限制
 
-`tests/native-credential-vault.test.js` 覆蓋帳戶隔離、記憶體 Access Token、refresh single-flight、帳戶不匹配、冷啟動恢復、過期 Access Token 更新與登出清理。這些是注入式儲存 adapter 的單元測試，仍需 Android／iOS 真機 SecureStore、服務端撤銷與輪替故障測試。
+`tests/native-credential-vault.test.js` 覆蓋帳戶隔離、記憶體 Access Token、refresh single-flight、帳戶不匹配、冷啟動恢復、過期 Access Token 更新與登出清理。`tests/native-auth-api.test.js` 與 `tests/native-token-auth-contract.test.js` 覆蓋 HTTP 契約、帳戶綁定、端點閘門、輪替與撤銷的安全性約束。仍需 Android／iOS 真機 SecureStore、PostgreSQL 端到端登入與輪替、併發重放、密碼變更及停權撤銷測試。
