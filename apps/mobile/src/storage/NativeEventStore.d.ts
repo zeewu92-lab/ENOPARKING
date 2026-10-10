@@ -15,6 +15,7 @@ export interface NativeLearningEvent {
 
 export declare class NativeEventStore {
   constructor(db: SQLiteDatabase, options?: { clock?: () => number });
+  getOrCreateDeviceId(createId: () => string | Promise<string>): Promise<string>;
   enqueue(
     accountId: string,
     event: NativeLearningEvent,
