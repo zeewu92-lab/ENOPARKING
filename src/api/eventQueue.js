@@ -88,8 +88,9 @@ export class EventQueue {
     writeJson(this.storage, this.keys.queue, state);
   }
 
-  enqueue({ type, payload, createdAt = this.now() }) {
+  enqueue({ type, payload, createdAt = this.now(), eventId = this.createId() }) {
     if (!['action', 'unit_outcome'].includes(type)) throw new Error('EVENT_TYPE_UNKNOWN');
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(eventId))) throw new Error('EVENT_ID_INVALID');
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('EVENT_PAYLOAD_INVALID');
     if (!Number.isSafeInteger(createdAt) || createdAt < 0) throw new Error('EVENT_CREATED_AT_INVALID');
 
@@ -98,7 +99,7 @@ export class EventQueue {
     if (!Number.isSafeInteger(state.localCounter)) throw new Error('EVENT_LOCAL_COUNTER_EXHAUSTED');
 
     const event = {
-      eventId: this.createId(),
+      eventId,
       type,
       localCounter: state.localCounter,
       payload,
@@ -114,6 +115,20 @@ export class EventQueue {
     // 本地事件已即时生效，Replay 拉回同一事件时只推进游标，不重复应用。
     this.markApplied(event.eventId);
     return { ...event };
+  }
+
+  discardPending(eventId) {
+    const state = this.readState();
+    const event = state.events.find(item => item.eventId === eventId);
+    if (!event) return false;
+    if (event.syncStatus !== 'pending' || event.serverSequence !== null) {
+      throw new Error('EVENT_ALREADY_SYNCED');
+    }
+    state.events = state.events.filter(item => item.eventId !== eventId);
+    this.saveState(state);
+    const applied = readJson(this.storage, this.keys.applied, []);
+    writeJson(this.storage, this.keys.applied, (Array.isArray(applied) ? applied : []).filter(id => id !== eventId));
+    return true;
   }
 
   list() {
