@@ -22,6 +22,7 @@ on:
       - 'api/**'
       - 'server/**'
       - 'shared/**'
+      - 'apps/mobile/**'
       - 'docs/**'
       - 'tests/**'
       - 'public/**'
