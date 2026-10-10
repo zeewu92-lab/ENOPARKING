@@ -234,10 +234,17 @@ export async function chuliAuth(req, res, action) {
       }
 
       const passwordHash = await hashPassword(newPassword);
-      await sql`UPDATE eng_users SET password_hash = ${passwordHash} WHERE id = ${rows[0].id}`;
-      await sql`UPDATE eng_recovery_codes SET used_at = NOW() WHERE id = ${recovery[0].id}`;
-      await sql`DELETE FROM eng_sessions WHERE user_id = ${rows[0].id}`;
-      return json(res, 200, { ok: true });
+      await sql.transaction([
+        sql`UPDATE eng_users SET password_hash = ${passwordHash} WHERE id = ${rows[0].id}`,
+        sql`UPDATE eng_recovery_codes SET used_at = NOW() WHERE id = ${recovery[0].id} AND used_at IS NULL`,
+        sql`DELETE FROM eng_sessions WHERE user_id = ${rows[0].id}`
+      ]);
+      res.setHeader('Set-Cookie', [
+        cookie('engnocrazy_session', '', 0),
+        'enoparking_refresh=; Path=/api/token; Max-Age=0; HttpOnly; SameSite=Lax' +
+          (process.env.NODE_ENV === 'development' ? '' : '; Secure')
+      ]);
+      return json(res, 200, { ok: true, requireLogin: true });
     }
 
     if (action === 'register' && req.method === 'POST') {
