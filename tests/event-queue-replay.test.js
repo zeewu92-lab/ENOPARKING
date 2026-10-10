@@ -19,18 +19,39 @@ function makeIds() {
 
 test('queue persists events and monotonically increments a device-local counter', () => {
   const storage = makeStorage();
-  const queue = new EventQueue({ storage, now: () => 1791500000000, createId: makeIds() });
+  const queue = new EventQueue({ accountId: 'test-user', storage, now: () => 1791500000000, createId: makeIds() });
   const first = queue.enqueue({ type: 'action', payload: { action: 'remember', wordId: 'w-1' } });
   const second = queue.enqueue({ type: 'unit_outcome', payload: { unitId: 'u-1', correct: true } });
 
   assert.equal(first.localCounter, 1);
   assert.equal(second.localCounter, 2);
-  assert.equal(new EventQueue({ storage }).list().length, 2);
-  assert.equal(queue.getDeviceId(), new EventQueue({ storage }).getDeviceId());
+  assert.equal(new EventQueue({ accountId: 'test-user', storage }).list().length, 2);
+  assert.equal(queue.getDeviceId(), new EventQueue({ accountId: 'test-user', storage }).getDeviceId());
+});
+
+test('event queue requires an account identity and isolates data across accounts', () => {
+  const storage = makeStorage();
+  assert.throws(() => new EventQueue({ storage }), /EVENT_QUEUE_ACCOUNT_REQUIRED/);
+
+  const firstAccount = new EventQueue({ accountId: 'user-a', storage, createId: makeIds() });
+  const secondAccount = new EventQueue({ accountId: 'user-b', storage, createId: makeIds() });
+  const event = firstAccount.enqueue({ type: 'action', payload: { action: 'remember', wordId: 'private-word' } });
+
+  firstAccount.setReplayCursor(4);
+  firstAccount.markApplied('remote-user-a');
+
+  assert.equal(firstAccount.list().length, 1);
+  assert.equal(secondAccount.list().length, 0);
+  assert.equal(firstAccount.getReplayCursor(), 4);
+  assert.equal(secondAccount.getReplayCursor(), 0);
+  assert.equal(firstAccount.hasApplied('remote-user-a'), true);
+  assert.equal(secondAccount.hasApplied('remote-user-a'), false);
+  assert.equal(firstAccount.getDeviceId(), secondAccount.getDeviceId());
+  assert.ok(event.eventId);
 });
 
 test('invalid events are rejected before entering the queue', () => {
-  const queue = new EventQueue({ storage: makeStorage(), createId: makeIds() });
+  const queue = new EventQueue({ accountId: 'test-user', storage: makeStorage(), createId: makeIds() });
   assert.throws(() => queue.enqueue({ type: 'unknown', payload: {} }), /EVENT_TYPE_UNKNOWN/);
   assert.throws(() => queue.enqueue({ type: 'action', payload: [] }), /EVENT_PAYLOAD_INVALID/);
   assert.equal(queue.list().length, 0);
@@ -38,7 +59,7 @@ test('invalid events are rejected before entering the queue', () => {
 
 test('sync reconciliation records confirmations and schedules retryable failures', () => {
   let now = 11;
-  const queue = new EventQueue({ storage: makeStorage(), now: () => now, createId: makeIds() });
+  const queue = new EventQueue({ accountId: 'test-user', storage: makeStorage(), now: () => now, createId: makeIds() });
   const one = queue.enqueue({ type: 'action', payload: { action: 'remember' }, createdAt: 10 });
   const two = queue.enqueue({ type: 'action', payload: { action: 'forget' }, createdAt: 11 });
   queue.reconcile([
@@ -57,7 +78,7 @@ test('sync reconciliation records confirmations and schedules retryable failures
 });
 
 test('replay pushes pending events, applies pulled events once, and persists cursor', async () => {
-  const queue = new EventQueue({ storage: makeStorage(), createId: makeIds() });
+  const queue = new EventQueue({ accountId: 'test-user', storage: makeStorage(), createId: makeIds() });
   const local = queue.enqueue({ type: 'action', payload: { action: 'remember' }, createdAt: 10 });
   const applied = [];
   let pushCalls = 0;
@@ -103,7 +124,7 @@ test('replay pushes pending events, applies pulled events once, and persists cur
 });
 
 test('failed apply does not advance the replay cursor or mark the event applied', async () => {
-  const queue = new EventQueue({ storage: makeStorage(), createId: makeIds() });
+  const queue = new EventQueue({ accountId: 'test-user', storage: makeStorage(), createId: makeIds() });
   await assert.rejects(() => replayEvents({
     queue,
     clientVersion: '1.0.0',
@@ -120,7 +141,7 @@ test('failed apply does not advance the replay cursor or mark the event applied'
 });
 
 test('replay rejects a server cursor gap instead of silently skipping events', async () => {
-  const queue = new EventQueue({ storage: makeStorage(), createId: makeIds() });
+  const queue = new EventQueue({ accountId: 'test-user', storage: makeStorage(), createId: makeIds() });
   await assert.rejects(() => replayEvents({
     queue,
     clientVersion: '1.0.0',
