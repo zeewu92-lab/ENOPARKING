@@ -106,6 +106,9 @@ export class EventQueue {
     if (!Number.isSafeInteger(createdAt) || createdAt < 0) throw new Error('EVENT_CREATED_AT_INVALID');
 
     const state = this.readState();
+    if (state.events.some(item => item.eventId === eventId)) {
+      throw new Error('EVENT_ID_DUPLICATE');
+    }
     const previousEvents = state.events.map(item => ({ ...item }));
     const previousCounter = state.localCounter;
     state.localCounter += 1;
@@ -189,7 +192,15 @@ export class EventQueue {
 
   reconcile(results) {
     if (!Array.isArray(results)) throw new Error('EVENT_SYNC_RESPONSE_INVALID');
-    const byId = new Map(results.map(result => [result?.eventId, result]));
+    const byId = new Map();
+    for (const result of results) {
+      if (!result || typeof result !== 'object' || Array.isArray(result) ||
+          typeof result.eventId !== 'string' || !result.eventId.trim() ||
+          byId.has(result.eventId)) {
+        throw new Error('EVENT_SYNC_RESPONSE_INVALID');
+      }
+      byId.set(result.eventId, result);
+    }
     const state = this.readState();
     state.events = state.events.map(event => {
       const result = byId.get(event.eventId);
