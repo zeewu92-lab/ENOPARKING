@@ -10,14 +10,13 @@ function json(res, status, body) {
 // 这里统一处理管理员相关请求，先检查管理员权限，再按具体操作执行数据库变更。
 export async function chuliAdmin(req, res, caozuo) {
   try {
-    await baozhengSchema();
-
     if (caozuo === 'bootstrap-admin' && req.method === 'POST') {
-      const setupKey = process.env.ENGNOCRAZY_ADMIN_SETUP_KEY;
-      const providedKey = req.headers['x-admin-setup-key'];
+      const setupKey = process.env.ENOPARKING_ADMIN_SETUP_KEY;
+      const providedKey = req.headers?.['x-admin-setup-key'];
       if (!setupKey || !providedKey || providedKey !== setupKey) {
         return json(res, 403, { error: '管理員初始化金鑰無效' });
       }
+      await baozhengSchema();
       const body = await readBody(req);
       const username = String(body.username || '').trim().toLowerCase();
       if (!username) return json(res, 400, { error: '缺少帳號' });
@@ -35,6 +34,7 @@ export async function chuliAdmin(req, res, caozuo) {
       return json(res, 200, { ok: true, user: rows[0] });
     }
 
+    await baozhengSchema();
     const user = await requireUser(req, res);
     if (!user) return;
     if (user.role !== 'admin') return json(res, 403, { error: '沒有管理員權限' });
