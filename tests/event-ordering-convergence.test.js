@@ -76,7 +76,7 @@ test('learning state converges when the same server events arrive in different o
   });
 
   assert.deepEqual(reverse.scores, forward.scores);
-  assert.equal(reverse.mastery, forward.mastery);
+  assert.deepEqual(reverse.mastery, forward.mastery);
   assert.deepEqual(reverse.stability, forward.stability);
   assert.equal(reverse.reviewCount, forward.reviewCount);
   assert.equal(reverse.lastEvent?.verification, forward.lastEvent?.verification);
