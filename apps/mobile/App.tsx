@@ -18,10 +18,14 @@ import { nativeCredentialVault } from './src/auth/nativeCredentialVault';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || '';
 
-function describeAuthError(error: unknown): string {
-  const code = error && typeof error === 'object' && 'code' in error
+function getAuthErrorCode(error: unknown): string {
+  return error && typeof error === 'object' && 'code' in error
     ? String((error as { code?: unknown }).code || '')
     : error instanceof Error ? error.message : '';
+}
+
+function describeAuthError(error: unknown): string {
+  const code = getAuthErrorCode(error);
   const messages: Record<string, string> = {
     TOKEN_AUTH_DISABLED: '原生登入服務尚未開放，請稍後再試。',
     CREDENTIALS_INVALID: '帳號或密碼不正確。',
@@ -54,7 +58,15 @@ function NativeStatus() {
     }
     auth.restore().then(restored => {
       if (alive) setSession(restored ? { accountId: restored.accountId, expiresAt: restored.expiresAt } : null);
-    }).catch(error => {
+    }).catch(async error => {
+      const terminalCodes = new Set([
+        'ACCOUNT_LOCKED', 'ACCOUNT_DELETED', 'REFRESH_INVALID',
+        'REFRESH_EXPIRED', 'TOKEN_REVOKED', 'REFRESH_REPLAY',
+        'REFRESH_RECOVERY_EXPIRED'
+      ]);
+      if (terminalCodes.has(getAuthErrorCode(error))) {
+        try { await nativeCredentialVault.clearAllLocalCredentials(); } catch { /* report the original auth failure */ }
+      }
       if (alive) setNotice(describeAuthError(error));
     }).finally(() => {
       if (alive) setBusy(false);
