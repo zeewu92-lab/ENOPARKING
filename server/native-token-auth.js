@@ -153,7 +153,10 @@ export async function chuliNativeTokenAuth(req, res, action) {
          LIMIT 1
       `;
       const tokenRow = rows[0];
-      if (!tokenRow) return sendJson(res, 401, { error: { code: 'REFRESH_INVALID', retryable: false } });
+      if (!tokenRow) {
+        const deleted = await sql`SELECT token_hash FROM eng_deleted_refresh_tokens WHERE token_hash = ${oldHash} LIMIT 1`;
+        return sendJson(res, 401, { error: { code: deleted[0] ? 'ACCOUNT_DELETED' : 'REFRESH_INVALID', retryable: false } });
+      }
       const familyExpiresAt = tokenRow.expires_at;
       if (new Date(familyExpiresAt).getTime() <= Date.now()) {
         return sendJson(res, 401, { error: { code: 'REFRESH_EXPIRED', retryable: false } });
