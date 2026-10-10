@@ -280,3 +280,39 @@ test('queue does not accept missing, string, zero, or negative server sequences 
   assert.equal(queue.list()[0].syncStatus, 'confirmed');
   assert.equal(queue.list()[0].serverSequence, 1);
 });
+
+
+test('replay follows multi-page server history in strict sequence order', async () => {
+  const queue = new EventQueue({ accountId: 'test-user', storage: makeStorage(), createId: makeIds() });
+  const applied = [];
+  const pullCursors = [];
+  const remoteEvents = [
+    { eventId: 'remote-1', type: 'action', payload: {}, serverSequence: 1 },
+    { eventId: 'remote-2', type: 'action', payload: {}, serverSequence: 2 },
+    { eventId: 'remote-3', type: 'action', payload: {}, serverSequence: 3 }
+  ];
+
+  const report = await replayEvents({
+    queue,
+    clientVersion: '1.0.0',
+    push: async () => ({ results: [] }),
+    pull: async ({ afterSequence, limit }) => {
+      pullCursors.push(afterSequence);
+      assert.equal(limit, 100);
+      if (afterSequence === 0) {
+        return { events: remoteEvents.slice(0, 2), nextSequence: 2, hasMore: true };
+      }
+      if (afterSequence === 2) {
+        return { events: remoteEvents.slice(2), nextSequence: 3, hasMore: false };
+      }
+      return { events: [], nextSequence: afterSequence, hasMore: false };
+    },
+    applyEvent: async event => applied.push(event.serverSequence)
+  });
+
+  assert.deepEqual(applied, [1, 2, 3]);
+  assert.deepEqual(pullCursors, [0, 2]);
+  assert.equal(report.replayed, 3);
+  assert.equal(report.cursor, 3);
+  assert.equal(queue.getReplayCursor(), 3);
+});
