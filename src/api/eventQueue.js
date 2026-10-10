@@ -174,7 +174,7 @@ export class EventQueue {
   }
 
   markApplied(eventId) {
-    const ids = readJson(this.storage, APPLIED_KEY, []);
+    const ids = readJson(this.storage, this.keys.applied, []);
     const next = Array.isArray(ids) ? ids : [];
     if (!next.includes(eventId)) next.push(eventId);
     writeJson(this.storage, this.keys.applied, next.slice(-5000));
