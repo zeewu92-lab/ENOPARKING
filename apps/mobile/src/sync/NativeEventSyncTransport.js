@@ -34,6 +34,7 @@ export function createNativeEventSyncTransport({ baseUrl, fetchImpl = globalThis
       response = await fetchImpl(base + path, {
         ...options,
         method: options.method || 'GET',
+        credentials: 'omit',
         cache: 'no-store',
         headers: {
           Accept: 'application/json',
