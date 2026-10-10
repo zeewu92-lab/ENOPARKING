@@ -68,6 +68,8 @@ CREATE TABLE IF NOT EXISTS enop_learning_state (
 );
 `;
 
+const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 function requireAccountId(accountId) {
   if (typeof accountId !== 'string' || !accountId.trim()) {
     throw new Error('NATIVE_EVENT_STORE_ACCOUNT_REQUIRED');
@@ -126,6 +128,36 @@ export class NativeEventStore {
     }
     this.db = db;
     this.clock = clock;
+  }
+
+  async getOrCreateDeviceId(createId) {
+    if (typeof createId !== 'function') throw new Error('NATIVE_DEVICE_ID_PROVIDER_REQUIRED');
+    const candidate = await createId();
+    if (typeof candidate !== 'string' || !UUID_V4.test(candidate)) {
+      throw new Error('NATIVE_DEVICE_ID_INVALID');
+    }
+    const now = this.clock();
+    assertSafeInteger(now, 'NATIVE_EVENT_CLOCK_INVALID');
+    return this.db.withExclusiveTransactionAsync(async tx => {
+      const existing = await tx.getFirstAsync(
+        'SELECT device_id AS deviceId FROM enop_device_identity WHERE singleton_id = 1'
+      );
+      if (existing?.deviceId) {
+        if (!UUID_V4.test(existing.deviceId)) throw new Error('NATIVE_DEVICE_ID_CORRUPT');
+        return existing.deviceId;
+      }
+      await tx.runAsync(
+        'INSERT INTO enop_device_identity (singleton_id, device_id, created_at) VALUES (1, ?, ?) ON CONFLICT(singleton_id) DO NOTHING',
+        candidate, now
+      );
+      const saved = await tx.getFirstAsync(
+        'SELECT device_id AS deviceId FROM enop_device_identity WHERE singleton_id = 1'
+      );
+      if (!saved?.deviceId || !UUID_V4.test(saved.deviceId)) {
+        throw new Error('NATIVE_DEVICE_ID_PERSIST_FAILED');
+      }
+      return saved.deviceId;
+    });
   }
 
   async ensureAccount(tx, accountId, now) {
