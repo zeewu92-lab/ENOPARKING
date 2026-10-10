@@ -108,8 +108,12 @@ export async function chuliEventSync(req, res) {
         error: { code, retryable, ...(retryAfterMs === undefined ? {} : { retryAfterMs }) }
       });
     }
+    if (result.sequenceNearLimit) {
+      console.warn('[event-sync] account sequence is nearing the JavaScript safe-integer ceiling');
+    }
     return sendJson(res, 200, {
       results: Array.isArray(result.results) ? result.results : [],
+      sequenceNearLimit: Boolean(result.sequenceNearLimit),
       serverTime: Number(result.serverTime)
     });
   } catch (error) {
