@@ -325,8 +325,14 @@ test('corrupt persisted queue, cursor, and applied IDs fail closed without reset
   storage.setItem(queue.keys.queue, '{broken-json');
   assert.throws(() => queue.list(), /EVENT_QUEUE_STORAGE_CORRUPT/);
   assert.equal(storage.getItem(queue.keys.queue), '{broken-json');
+  storage.setItem(queue.keys.queue, '');
+  assert.throws(() => queue.list(), /EVENT_QUEUE_STORAGE_CORRUPT/);
+  assert.equal(storage.getItem(queue.keys.queue), '');
 
   storage.setItem(queue.keys.queue, JSON.stringify({ version: 1, localCounter: 0, events: [] }));
+  storage.setItem(queue.keys.cursor, '');
+  assert.throws(() => queue.getReplayCursor(), /EVENT_QUEUE_STORAGE_CORRUPT/);
+  assert.equal(storage.getItem(queue.keys.cursor), '');
   storage.setItem(queue.keys.cursor, 'not-a-sequence');
   assert.throws(() => queue.getReplayCursor(), /EVENT_QUEUE_STORAGE_CORRUPT/);
   assert.equal(storage.getItem(queue.keys.cursor), 'not-a-sequence');
