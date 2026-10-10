@@ -23,7 +23,7 @@ Android 與 iOS 是同等優先的正式客戶端，必須並線設計、並線�
 
 ## 現況與限制
 
-目前分支已建立 React Web 過渡端，以及共用 Expo/React Native Android 與 iOS 執行目標的初始骨架。原生端已加入 SQLite event store、帳戶隔離資料表、交易式 enqueue、ACK reconciliation 與 Replay cursor 基礎，並建立原生端 bundle/typecheck CI。這是原生基礎階段，尚未完成登入、API transport、原生背景同步排程、正式學習 reducer、舊資料遷移與真機整合驗收，因此不得宣稱行動端功能已完成。
+目前分支已建立 React Web 過渡端，以及共用 Expo/React Native Android 與 iOS 執行目標的初始骨架。原生端已加入 SQLite event store、帳戶隔離資料表、交易式 enqueue、ACK reconciliation、bounded exponential retry 與 Replay cursor 基礎，並建立原生端 bundle/typecheck CI。這是原生基礎階段，尚未完成登入、API transport、原生背景同步排程、正式學習 reducer、舊資料遷移與真機整合驗收，因此不得宣稱行動端功能已完成。
 
 後續必須在同一迭代補上 Android 與 iOS 的 lifecycle adapter、可靠同步排程、領域狀態 reducer、資料遷移和實機驗收，避免只完成其中一端。
 
