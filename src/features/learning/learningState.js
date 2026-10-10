@@ -23,7 +23,7 @@ function todayKey() {
 }
 
 function dayFromDate(value = todayKey()) {
-  const match = String(value).match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return dayFromDate(todayKey());
   return Math.floor(Date.UTC(
     Number(match[1]),
