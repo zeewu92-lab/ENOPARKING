@@ -33,7 +33,7 @@ Android 與 iOS 是同等優先的正式客戶端，必須並線設計、並線�
 
 - `docs/native-credential-contract.md` 定義 Android／iOS 共用 SecureStore、記憶體 Access Token、Refresh Token 輪替、冷啟動恢復與登出清理規則。
 - `apps/mobile/src/auth/NativeCredentialVault.js` 是平台無關的憑證生命週期核心，`nativeSecureStore.ts` 是 Expo SecureStore adapter。
-- `apps/mobile/src/auth/NativeAuthApi.js` 對接 `/api/token/native-login`、`native-refresh` 與 `native-logout`；`NativeAuthSession.js` 將 API 與 Vault 的登入、恢復、輪替、登出流程串接。
+- 原生登入畫面已接入 `NativeAuthSession`，可輸入帳號密碼、嘗試冷啟動恢復與登出目前裝置；建置時須設定 `EXPO_PUBLIC_API_BASE_URL` 為 HTTPS API 根網址。未設定時 UI 會明確提示，不會默認連到未知服務。登入後的正式學習流程與事件同步仍未接入。\n- `apps/mobile/src/auth/NativeAuthApi.js` 對接 `/api/token/native-login`、`native-refresh` 與 `native-logout`；`NativeAuthSession.js` 將 API 與 Vault 的登入、恢復、輪替、登出流程串接。
 - 原生端只保存 Refresh Token；Access Token 不寫入 SQLite 或一般持久化儲存。服務層已接線，尚未接入完整登入 UI，也尚未完成真機驗收。
 
 ## 共用事件契約測試素材
