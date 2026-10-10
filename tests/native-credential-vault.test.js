@@ -18,7 +18,7 @@ function fakeSecureStore() {
 
 test('native credential vault keeps access tokens in memory and refresh tokens account-scoped in secure storage', async () => {
   const secureStore = fakeSecureStore();
-  const vault = new NativeCredentialVault({ secureStore, now: () => 100000 });
+  const vault = new NativeCredentialVault({ secureStore, now: () => 100000, createRefreshRequestId: () => 'b6b9e8b4-7d11-4f2d-9a8b-112233445566' });
   await vault.saveLogin(session());
   assert.equal(await vault.getRefreshToken('account_a'), token('r'));
   assert.deepEqual(await vault.getAccessCredentials('account_a'), { accountId: 'account_a', accessToken: token('a') });
@@ -91,7 +91,7 @@ test('native credential vault revokes then deletes credentials on logout', async
 });
 
 test('native credential vault rejects expired sessions and invalid account identifiers', async () => {
-  const vault = new NativeCredentialVault({ secureStore: fakeSecureStore(), now: () => 500000 });
+  const vault = new NativeCredentialVault({ secureStore: fakeSecureStore(), now: () => 500000, createRefreshRequestId: () => 'b6b9e8b4-7d11-4f2d-9a8b-112233445566' });
   await vault.saveLogin(session('account_a', token('r'), token('a'), 200000));
   assert.equal(vault.getActiveSession(), null);
   await assert.rejects(vault.getRefreshToken('../other'), /NATIVE_CREDENTIAL_ACCOUNT_INVALID/);
@@ -99,7 +99,7 @@ test('native credential vault rejects expired sessions and invalid account ident
 
 test('native credential vault can refresh an expired access token while session identity remains active', async () => {
   const secureStore = fakeSecureStore();
-  const vault = new NativeCredentialVault({ secureStore, now: () => 500000 });
+  const vault = new NativeCredentialVault({ secureStore, now: () => 500000, createRefreshRequestId: () => 'b6b9e8b4-7d11-4f2d-9a8b-112233445566' });
   await vault.saveLogin(session('account_a', token('r'), token('a'), 200000));
   assert.equal(vault.getActiveSession(), null);
   const next = await vault.rotateRefreshToken({
