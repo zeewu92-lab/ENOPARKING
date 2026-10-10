@@ -316,3 +316,25 @@ test('replay follows multi-page server history in strict sequence order', async 
   assert.equal(report.cursor, 3);
   assert.equal(queue.getReplayCursor(), 3);
 });
+
+
+test('corrupt persisted queue, cursor, and applied IDs fail closed without resetting state', () => {
+  const storage = makeStorage();
+  const queue = new EventQueue({ accountId: 'test-user', storage, createId: makeIds() });
+
+  storage.setItem(queue.keys.queue, '{broken-json');
+  assert.throws(() => queue.list(), /EVENT_QUEUE_STORAGE_CORRUPT/);
+  assert.equal(storage.getItem(queue.keys.queue), '{broken-json');
+
+  storage.setItem(queue.keys.queue, JSON.stringify({ version: 1, localCounter: 0, events: [] }));
+  storage.setItem(queue.keys.cursor, 'not-a-sequence');
+  assert.throws(() => queue.getReplayCursor(), /EVENT_QUEUE_STORAGE_CORRUPT/);
+  assert.equal(storage.getItem(queue.keys.cursor), 'not-a-sequence');
+
+  storage.setItem(queue.keys.cursor, '0');
+  storage.setItem(queue.keys.applied, JSON.stringify({ unexpected: 'shape' }));
+  assert.throws(() => queue.hasApplied('remote-1'), /EVENT_QUEUE_STORAGE_CORRUPT/);
+  assert.equal(storage.getItem(queue.keys.applied), JSON.stringify({ unexpected: 'shape' }));
+  assert.throws(() => queue.enqueue({ type: 'action', payload: { wordId: 'w-1' } }), /EVENT_QUEUE_STORAGE_CORRUPT/);
+  assert.equal(queue.list().length, 0);
+});
