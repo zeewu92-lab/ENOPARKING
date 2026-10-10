@@ -6,7 +6,8 @@ This change adds a staged backend foundation. It is intentionally inert until op
 
 - `DATABASE_URL`: existing Neon connection string.
 - `TOKEN_AUTH_ENABLED=true`: enables Cookie Session to Bearer-token exchange and refresh.
-- `EVENT_SYNC_ENABLED=true`: enables Event Sync. Keep this unset or set to `false` until the payload schemas and client queue integration have passed acceptance tests.
+- `EVENT_SYNC_ENABLED=true`: enables the HTTP Event Sync routes. Keep this unset or set to `false` until payload schemas and client queue integration pass acceptance tests.
+- Database flag `eng_event_sync_settings.enabled` must also be explicitly set to `TRUE` after acceptance. The environment flag and database flag are both required; the database flag defaults to `FALSE` and is locked for the duration of each sync/pull transaction.
 - `TOKEN_RECOVERY_ENCRYPTION_KEY`: exactly 64 hexadecimal characters representing 32 random bytes. Generate it with a secure secret manager. Never commit it or log it.
 
 Token exchange returns the short-lived Access Token in the response `Authorization` header. The Refresh Token is set only as an HttpOnly, Secure (outside development), SameSite=Lax cookie scoped to `/api/token`. Neither token is returned in JSON.
@@ -18,8 +19,8 @@ Token exchange returns the short-lived Access Token in the response `Authorizati
 3. Run `npm run db:migrate` once from a trusted environment with `DATABASE_URL` configured.
 4. Verify all versions in `eng_schema_migrations`, inspect indexes and functions, and run the test suite.
 5. Enable `TOKEN_AUTH_ENABLED=true` only in a non-production environment first.
-6. Keep `EVENT_SYNC_ENABLED=false` until the per-type payload schemas and client Event Queue / Replay implementation are complete and validated.
-7. Enable Event Sync for a test account only after all hard gates pass.
+6. Keep `EVENT_SYNC_ENABLED=false` and the database flag disabled until the per-type payload schemas and client Event Queue / Replay implementation are complete and validated.
+7. After all hard gates pass, enable both switches in a test environment; then enable for a test account.
 
 The migration runner is explicit; application startup does not run these migrations. The legacy schema initializer still runs as part of the existing application behavior.
 
@@ -50,5 +51,6 @@ A duplicate Event ID with identical canonical content returns its original seque
 
 - The client must implement persistent per-account Event Queues, stable device ID/localCounter, single-flight refresh, refreshRequestId persistence, partial ACK persistence, retry policy, and Replay.
 - Type-specific payload schemas need to be fixed before the sync endpoint is enabled.
-- Account-deletion tombstone handling and end-to-end concurrency tests must pass before release.
+- Account-deletion tombstones are recorded by migration, but deletion/revocation concurrency tests must pass before release.
+- Server-side rate limiting and strict type-specific payload schemas remain release blockers.
 - The current local server imports `server/admin.js`, which was not present in the inspected `main` branch; local API startup requires that pre-existing repository issue to be resolved separately.
