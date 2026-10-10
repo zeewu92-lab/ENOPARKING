@@ -27,6 +27,14 @@ export function up(sql) {
       v_result JSONB;
       v_error TEXT;
       v_enabled BOOLEAN;
+      v_rate RECORD;
+      v_now TIMESTAMPTZ;
+      v_window TIMESTAMPTZ;
+      v_retry_after_ms BIGINT;
+      v_allowed_events INTEGER;
+      v_event_index INTEGER := 0;
+      v_request_limit INTEGER;
+      v_event_limit INTEGER;
     BEGIN
       SELECT enabled INTO v_enabled FROM eng_event_sync_settings WHERE id = 1 FOR SHARE;
       IF NOT COALESCE(v_enabled, FALSE) THEN
@@ -71,8 +79,50 @@ export function up(sql) {
         RETURN jsonb_build_object('httpStatus', 400, 'errorCode', 'REQUEST_INVALID');
       END IF;
 
+      SELECT max_requests_per_minute, max_events_per_minute
+        INTO v_request_limit, v_event_limit
+        FROM eng_event_sync_settings WHERE id = 1;
+      v_now := clock_timestamp();
+      v_window := date_trunc('minute', v_now);
+
+      INSERT INTO eng_event_rate_limits(account_id, window_started_at, request_count, event_count)
+      VALUES (v_token.user_id, v_window, 0, 0)
+      ON CONFLICT (account_id) DO UPDATE SET
+        window_started_at = CASE
+          WHEN eng_event_rate_limits.window_started_at < EXCLUDED.window_started_at
+          THEN EXCLUDED.window_started_at ELSE eng_event_rate_limits.window_started_at END,
+        request_count = CASE
+          WHEN eng_event_rate_limits.window_started_at < EXCLUDED.window_started_at
+          THEN 0 ELSE eng_event_rate_limits.request_count END,
+        event_count = CASE
+          WHEN eng_event_rate_limits.window_started_at < EXCLUDED.window_started_at
+          THEN 0 ELSE eng_event_rate_limits.event_count END,
+        updated_at = NOW();
+
+      SELECT * INTO v_rate
+        FROM eng_event_rate_limits
+       WHERE account_id = v_token.user_id
+       FOR UPDATE;
+
+      IF v_rate.request_count >= v_request_limit THEN
+        v_retry_after_ms := GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (v_rate.window_started_at + INTERVAL '1 minute' - v_now)) * 1000)::BIGINT);
+        RETURN jsonb_build_object(
+          'httpStatus', 429,
+          'errorCode', 'RATE_LIMITED',
+          'retryAfterMs', v_retry_after_ms
+        );
+      END IF;
+
+      v_allowed_events := GREATEST(0, v_event_limit - v_rate.event_count);
+      UPDATE eng_event_rate_limits
+         SET request_count = request_count + 1,
+             event_count = event_count + LEAST(jsonb_array_length(p_events), v_allowed_events),
+             updated_at = NOW()
+       WHERE account_id = v_token.user_id;
+
       FOR v_item IN SELECT value FROM jsonb_array_elements(p_events)
       LOOP
+        v_event_index := v_event_index + 1;
         v_error := NULL;
         BEGIN
           IF COALESCE(v_item->>'eventId', '') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' THEN
@@ -118,6 +168,17 @@ export function up(sql) {
             'syncStatus', 'dead',
             'serverSequence', NULL,
             'error', jsonb_build_object('code', v_error, 'retryable', FALSE)
+          ));
+          CONTINUE;
+        END IF;
+
+        IF v_event_index > v_allowed_events THEN
+          v_retry_after_ms := GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (v_rate.window_started_at + INTERVAL '1 minute' - v_now)) * 1000)::BIGINT);
+          v_results := v_results || jsonb_build_array(jsonb_build_object(
+            'eventId', v_event_id,
+            'syncStatus', 'failed',
+            'serverSequence', NULL,
+            'error', jsonb_build_object('code', 'RATE_LIMITED', 'retryable', TRUE, 'retryAfterMs', v_retry_after_ms)
           ));
           CONTINUE;
         END IF;
