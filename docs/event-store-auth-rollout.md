@@ -32,7 +32,16 @@ The migration runner is explicit; application startup does not run these migrati
 - `POST /api/events/sync`: requires `Authorization: Bearer <access-token>`, `deviceId` UUID v4, SemVer `clientVersion`, and up to 100 Events.
 - `GET /api/events/pull`: requires `Authorization: Bearer <access-token>`, `afterSequence` (default 0), and `limit` (1–100).
 
-Event Sync currently validates envelope fields, size, Event ID, event type, and idempotency fingerprint. The client-side queue and Replay modules now persist per-account event state, device ID, local counters, retry status, applied IDs, and replay cursor. They are unit-tested, but they are not yet wired into the actual learning-action pipeline. Strict per-type payload schemas and end-to-end application integration remain release blockers. Do not enable `EVENT_SYNC_ENABLED` until those are implemented and tested.
+## Event payload contract v1
+
+The HTTP handler validates the entire submitted batch before calling PostgreSQL. A malformed Event rejects the batch with `400 EVENT_PAYLOAD_INVALID`; no event in that batch is written.
+
+- `action`: exact fields are `wordId` (non-empty string, max 256 characters), `day` (non-negative safe integer), `verification` (`choice`, `spelling`, `dictation`, or `usage`), `result` (`correct` or `wrong`), `hintLevel` (currently `none`), and optional `unitId` (null or non-empty string, max 256 characters). Unknown fields are rejected.
+- `unit_outcome`: exact fields are `unitId` (non-empty string, max 256 characters) and `correct` (boolean). Unknown fields are rejected.
+- Every Event must have a UUID v4 `eventId`, positive safe-integer `localCounter`, and non-negative safe-integer `createdAt`.
+- Payload contracts are deliberately narrow. Extend them only with a versioned contract change and corresponding tests.
+
+Event Sync validates envelope fields, payload schemas, size, Event ID, and idempotency fingerprint. The client-side queue and Replay modules persist per-account event state, device ID, local counters, retry status, applied IDs, and replay cursor. They are unit-tested, but they are not yet wired into the actual learning-action pipeline. Strict per-type payload schema tests and end-to-end application integration remain release blockers. Do not enable `EVENT_SYNC_ENABLED` until those are implemented and tested.
 
 The database rate-limit defaults are 60 sync requests per account per minute and 300 submitted Events per account per minute. Operators can adjust `eng_event_sync_settings.max_requests_per_minute` and `max_events_per_minute` after observing real traffic. Whole-request limits return HTTP 429 with `Retry-After`; per-event limits return HTTP 200 with an individual `RATE_LIMITED` result.
 
@@ -58,6 +67,6 @@ A duplicate Event ID with identical canonical content returns its original seque
 - GitHub Actions runs the migrations against an ephemeral PostgreSQL 16 service and verifies concurrent Event Sync writes, contiguous server sequences, duplicate-event idempotency, conflicting-payload rejection, Event Pull pagination, refresh-token replay revocation, account-deletion tombstones, and session-deletion Token Family preservation/revocation.
 - Client queue and Replay unit tests cover persistent state, per-account isolation, ACK reconciliation, bounded retry backoff, duplicate suppression, cursor persistence, apply failure, and sequence gaps.
 - The queue and Replay modules are not yet wired into the actual learning-action pipeline. Complete that application integration before enabling Event Sync.
-- Strict per-type payload schemas still need to be defined and tested before the sync endpoint is enabled.
+- Payload schema tests validate the currently defined v1 shapes. Confirm all production event producers against these contracts before enabling the sync endpoint.
 - The PostgreSQL integration tests run only against the disposable CI service. No production database migration has been executed.
 - The local API admin handler has been restored and its route module is tested; verify the intended ENOPARKING admin bootstrap secret/configuration before enabling admin operations.
