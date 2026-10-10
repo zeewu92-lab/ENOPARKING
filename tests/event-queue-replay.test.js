@@ -407,3 +407,16 @@ test('Replay rejects string server sequence values rather than coercing them', a
   }), /EVENT_PULL_SEQUENCE_INVALID/);
   assert.equal(queue.getReplayCursor(), 0);
 });
+
+
+test('Replay does not advance past an empty page with a higher cursor', async () => {
+  const queue = new EventQueue({ accountId: 'test-user', storage: makeStorage(), createId: makeIds() });
+  await assert.rejects(() => replayEvents({
+    queue,
+    clientVersion: '1.0.0',
+    push: async () => ({ results: [] }),
+    pull: async () => ({ events: [], nextSequence: 5, hasMore: false }),
+    applyEvent: async () => {}
+  }), /EVENT_PULL_CURSOR_GAP/);
+  assert.equal(queue.getReplayCursor(), 0);
+});
