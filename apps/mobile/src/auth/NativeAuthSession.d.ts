@@ -9,7 +9,7 @@ export interface NativeAuthSessionController {
   getAccessCredentials(accountId: string): Promise<{ accountId: string; accessToken: string } | null>;
 }
 export declare function createNativeAuthSession(options: {
-  baseUrl?: string;
+  baseUrl: string;
   api?: Pick<NativeAuthApi, 'login' | 'refresh' | 'revoke'>;
   vault: {
     saveLogin(input: { accountId: string; accessToken: string; refreshToken: string; expiresAt: number }): Promise<NativeSession>;
