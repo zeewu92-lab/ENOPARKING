@@ -48,8 +48,8 @@ export class NativeCredentialVault {
     validateSession(session);
     // Persist new account's refresh token before switching the in-memory session.
     await this.secureStore.setItemAsync(TOKEN_KEY_PREFIX + accountId, refreshToken);
-    this.session = session;
     await this.secureStore.setItemAsync(SESSION_KEY, JSON.stringify({ accountId }));
+    this.session = session;
     return { ...session };
   }
 
@@ -75,7 +75,7 @@ export class NativeCredentialVault {
     if (typeof refresh !== 'function') throw new Error('NATIVE_REFRESH_ADAPTER_REQUIRED');
     if (this.refreshInFlight.has(accountId)) return this.refreshInFlight.get(accountId);
     const operation = (async () => {
-      const session = this.getActiveSession();
+      const session = this.session;
       if (!session || session.accountId !== accountId) throw new Error('NATIVE_SESSION_ACCOUNT_MISMATCH');
       const oldRefreshToken = await this.getRefreshToken(accountId);
       validateRefreshToken(oldRefreshToken);
@@ -97,20 +97,32 @@ export class NativeCredentialVault {
   }
 
   async logout({ revoke } = {}) {
-    const session = this.session;
+    const active = this.session;
     this.session = null;
-    if (!session) return { status: 'signed_out' };
-    const key = TOKEN_KEY_PREFIX + session.accountId;
+    const saved = await this.secureStore.getItemAsync(SESSION_KEY);
+    let accountId = active?.accountId;
+    if (!accountId && saved) {
+      try {
+        const metadata = JSON.parse(saved);
+        validateAccountId(metadata?.accountId);
+        accountId = metadata.accountId;
+      } catch {
+        await this.secureStore.deleteItemAsync(SESSION_KEY);
+        return { status: 'signed_out' };
+      }
+    }
+    if (!accountId) return { status: 'signed_out' };
+    const key = TOKEN_KEY_PREFIX + accountId;
     const refreshToken = await this.secureStore.getItemAsync(key);
     try {
       if (typeof revoke === 'function' && refreshToken) {
-        await revoke({ accountId: session.accountId, refreshToken });
+        await revoke({ accountId, refreshToken });
       }
     } finally {
       await this.secureStore.deleteItemAsync(key);
       await this.secureStore.deleteItemAsync(SESSION_KEY);
     }
-    return { status: 'signed_out', accountId: session.accountId };
+    return { status: 'signed_out', accountId };
   }
 
   async restoreSession({ refresh }) {
