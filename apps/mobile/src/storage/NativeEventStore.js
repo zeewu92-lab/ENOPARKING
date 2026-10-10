@@ -321,6 +321,14 @@ export class NativeEventStore {
              WHERE account_id = ? AND event_id = ?`,
             event.serverSequence, accountId, event.eventId
           );
+          // The server may deliver our own event before its POST ACK arrives.
+          // Confirm it here so it does not remain in the pending queue forever.
+          await tx.runAsync(
+            `UPDATE enop_learning_events
+             SET sync_status = 'confirmed', server_sequence = ?, error_code = NULL
+             WHERE account_id = ? AND event_id = ? AND sync_status = 'pending'`,
+            event.serverSequence, accountId, event.eventId
+          );
         }
 
         cursor = event.serverSequence;
