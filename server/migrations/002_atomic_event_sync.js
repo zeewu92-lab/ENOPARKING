@@ -95,9 +95,11 @@ export function up(sql) {
               v_payload := v_item->'payload';
             END IF;
             IF v_error IS NULL AND (v_local_counter IS NULL OR v_created_at IS NULL
-              OR v_local_counter <= 0 OR v_local_counter > 9007199254740991
-              OR octet_length(v_payload::TEXT) > 65536) THEN
+              OR v_local_counter <= 0 OR v_local_counter > 9007199254740991) THEN
               v_error := 'SCHEMA_INVALID';
+            END IF;
+            IF v_error IS NULL AND octet_length(v_payload::TEXT) > 65536 THEN
+              v_error := 'PAYLOAD_TOO_LARGE';
             END IF;
           EXCEPTION WHEN OTHERS THEN
             v_error := 'SCHEMA_INVALID';
