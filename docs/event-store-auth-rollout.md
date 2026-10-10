@@ -32,6 +32,10 @@ The migration runner is explicit; application startup does not run these migrati
 
 Event Sync currently validates envelope fields, size, Event ID, type, and idempotency fingerprint. The exact strict per-type payload schemas, Event download endpoint, client-side durable queue, localCounter/deviceId persistence, and full Replay integration remain release blockers. Do not enable `EVENT_SYNC_ENABLED` until those are implemented and tested.
 
+The database rate-limit defaults are 60 sync requests per account per minute and 300 submitted Events per account per minute. Operators can adjust `eng_event_sync_settings.max_requests_per_minute` and `max_events_per_minute` after observing real traffic. Whole-request limits return HTTP 429 with `Retry-After`; per-event limits return HTTP 200 with an individual `RATE_LIMITED` result.
+
+To enable the database side of Event Sync after all gates pass, an operator must explicitly run `UPDATE eng_event_sync_settings SET enabled = TRUE, updated_at = NOW() WHERE id = 1;` in the target environment. To stop new sync/pull requests, set it back to `FALSE` and set `EVENT_SYNC_ENABLED=false`. Do not run either command until acceptance is complete.
+
 ## Transaction and ordering
 
 The database function serializes an account's Event Sync against account status changes and Token Family revocation by locking the account row before the Family row. The Event insert and account-level sequence allocation execute inside the same PostgreSQL function call. The database enforces unique account-plus-Event-ID and account-plus-sequence pairs.
