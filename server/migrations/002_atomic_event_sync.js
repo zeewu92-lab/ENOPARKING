@@ -75,7 +75,10 @@ export function up(sql) {
         RETURN jsonb_build_object('httpStatus', 401, 'errorCode', 'TOKEN_EXPIRED');
       END IF;
 
-      IF jsonb_typeof(p_events) <> 'array' OR jsonb_array_length(p_events) > 100 THEN
+      IF jsonb_typeof(p_events) IS DISTINCT FROM 'array' THEN
+        RETURN jsonb_build_object('httpStatus', 400, 'errorCode', 'REQUEST_INVALID');
+      END IF;
+      IF jsonb_array_length(p_events) > 100 THEN
         RETURN jsonb_build_object('httpStatus', 400, 'errorCode', 'REQUEST_INVALID');
       END IF;
 
