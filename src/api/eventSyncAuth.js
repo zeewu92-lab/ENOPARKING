@@ -1,4 +1,4 @@
-const ENABLED = import.meta.env.VITE_EVENT_SYNC_ENABLED === 'true';
+const ENABLED = import.meta.env?.VITE_EVENT_SYNC_ENABLED === 'true';
 const REFRESH_REQUEST_ID_KEY = 'enoparking:refresh-request-id:v1';
 const ACCESS_TOKEN_SKEW_MS = 20_000;
 
