@@ -344,3 +344,32 @@ test('corrupt persisted queue, cursor, and applied IDs fail closed without reset
   assert.throws(() => queue.enqueue({ type: 'action', payload: { wordId: 'w-1' } }), /EVENT_QUEUE_STORAGE_CORRUPT/);
   assert.equal(queue.list().length, 0);
 });
+
+
+test('enqueue rejects a duplicate event ID without mutating the existing queue', () => {
+  const queue = new EventQueue({ accountId: 'test-user', storage: makeStorage(), createId: makeIds() });
+  const eventId = 'b6d2cfa9-67a7-4e4b-9b0e-000000000201';
+  const first = queue.enqueue({ eventId, type: 'action', payload: { wordId: 'w-1' } });
+
+  assert.throws(
+    () => queue.enqueue({ eventId, type: 'action', payload: { wordId: 'w-2' } }),
+    /EVENT_ID_DUPLICATE/
+  );
+  assert.deepEqual(queue.list(), [first]);
+  assert.equal(queue.readState().localCounter, 1);
+});
+
+test('reconciliation rejects duplicate or malformed acknowledgement entries atomically', () => {
+  const queue = new EventQueue({ accountId: 'test-user', storage: makeStorage(), createId: makeIds() });
+  const event = queue.enqueue({ type: 'action', payload: { wordId: 'w-1' } });
+
+  assert.throws(() => queue.reconcile([
+    { eventId: event.eventId, syncStatus: 'confirmed', serverSequence: 1 },
+    { eventId: event.eventId, syncStatus: 'failed', error: { code: 'CONFLICT' } }
+  ]), /EVENT_SYNC_RESPONSE_INVALID/);
+  assert.throws(() => queue.reconcile([
+    { syncStatus: 'confirmed', serverSequence: 1 }
+  ]), /EVENT_SYNC_RESPONSE_INVALID/);
+  assert.equal(queue.list()[0].syncStatus, 'pending');
+  assert.equal(queue.list()[0].serverSequence, null);
+});
