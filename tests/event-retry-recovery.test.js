@@ -144,3 +144,42 @@ test('re-login under a different account cannot push another account pending eve
   assert.equal(userA.list().length, 1);
   assert.equal(userB.list().length, 0);
 });
+
+test('offline-created event remains pending and syncs after network recovery', async () => {
+  const storage = makeStorage();
+  const queue = new EventQueue({ accountId: 'user-offline', storage, createId: makeId });
+  const event = queue.enqueue({
+    type: 'action',
+    payload: { action: 'remember', wordId: 'offline-word' },
+    createdAt: 400
+  });
+
+  await assert.rejects(() => replayEvents({
+    queue,
+    clientVersion: '1.0.0',
+    push: async () => { throw new Error('NETWORK_OFFLINE'); },
+    pull: emptyPull,
+    applyEvent: async () => {}
+  }), /NETWORK_OFFLINE/);
+
+  assert.equal(queue.list()[0].eventId, event.eventId);
+  assert.equal(queue.list()[0].syncStatus, 'pending');
+
+  const report = await replayEvents({
+    queue,
+    clientVersion: '1.0.0',
+    push: async ({ events }) => ({
+      results: events.map(item => ({
+        eventId: item.eventId,
+        syncStatus: 'confirmed',
+        serverSequence: 1
+      }))
+    }),
+    pull: emptyPull,
+    applyEvent: async () => {}
+  });
+
+  assert.equal(report.confirmed, 1);
+  assert.equal(queue.list()[0].eventId, event.eventId);
+  assert.equal(queue.list()[0].syncStatus, 'confirmed');
+});
