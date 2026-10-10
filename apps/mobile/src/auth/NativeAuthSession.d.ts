@@ -8,10 +8,10 @@ export interface NativeAuthSessionController {
   getActiveSession(): NativeSession | null;
   getAccessCredentials(accountId: string): Promise<{ accountId: string; accessToken: string } | null>;
 }
-export declare function createNativeAuthSession(options?: {
+export declare function createNativeAuthSession(options: {
   baseUrl?: string;
   api?: Pick<NativeAuthApi, 'login' | 'refresh' | 'revoke'>;
-  vault?: {
+  vault: {
     saveLogin(input: { accountId: string; accessToken: string; refreshToken: string; expiresAt: number }): Promise<NativeSession>;
     restoreSession(options: { refresh: (input: { accountId: string; refreshToken: string; refreshRequestId: string }) => Promise<{ accountId: string; accessToken: string; refreshToken: string; expiresAt: number }> }): Promise<NativeSession | null>;
     rotateRefreshToken(options: { accountId: string; refresh: (input: { accountId: string; refreshToken: string; refreshRequestId: string }) => Promise<{ accountId: string; accessToken: string; refreshToken: string; expiresAt: number }> }): Promise<NativeSession>;
