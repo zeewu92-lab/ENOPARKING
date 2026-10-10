@@ -9,12 +9,12 @@
     "build": "vite build",
     "preview": "vite preview",
     "db:migrate": "node server/migrate.js",
-    "test": "node --test tests/event-sync.test.js tests/migration-contract.test.js tests/event-queue-replay.test.js tests/transaction-contract.test.js tests/event-retry-recovery.test.js tests/event-ordering-convergence.test.js tests/account-sync-lock.test.js tests/event-queue-hardening.test.js tests/shared-event-contract.test.js tests/native-sqlite-schema.test.js tests/native-event-store.test.js tests/native-sync-coordinator.test.js tests/native-event-sync-service.test.js",
+    "test": "node --test tests/event-sync.test.js tests/migration-contract.test.js tests/event-queue-replay.test.js tests/transaction-contract.test.js tests/event-retry-recovery.test.js tests/event-ordering-convergence.test.js tests/account-sync-lock.test.js tests/event-queue-hardening.test.js tests/shared-event-contract.test.js tests/native-sqlite-schema.test.js tests/native-event-store.test.js tests/native-sync-coordinator.test.js tests/native-event-sync-service.test.js tests/native-event-sync-transport.test.js",
     "check:server": "find server api -name '*.js' -print0 | xargs -0 -n1 node --check",
-    "test:event-sync": "node --test tests/event-sync.test.js tests/migration-contract.test.js tests/event-queue-replay.test.js tests/learning-state-sync.test.js tests/transaction-contract.test.js tests/event-retry-recovery.test.js tests/event-ordering-convergence.test.js tests/account-sync-lock.test.js tests/event-queue-hardening.test.js tests/shared-event-contract.test.js tests/native-sqlite-schema.test.js tests/native-event-store.test.js tests/native-sync-coordinator.test.js tests/native-event-sync-service.test.js",
+    "test:event-sync": "node --test tests/event-sync.test.js tests/migration-contract.test.js tests/event-queue-replay.test.js tests/learning-state-sync.test.js tests/transaction-contract.test.js tests/event-retry-recovery.test.js tests/event-ordering-convergence.test.js tests/account-sync-lock.test.js tests/event-queue-hardening.test.js tests/shared-event-contract.test.js tests/native-sqlite-schema.test.js tests/native-event-store.test.js tests/native-sync-coordinator.test.js tests/native-event-sync-service.test.js tests/native-event-sync-transport.test.js",
     "test:all": "node --test",
     "test:postgres": "node --test tests/postgres-integration.test.js",
-    "check:mobile-store": "node --check apps/mobile/src/storage/NativeEventStore.js && node --check apps/mobile/src/sync/NativeSyncCoordinator.js && node --check apps/mobile/src/sync/NativeEventSyncService.js"
+    "check:mobile-store": "node --check apps/mobile/src/storage/NativeEventStore.js && node --check apps/mobile/src/sync/NativeSyncCoordinator.js && node --check apps/mobile/src/sync/NativeEventSyncService.js && node --check apps/mobile/src/sync/NativeEventSyncTransport.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
