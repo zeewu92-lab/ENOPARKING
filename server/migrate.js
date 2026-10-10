@@ -1,5 +1,6 @@
+import { pathToFileURL } from 'node:url';
 import { baozhengSchema, huoquSql } from './db.js';
-import migration001 from './migrations/001_event_store_auth.js';
+import * as migration001 from './migrations/001_event_store_auth.js';
 
 const migrations = [migration001];
 
@@ -20,14 +21,15 @@ export async function runMigrations() {
 
     const statements = migration.up(sql);
     await sql.transaction([
+      sql`SELECT pg_advisory_xact_lock(947201, 1)`,
       ...statements,
-      sql`INSERT INTO eng_schema_migrations(version) VALUES (${migration.version})`
+      sql`INSERT INTO eng_schema_migrations(version) VALUES (${migration.version}) ON CONFLICT (version) DO NOTHING`
     ]);
-    console.log(`[migrations] applied ${migration.version}`);
+    console.log(`[migrations] applied/check complete ${migration.version}`);
   }
 }
 
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   runMigrations().then(() => {
     console.log('[migrations] complete');
     process.exitCode = 0;
