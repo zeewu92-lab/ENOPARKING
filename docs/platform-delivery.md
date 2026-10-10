@@ -26,3 +26,9 @@ Android 與 iOS 是同等優先的正式客戶端，必須並線設計、並線�
 目前此分支已建立 React Web 過渡端的事件佇列、Replay、重試與服務端事件序號基礎。尚未建立 Android/iOS 原生執行目標，也未完成原生 SQLite adapter、App lifecycle 同步排程與雙平台整合測試。因此目前的成果只代表同步協定基礎已開始驗證，不能宣稱 Android/iOS 客戶端已完成。
 
 下一階段應先確立共用領域模組與平台儲存介面，再並線建立 Android 與 iOS 執行目標，避免繼續擴大 Web-only 實作而增加後續移植成本。
+
+## 共用事件契約測試素材
+
+- `shared/learning/event-contract-v1.json` 是 Android、iOS 與過渡 Web 端共同使用的有效／無效事件測試資料。
+- `tests/shared-event-contract.test.js` 會用服務端目前的 v1 schema 驗證這份資料，避免跨端各自實作時逐漸偏離。
+- 新增事件型別或改動 payload 時，必須同步更新 fixture 與服務端 schema，並在 Android、iOS 的測試套件中重用相同案例。不得只在 Web 測試中驗證新契約。
