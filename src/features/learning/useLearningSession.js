@@ -174,6 +174,7 @@ export function useLearningSession(wordList, sourceKey, requestedGoal = null, ac
 
     let syncQueue = null;
     let queuedEvent = null;
+    let learningEventRecorded = false;
     try {
       const wordId = String(currentWord.id ?? currentWord.word ?? currentWord.w);
       const day = getTodayDay();
@@ -195,7 +196,7 @@ export function useLearningSession(wordList, sourceKey, requestedGoal = null, ac
         });
       }
 
-      const result = recordLearningEvent({
+      recordLearningEvent({
         wordId,
         day,
         verification: verification.verification,
@@ -204,6 +205,7 @@ export function useLearningSession(wordList, sourceKey, requestedGoal = null, ac
         accountId: scopedAccountId,
         syncEventId: queuedEvent?.eventId || null
       });
+      learningEventRecorded = true;
 
       if (queuedEvent) void syncLearningEventAfterWrite(scopedAccountId);
 
@@ -249,12 +251,14 @@ export function useLearningSession(wordList, sourceKey, requestedGoal = null, ac
 
       return true;
     } catch (error) {
-      if (syncQueue && queuedEvent) {
+      if (!learningEventRecorded && syncQueue && queuedEvent) {
         try { syncQueue.discardPending(queuedEvent.eventId); } catch {}
       }
       setFeedback({
         ok: false,
-        message: error?.message || '學習事件寫入失敗，這次不計入進度。'
+        message: learningEventRecorded
+          ? (error?.message || '學習事件已記錄，但進度更新未完成。')
+          : (error?.message || '學習事件寫入失敗，這次不計入進度。')
       });
       return false;
     } finally {
