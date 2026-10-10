@@ -1,5 +1,7 @@
 const TOKEN_KEY_PREFIX = 'enoparking.native.refresh.v1.';
 const SESSION_KEY = 'enoparking.native.session.v1';
+const REFRESH_REQUEST_PREFIX = 'enoparking.native.refresh-request.v1.';
+const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function validateAccountId(accountId) {
   if (typeof accountId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(accountId)) {
@@ -28,15 +30,17 @@ function validateSession(session) {
  * by the injected server adapter; persistence is account-scoped and ordered.
  */
 export class NativeCredentialVault {
-  constructor({ secureStore, now = () => Date.now() } = {}) {
+  constructor({ secureStore, now = () => Date.now(), createRefreshRequestId } = {}) {
     if (!secureStore || typeof secureStore.getItemAsync !== 'function' ||
         typeof secureStore.setItemAsync !== 'function' ||
         typeof secureStore.deleteItemAsync !== 'function') {
       throw new Error('NATIVE_SECURE_STORE_ADAPTER_REQUIRED');
     }
     if (typeof now !== 'function') throw new Error('NATIVE_CREDENTIAL_CLOCK_INVALID');
+    if (typeof createRefreshRequestId !== 'function') throw new Error('NATIVE_REFRESH_REQUEST_ID_PROVIDER_REQUIRED');
     this.secureStore = secureStore;
     this.now = now;
+    this.createRefreshRequestId = createRefreshRequestId;
     this.session = null;
     this.refreshInFlight = new Map();
   }
@@ -70,6 +74,18 @@ export class NativeCredentialVault {
     return this.secureStore.getItemAsync(TOKEN_KEY_PREFIX + accountId);
   }
 
+  async getOrCreateRefreshRequestId(accountId) {
+    const key = REFRESH_REQUEST_PREFIX + accountId;
+    const existing = await this.secureStore.getItemAsync(key);
+    if (existing && UUID_V4.test(existing)) return existing;
+    const requestId = await this.createRefreshRequestId();
+    if (typeof requestId !== 'string' || !UUID_V4.test(requestId)) {
+      throw new Error('NATIVE_REFRESH_REQUEST_ID_INVALID');
+    }
+    await this.secureStore.setItemAsync(key, requestId);
+    return requestId;
+  }
+
   async rotateRefreshToken({ accountId, refresh }) {
     validateAccountId(accountId);
     if (typeof refresh !== 'function') throw new Error('NATIVE_REFRESH_ADAPTER_REQUIRED');
@@ -79,12 +95,14 @@ export class NativeCredentialVault {
       if (!session || session.accountId !== accountId) throw new Error('NATIVE_SESSION_ACCOUNT_MISMATCH');
       const oldRefreshToken = await this.getRefreshToken(accountId);
       validateRefreshToken(oldRefreshToken);
-      const next = await refresh({ accountId, refreshToken: oldRefreshToken });
+      const refreshRequestId = await this.getOrCreateRefreshRequestId(accountId);
+      const next = await refresh({ accountId, refreshToken: oldRefreshToken, refreshRequestId });
       if (!next || next.accountId !== accountId) throw new Error('NATIVE_REFRESH_ACCOUNT_MISMATCH');
       validateSession(next);
       validateRefreshToken(next.refreshToken);
       // Store rotated token first. If persistence fails, do not expose the new access token.
       await this.secureStore.setItemAsync(TOKEN_KEY_PREFIX + accountId, next.refreshToken);
+      await this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + accountId);
       this.session = { accountId, accessToken: next.accessToken, expiresAt: next.expiresAt };
       return { ...this.session };
     })();
@@ -120,6 +138,7 @@ export class NativeCredentialVault {
       }
     } finally {
       await this.secureStore.deleteItemAsync(key);
+      await this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + accountId);
       await this.secureStore.deleteItemAsync(SESSION_KEY);
     }
     return { status: 'signed_out', accountId };
@@ -138,11 +157,13 @@ export class NativeCredentialVault {
       return null;
     }
     validateRefreshToken(refreshToken);
-    const next = await refresh({ accountId: metadata.accountId, refreshToken });
+    const refreshRequestId = await this.getOrCreateRefreshRequestId(metadata.accountId);
+    const next = await refresh({ accountId: metadata.accountId, refreshToken, refreshRequestId });
     if (!next || next.accountId !== metadata.accountId) throw new Error('NATIVE_REFRESH_ACCOUNT_MISMATCH');
     validateSession(next);
     validateRefreshToken(next.refreshToken);
     await this.secureStore.setItemAsync(TOKEN_KEY_PREFIX + next.accountId, next.refreshToken);
+    await this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + next.accountId);
     this.session = { accountId: next.accountId, accessToken: next.accessToken, expiresAt: next.expiresAt };
     return { ...this.session };
   }
@@ -155,6 +176,7 @@ export class NativeCredentialVault {
         const metadata = JSON.parse(saved);
         validateAccountId(metadata.accountId);
         await this.secureStore.deleteItemAsync(TOKEN_KEY_PREFIX + metadata.accountId);
+        await this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + metadata.accountId);
       } catch { /* invalid metadata must not be used to form a storage key */ }
     }
     await this.secureStore.deleteItemAsync(SESSION_KEY);
