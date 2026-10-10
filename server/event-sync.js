@@ -71,6 +71,9 @@ export async function chuliEventSync(req, res) {
     const token = readBearer(req);
     if (!token) return sendJson(res, 401, { error: { code: 'TOKEN_INVALID', retryable: false } });
     const body = await readBody(req);
+    if (Buffer.byteLength(JSON.stringify(body), 'utf8') > 4 * 1024 * 1024) {
+      return sendJson(res, 400, { error: { code: 'REQUEST_INVALID', retryable: false } });
+    }
     if (!UUID_V4.test(String(body.deviceId || '')) ||
         !SEMVER.test(String(body.clientVersion || '')) ||
         !Array.isArray(body.events) ||
