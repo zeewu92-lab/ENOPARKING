@@ -144,6 +144,15 @@ test('PostgreSQL migrations, event sync concurrency, idempotency, pull paginatio
       concurrentEvents.map(event => callSync(pool, accessHash, deviceId, [event]))
     );
     assert.ok(concurrentResults.every(result => result.httpStatus === 200));
+    const acknowledgedSequences = concurrentResults.flatMap(result =>
+      result.results.map(item => item.serverSequence)
+    );
+    assert.equal(acknowledgedSequences.length, 20);
+    assert.ok(acknowledgedSequences.every(Number.isSafeInteger));
+    assert.deepEqual(
+      [...acknowledgedSequences].sort((a, b) => a - b),
+      Array.from({ length: 20 }, (_, i) => i + 1)
+    );
 
     const rows = await pool.query(
       'SELECT event_id, server_sequence FROM eng_events WHERE account_id = $1 ORDER BY server_sequence',
