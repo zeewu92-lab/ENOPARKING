@@ -85,3 +85,39 @@ test('native replay refuses a sequence gap inside a single database transaction'
   }], async () => {}), /NATIVE_REPLAY_SEQUENCE_GAP/);
   assert.equal(transactions, 1);
 });
+
+test('native retry backoff is bounded and account-scoped', async () => {
+  const updates = [];
+  const db = {
+    withExclusiveTransactionAsync: async operation => operation({
+      getFirstAsync: async sql => sql.includes('syncStatus')
+        ? { syncStatus: 'pending', attemptCount: 0 }
+        : null,
+      runAsync: async (sql, ...params) => { updates.push({ sql, params }); return { changes: 1 }; }
+    })
+  };
+  const store = new NativeEventStore(db, { clock: () => 100 });
+  await store.recordSyncFailure('account-a', ['event-1'], 'NETWORK_UNAVAILABLE');
+  assert.equal(updates[0].params[0], 1);
+  assert.equal(updates[0].params[1], 1100);
+  assert.equal(updates[0].params[2], 'NETWORK_UNAVAILABLE');
+  assert.match(updates[0].sql, /WHERE account_id = \? AND event_id = \? AND sync_status = 'pending'/);
+});
+
+test('native retry validates the full event set before mutating any event', async () => {
+  const writes = [];
+  const db = {
+    withExclusiveTransactionAsync: async operation => operation({
+      getFirstAsync: async (_sql, accountId, eventId) => eventId === 'event-1'
+        ? { syncStatus: 'pending', attemptCount: 0 }
+        : null,
+      runAsync: async (...args) => { writes.push(args); return { changes: 1 }; }
+    })
+  };
+  const store = new NativeEventStore(db, { clock: () => 100 });
+  await assert.rejects(
+    store.recordSyncFailure('account-a', ['event-1', 'unknown-event'], 'NETWORK_UNAVAILABLE'),
+    /NATIVE_RETRY_UNKNOWN_EVENT/
+  );
+  assert.equal(writes.length, 0);
+});
