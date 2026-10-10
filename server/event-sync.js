@@ -4,6 +4,48 @@ import { huoquSql } from './db.js';
 export const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
+const ACTION_FIELDS = new Set(['wordId', 'day', 'verification', 'result', 'hintLevel', 'unitId']);
+const UNIT_OUTCOME_FIELDS = new Set(['unitId', 'correct']);
+const VERIFICATIONS = new Set(['choice', 'spelling', 'dictation', 'usage']);
+const RESULTS = new Set(['correct', 'wrong']);
+
+function isPlainObject(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function hasOnlyFields(payload, fields) {
+  return Object.keys(payload).every(key => fields.has(key));
+}
+
+function isNonEmptyString(value, maxLength = 256) {
+  return typeof value === 'string' && value.trim().length > 0 && value.length <= maxLength;
+}
+
+export function validateEventPayload(type, payload) {
+  if (!isPlainObject(payload)) return false;
+
+  if (type === 'action') {
+    if (!hasOnlyFields(payload, ACTION_FIELDS)) return false;
+    if (!isNonEmptyString(payload.wordId)) return false;
+    if (!Number.isSafeInteger(payload.day) || payload.day < 0) return false;
+    if (!VERIFICATIONS.has(payload.verification)) return false;
+    if (!RESULTS.has(payload.result)) return false;
+    if (payload.hintLevel !== 'none') return false;
+    if (payload.unitId !== undefined && payload.unitId !== null && !isNonEmptyString(payload.unitId)) return false;
+    return true;
+  }
+
+  if (type === 'unit_outcome') {
+    return hasOnlyFields(payload, UNIT_OUTCOME_FIELDS) &&
+      isNonEmptyString(payload.unitId) &&
+      typeof payload.correct === 'boolean';
+  }
+
+  return false;
+}
+
 function sendJson(res, status, body) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -81,8 +123,21 @@ export async function chuliEventSync(req, res) {
       return sendJson(res, 400, { error: { code: 'REQUEST_INVALID', retryable: false } });
     }
 
+    // Reject the whole batch before opening a transaction if any payload violates its versioned contract.
+    if (body.events.some(event =>
+      !isPlainObject(event) ||
+      !UUID_V4.test(String(event.eventId || '')) ||
+      !Number.isSafeInteger(event.localCounter) ||
+      event.localCounter < 1 ||
+      !Number.isSafeInteger(event.createdAt) ||
+      event.createdAt < 0 ||
+      !validateEventPayload(event.type, event.payload)
+    )) {
+      return sendJson(res, 400, { error: { code: 'EVENT_PAYLOAD_INVALID', retryable: false } });
+    }
+
     const events = body.events.map(event => ({
-      ...(event && typeof event === 'object' && !Array.isArray(event) ? event : {}),
+      ...event,
       _fingerprint: fingerprint(event)
     }));
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
