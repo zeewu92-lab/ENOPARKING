@@ -95,6 +95,12 @@ export function up(sql) {
       deleted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`,
     sql`CREATE INDEX IF NOT EXISTS eng_deleted_access_tokens_age_idx
-      ON eng_deleted_access_tokens(deleted_at)`
+      ON eng_deleted_access_tokens(deleted_at)`,
+    sql`CREATE TABLE IF NOT EXISTS eng_deleted_refresh_tokens (
+      token_hash TEXT PRIMARY KEY,
+      deleted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    sql`CREATE INDEX IF NOT EXISTS eng_deleted_refresh_tokens_age_idx
+      ON eng_deleted_refresh_tokens(deleted_at)`
   ];
 }
