@@ -130,7 +130,7 @@ test('native device identity is persisted once and reused across sync service re
       transactions += 1;
       return operation({
         getFirstAsync: async () => savedId ? { deviceId: savedId } : null,
-        runAsync: async (_sql, _singleton, deviceId) => {
+        runAsync: async (_sql, deviceId, _createdAt) => {
           if (!savedId) savedId = deviceId;
           return { changes: 1 };
         }
