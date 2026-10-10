@@ -18,7 +18,13 @@ export function up(sql) {
       v_next BIGINT;
       v_high_water BIGINT;
       v_has_more BOOLEAN;
+      v_enabled BOOLEAN;
     BEGIN
+      SELECT enabled INTO v_enabled FROM eng_event_sync_settings WHERE id = 1 FOR SHARE;
+      IF NOT COALESCE(v_enabled, FALSE) THEN
+        RETURN jsonb_build_object('httpStatus', 503, 'errorCode', 'EVENT_SYNC_DISABLED');
+      END IF;
+
       SELECT user_id, family_id, expires_at INTO v_token
         FROM eng_access_tokens
        WHERE token_hash = p_access_token_hash;
