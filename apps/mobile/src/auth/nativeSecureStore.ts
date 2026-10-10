@@ -5,17 +5,17 @@ import * as SecureStore from 'expo-secure-store';
  * The refresh token remains device-local and is not migrated through backups.
  */
 export const nativeSecureStore = {
-  getItemAsync(key) {
+  getItemAsync(key: string): Promise<string | null> {
     return SecureStore.getItemAsync(key, {
       keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
     });
   },
-  setItemAsync(key, value) {
+  setItemAsync(key: string, value: string): Promise<void> {
     return SecureStore.setItemAsync(key, value, {
       keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
     });
   },
-  deleteItemAsync(key) {
+  deleteItemAsync(key: string): Promise<void> {
     return SecureStore.deleteItemAsync(key);
   },
 };
