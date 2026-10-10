@@ -73,3 +73,10 @@ A duplicate Event ID with identical canonical content returns its original seque
 - Payload schema tests validate the currently defined v1 shapes. Confirm all production event producers against these contracts before enabling the sync endpoint.
 - The PostgreSQL integration tests run only against the disposable CI service. No production database migration has been executed.
 - The local API admin handler has been restored and its route module is tested; verify the intended ENOPARKING admin bootstrap secret/configuration before enabling admin operations.
+
+
+### Additional client-side concurrency safeguards
+
+- Same-account Replay now uses the browser Web Locks API with an exclusive lock named `enoparking:event-sync:<encoded-account-id>`, so cooperating same-origin tabs/workers do not concurrently mutate the same account's local cursor and applied-ID ledger. The existing per-tab single-flight guard remains in place.
+- Browsers without Web Locks fall back to per-tab single-flight only. Cross-tab serialization is therefore not guaranteed in that fallback environment; verify the supported browser matrix before production enablement.
+- Tests cover same-account lock serialization, independent locks for different accounts, bounded exponential retry backoff, malformed/duplicate ACK rejection, offline retry recovery, and deterministic learning-state replay from reordered server events.
