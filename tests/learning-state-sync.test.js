@@ -46,14 +46,17 @@ test('remote learning actions are idempotent and use server sequence ordering', 
   const previousWindow = globalThis.window;
   globalThis.window = { localStorage: makeStorage() };
   try {
+    const day = 20637;
+    const expected = getNextVerification('word-1', day, 'user-a').verification;
+    const remoteVerification = ['choice', 'spelling', 'dictation', 'usage'].find(value => value !== expected);
     const remote = {
       eventId: 'b6d2cfa9-67a7-4e4b-9b0e-2ec1d4a63b28',
       type: 'action',
       serverSequence: 7,
       payload: {
         wordId: 'Word-1',
-        day: 20637,
-        verification: 'choice',
+        day,
+        verification: remoteVerification,
         result: 'correct',
         hintLevel: 'none'
       }
@@ -101,4 +104,22 @@ test('local event server sequence can be reconciled after sync acknowledgement',
 test('remote event schema rejects malformed payload and missing account identity', () => {
   assert.throws(() => applyRemoteLearningEvent({ type: 'action', eventId: 'remote', serverSequence: 1, payload: {} }, 'user-a'), /EVENT_PAYLOAD_INVALID/);
   assert.throws(() => applyRemoteLearningEvent({ type: 'action', eventId: 'remote', serverSequence: 1, payload: {} }, ''), /LEARNING_EVENT_ACCOUNT_REQUIRED/);
+});
+
+test('remote unit outcomes are persisted and do not block replay consumers', () => {
+  const previousWindow = globalThis.window;
+  globalThis.window = { localStorage: makeStorage() };
+  try {
+    assert.equal(applyRemoteLearningEvent({
+      eventId: 'b6d2cfa9-67a7-4e4b-9b0e-2ec1d4a63b29',
+      type: 'unit_outcome',
+      serverSequence: 8,
+      payload: { unitId: 'unit-1', correct: true }
+    }, 'user-a'), true);
+    assert.equal(getLearningEvents('user-a')[0].type, 'unit_outcome');
+    assert.equal(getLearningEvents('user-a')[0].correct, true);
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
 });
