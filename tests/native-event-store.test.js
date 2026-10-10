@@ -121,3 +121,38 @@ test('native retry validates the full event set before mutating any event', asyn
   );
   assert.equal(writes.length, 0);
 });
+
+test('native device identity is persisted once and reused across sync service restarts', async () => {
+  let savedId = null;
+  let transactions = 0;
+  const db = {
+    withExclusiveTransactionAsync: async operation => {
+      transactions += 1;
+      return operation({
+        getFirstAsync: async () => savedId ? { deviceId: savedId } : null,
+        runAsync: async (_sql, _singleton, deviceId) => {
+          if (!savedId) savedId = deviceId;
+          return { changes: 1 };
+        }
+      });
+    }
+  };
+  const store = new NativeEventStore(db, { clock: () => 100 });
+  const first = await store.getOrCreateDeviceId(() => 'b6b9e8b4-7d11-4f2d-9a8b-112233445566');
+  const second = await store.getOrCreateDeviceId(() => 'c7c9e8b4-7d11-4f2d-9a8b-112233445566');
+  assert.equal(first, 'b6b9e8b4-7d11-4f2d-9a8b-112233445566');
+  assert.equal(second, first);
+  assert.equal(transactions, 2);
+});
+
+test('native device identity rejects malformed identifiers before database transaction', async () => {
+  let transactions = 0;
+  const store = new NativeEventStore({
+    withExclusiveTransactionAsync: async operation => {
+      transactions += 1;
+      return operation({ getFirstAsync: async () => null, runAsync: async () => ({ changes: 1 }) });
+    }
+  });
+  await assert.rejects(store.getOrCreateDeviceId(() => 'not-a-uuid'), /NATIVE_DEVICE_ID_INVALID/);
+  assert.equal(transactions, 0);
+});
