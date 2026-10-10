@@ -11,7 +11,7 @@ Android 與 iOS 共用 `NativeCredentialVault` 與 Expo SecureStore adapter。We
 - iOS Keychain 使用 `AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY`，避免憑證隨裝置備份遷移。Android 使用 Expo SecureStore 對應的加密儲存。
 - 不把 Token 寫入 SQLite、事件 payload、日誌、分析事件或一般應用程式設定。
 - 登入時先保存 Refresh Token 與目前帳戶 metadata，再切換記憶體中的 session。
-- Refresh Token 輪替按帳戶 single-flight 執行。伺服器回應的 accountId 必須符合目前帳戶；先保存新 Refresh Token，再發布新 Access Token。
+- Refresh Token 輪替按帳戶 single-flight 執行，並將 UUID v4 的 refreshRequestId 暫存於 SecureStore。網路中斷或回應遺失後重試會沿用同一 ID，成功保存新 Refresh Token 後才刪除 pending ID。伺服器回應的 accountId 必須符合目前帳戶；先保存新 Refresh Token，再發布新 Access Token。
 - 登出會嘗試呼叫服務端撤銷，並在 finally 中清除本機 Refresh Token 與 session metadata。
 - 冷啟動時只讀取帳戶 metadata，接著使用 Refresh Token 向服務端換取新憑證；本機 metadata 不代表服務端 session 仍有效。
 
