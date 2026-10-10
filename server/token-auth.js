@@ -239,6 +239,9 @@ export async function chuliTokenAuth(req, res, action) {
 
     return sendJson(res, 404, { error: { code: 'TOKEN_ENDPOINT_NOT_FOUND', retryable: false } });
   } catch (error) {
+    if (error?.code === '23505') {
+      return sendJson(res, 409, { error: { code: 'TOKEN_FAMILY_EXISTS', retryable: false } });
+    }
     console.error('[token-auth] request failed:', error?.message || 'unknown error');
     return sendJson(res, 500, { error: { code: 'INTERNAL_ERROR', retryable: true } });
   }
