@@ -50,7 +50,7 @@ A duplicate Event ID with identical canonical content returns its original seque
 - Keep the recovery encryption key stable across deployments; key rotation needs a separate migration/overlap plan.
 - A Refresh Token rotation response is encrypted with AES-256-GCM and recoverable for two minutes for the same old token and same request ID.
 - A different request ID on a consumed Refresh Token revokes the entire Family.
-- Password change and logout clear the Refresh Token cookie; deleting the associated Session cascades to its Family.
+- Password change and logout clear the Refresh Token cookie; deleting a Session marks its associated Token Family revoked and preserves the Family/Refresh Token audit records. Account deletion separately records token tombstones before account-owned rows are removed.
 - New endpoints are disabled by default. Database migration success alone never enables them.
 
 ## Known limitations before production
