@@ -13,8 +13,8 @@ function exampleText(word) {
   return example || '請根据单词含义完成验证。';
 }
 
-export default function LearningPage({ wordList, sourceKey, goal, onExit, onGarden }) {
-  const session = useLearningSession(wordList, sourceKey, goal);
+export default function LearningPage({ wordList, sourceKey, goal, accountId = null, onExit, onGarden }) {
+  const session = useLearningSession(wordList, sourceKey, goal, accountId);
   const word = session.currentWord;
   const type = session.verification?.verification;
 
