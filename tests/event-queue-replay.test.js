@@ -221,3 +221,32 @@ test('enqueue rolls back the queue and applied marker if the marker write fails'
   assert.equal(queue.readState().localCounter, 0);
   assert.equal(queue.hasApplied(eventId), false);
 });
+
+
+test('discardPending restores the queue if applied-marker cleanup fails', () => {
+  const values = new Map();
+  let failAppliedWrite = false;
+  const storage = {
+    getItem(key) { return values.has(key) ? values.get(key) : null; },
+    setItem(key, value) {
+      if (failAppliedWrite && key.includes('event-applied-ids')) {
+        failAppliedWrite = false;
+        throw new Error('quota exceeded');
+      }
+      values.set(key, String(value));
+    },
+    removeItem(key) { values.delete(key); }
+  };
+  const queue = new EventQueue({ accountId: 'test-user', storage, createId: makeIds() });
+  const eventId = 'b6d2cfa9-67a7-4e4b-9b0e-000000000104';
+  queue.enqueue({
+    eventId,
+    type: 'action',
+    payload: { wordId: 'word-1', day: 20637, verification: 'choice', result: 'correct', hintLevel: 'none' }
+  });
+
+  failAppliedWrite = true;
+  assert.throws(() => queue.discardPending(eventId), /EVENT_QUEUE_STORAGE_UNAVAILABLE/);
+  assert.equal(queue.list().length, 1);
+  assert.equal(queue.hasApplied(eventId), true);
+});
