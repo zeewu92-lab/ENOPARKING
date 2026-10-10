@@ -233,20 +233,9 @@ export function recordLearningEvent({
 
 export function applyRemoteLearningEvent(event, accountId) {
   if (!String(accountId || '').trim()) throw new Error('LEARNING_EVENT_ACCOUNT_REQUIRED');
-  if (event?.type !== 'action') throw new Error('EVENT_APPLY_UNSUPPORTED_TYPE');
-
-  const payload = event.payload;
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-    throw new Error('EVENT_PAYLOAD_INVALID');
-  }
-  const wordId = String(payload.wordId || '').trim().toLowerCase();
-  const day = Number(payload.day);
-  const serverSequence = Number(event.serverSequence);
-  if (!wordId || !Number.isSafeInteger(day) || day < 0 ||
-      !['choice', 'spelling', 'dictation', 'usage'].includes(payload.verification) ||
-      !['correct', 'wrong'].includes(payload.result) ||
-      payload.hintLevel !== 'none' ||
-      (payload.unitId != null && (typeof payload.unitId !== 'string' || !payload.unitId.trim())) ||
+  const payload = event?.payload;
+  const serverSequence = Number(event?.serverSequence);
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload) ||
       !Number.isSafeInteger(serverSequence) || serverSequence < 1 ||
       typeof event.eventId !== 'string' || !event.eventId) {
     throw new Error('EVENT_PAYLOAD_INVALID');
@@ -254,11 +243,40 @@ export function applyRemoteLearningEvent(event, accountId) {
 
   const events = readEvents(accountId);
   if (events.some(item => item.syncEventId === event.eventId)) return false;
-
   const sequence = events.reduce(
     (max, item) => Math.max(max, Number(item.sequence) || 0),
     0
   ) + 1;
+
+  if (event.type === 'unit_outcome') {
+    if (typeof payload.unitId !== 'string' || !payload.unitId.trim() || typeof payload.correct !== 'boolean') {
+      throw new Error('EVENT_PAYLOAD_INVALID');
+    }
+    events.push({
+      type: 'unit_outcome',
+      sequence,
+      eventId: 'sync-' + event.eventId,
+      syncEventId: event.eventId,
+      serverSequence,
+      unitId: payload.unitId,
+      correct: payload.correct,
+      recordedAt: new Date().toISOString()
+    });
+    writeEvents(events, accountId);
+    return true;
+  }
+
+  if (event.type !== 'action') throw new Error('EVENT_APPLY_UNSUPPORTED_TYPE');
+  const wordId = String(payload.wordId || '').trim().toLowerCase();
+  const day = Number(payload.day);
+  if (!wordId || !Number.isSafeInteger(day) || day < 0 ||
+      !['choice', 'spelling', 'dictation', 'usage'].includes(payload.verification) ||
+      !['correct', 'wrong'].includes(payload.result) ||
+      payload.hintLevel !== 'none' ||
+      (payload.unitId != null && (typeof payload.unitId !== 'string' || !payload.unitId.trim()))) {
+    throw new Error('EVENT_PAYLOAD_INVALID');
+  }
+
   events.push({
     type: 'action',
     sequence,
