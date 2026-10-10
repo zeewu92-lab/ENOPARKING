@@ -373,3 +373,24 @@ test('reconciliation rejects duplicate or malformed acknowledgement entries atom
   assert.equal(queue.list()[0].syncStatus, 'pending');
   assert.equal(queue.list()[0].serverSequence, null);
 });
+
+
+test('Replay report does not count malformed ACKs as confirmed', async () => {
+  const queue = new EventQueue({ accountId: 'test-user', storage: makeStorage(), createId: makeIds() });
+  const event = queue.enqueue({ type: 'action', payload: { wordId: 'w-1' } });
+
+  const report = await replayEvents({
+    queue,
+    clientVersion: '1.0.0',
+    push: async () => ({
+      results: [{ eventId: event.eventId, syncStatus: 'confirmed', serverSequence: null }]
+    }),
+    pull: async ({ afterSequence }) => ({ events: [], nextSequence: afterSequence, hasMore: false }),
+    applyEvent: async () => {}
+  });
+
+  assert.equal(report.pushed, 1);
+  assert.equal(report.confirmed, 0);
+  assert.equal(report.failed, 0);
+  assert.equal(queue.list()[0].syncStatus, 'pending');
+});
