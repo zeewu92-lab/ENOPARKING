@@ -25,22 +25,22 @@ test('native sync coordinator syncs only the active account and exposes a sessio
   coordinator.stop();
 });
 
-test('native sync coordinator coalesces concurrent triggers into a single sync pass', async () => {
-  let release;
+test('native sync coordinator serializes a new trigger arriving during an active sync', async () => {
+  let releaseFirst;
   let calls = 0;
   const coordinator = new NativeSyncCoordinator({
     getActiveAccountId: () => 'account-a',
     syncAccount: async () => {
       calls += 1;
-      await new Promise(resolve => { release = resolve; });
+      if (calls === 1) await new Promise(resolve => { releaseFirst = resolve; });
     },
   });
   const first = coordinator.requestSync('foreground');
   await new Promise(resolve => setImmediate(resolve));
   const second = coordinator.requestSync('network');
-  release();
+  releaseFirst();
   const [a, b] = await Promise.all([first, second]);
-  assert.equal(calls, 1);
+  assert.equal(calls, 2);
   assert.equal(a.status, 'synced');
   assert.equal(b.status, 'synced');
   coordinator.stop();
