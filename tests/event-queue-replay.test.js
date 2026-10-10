@@ -250,3 +250,33 @@ test('discardPending restores the queue if applied-marker cleanup fails', () => 
   assert.equal(queue.list().length, 1);
   assert.equal(queue.hasApplied(eventId), true);
 });
+
+
+test('queue does not accept missing, string, zero, or negative server sequences as confirmation', () => {
+  const queue = new EventQueue({ accountId: 'test-user', storage: makeStorage(), createId: makeIds() });
+  const event = queue.enqueue({
+    eventId: 'b6d2cfa9-67a7-4e4b-9b0e-000000000105',
+    type: 'action',
+    payload: { wordId: 'word-1', day: 20637, verification: 'choice', result: 'correct', hintLevel: 'none' }
+  });
+
+  queue.reconcile([
+    { eventId: event.eventId, syncStatus: 'confirmed', serverSequence: null }
+  ]);
+  assert.equal(queue.list()[0].syncStatus, 'pending');
+  assert.equal(queue.list()[0].serverSequence, null);
+
+  for (const invalidSequence of ['1', 0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1]) {
+    queue.reconcile([
+      { eventId: event.eventId, syncStatus: 'confirmed', serverSequence: invalidSequence }
+    ]);
+    assert.equal(queue.list()[0].syncStatus, 'pending');
+    assert.equal(queue.list()[0].serverSequence, null);
+  }
+
+  queue.reconcile([
+    { eventId: event.eventId, syncStatus: 'confirmed', serverSequence: 1 }
+  ]);
+  assert.equal(queue.list()[0].syncStatus, 'confirmed');
+  assert.equal(queue.list()[0].serverSequence, 1);
+});
