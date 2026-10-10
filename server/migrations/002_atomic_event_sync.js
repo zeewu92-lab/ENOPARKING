@@ -79,7 +79,7 @@ export function up(sql) {
         END;
 
         v_event_type := v_item->>'type';
-        IF v_error IS NULL AND v_event_type NOT IN ('action', 'unit_outcome') THEN
+        IF v_error IS NULL AND (v_event_type IS NULL OR v_event_type NOT IN ('action', 'unit_outcome')) THEN
           v_error := 'EVENT_TYPE_UNKNOWN';
         END IF;
 
@@ -91,7 +91,7 @@ export function up(sql) {
             IF v_local_counter <= 0 OR v_local_counter > 9007199254740991
               OR jsonb_typeof(v_payload) <> 'object'
               OR octet_length(v_payload::TEXT) > 65536
-              OR v_created_at < 0 THEN
+              THEN
               v_error := 'SCHEMA_INVALID';
             END IF;
           EXCEPTION WHEN OTHERS THEN
