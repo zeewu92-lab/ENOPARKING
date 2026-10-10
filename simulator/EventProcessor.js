@@ -48,12 +48,12 @@ export class EventProcessor {
     return VERIFICATION_EVIDENCE[bucket][verification];
   }
 
-  process({ wordId, day, verification, result = 'correct', hintLevel = 'none', scores }) {
+  process({ wordId, day, verification, result = 'correct', hintLevel = 'none', scores, enforceVerification = true }) {
     const selector = this.selectorFor(wordId);
     const reviewCountBefore = selector.reviewCount;
     const selected = selector.select(day);
 
-    if (verification !== selected.verification) {
+    if (enforceVerification && verification !== selected.verification) {
       throw new Error(
         'Verification mismatch for ' + wordId +
         ': expected ' + selected.verification +
