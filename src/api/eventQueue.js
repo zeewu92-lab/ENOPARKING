@@ -91,6 +91,8 @@ export class EventQueue {
       createdAt,
       syncStatus: 'pending',
       serverSequence: null,
+      attemptCount: 0,
+      nextAttemptAt: createdAt,
       error: null
     };
     state.events.push(event);
@@ -106,9 +108,9 @@ export class EventQueue {
 
   pendingForSync(limit = 100) {
     return this.readState().events
-      .filter(event => event.syncStatus === 'pending' || (event.syncStatus === 'failed' && event.error?.retryable))
+      .filter(event => event.syncStatus === 'pending' || (event.syncStatus === 'failed' && event.error?.retryable && Number(event.nextAttemptAt || 0) <= this.now()))
       .slice(0, Math.max(0, Math.min(100, limit)))
-      .map(({ syncStatus, serverSequence, error, ...event }) => event);
+      .map(({ syncStatus, serverSequence, error, attemptCount, nextAttemptAt, ...event }) => event);
   }
 
   reconcile(results) {
@@ -119,16 +121,21 @@ export class EventQueue {
       const result = byId.get(event.eventId);
       if (!result) return event;
       if (result.syncStatus === 'confirmed' && Number.isSafeInteger(Number(result.serverSequence))) {
-        return { ...event, syncStatus: 'confirmed', serverSequence: Number(result.serverSequence), error: null };
+        return { ...event, syncStatus: 'confirmed', serverSequence: Number(result.serverSequence), error: null, nextAttemptAt: null };
       }
       if (result.syncStatus === 'dead' || result.syncStatus === 'failed') {
+        const error = result.error && typeof result.error === 'object'
+          ? { code: String(result.error.code || 'EVENT_SYNC_FAILED'), retryable: Boolean(result.error.retryable), ...(Number.isFinite(Number(result.error.retryAfterMs)) ? { retryAfterMs: Math.max(0, Number(result.error.retryAfterMs)) } : {}) }
+          : { code: 'EVENT_SYNC_FAILED', retryable: false };
+        const attemptCount = (Number.isSafeInteger(event.attemptCount) ? event.attemptCount : 0) + 1;
+        const backoffMs = Math.min(5 * 60 * 1000, 1000 * (2 ** Math.min(attemptCount - 1, 8)));
         return {
           ...event,
           syncStatus: 'failed',
           serverSequence: null,
-          error: result.error && typeof result.error === 'object'
-            ? { code: String(result.error.code || 'EVENT_SYNC_FAILED'), retryable: Boolean(result.error.retryable), ...(Number.isFinite(Number(result.error.retryAfterMs)) ? { retryAfterMs: Number(result.error.retryAfterMs) } : {}) }
-            : { code: 'EVENT_SYNC_FAILED', retryable: false }
+          attemptCount,
+          nextAttemptAt: error.retryable ? this.now() + (error.retryAfterMs ?? backoffMs) : null,
+          error
         };
       }
       return event;
