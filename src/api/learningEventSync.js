@@ -3,16 +3,13 @@ import { replayEvents } from './eventReplay.js';
 import { applyRemoteLearningEvent, setLearningEventServerSequence } from '../features/learning/learningState.js';
 
 const ENABLED = import.meta.env?.VITE_EVENT_SYNC_ENABLED === 'true';
+const accountSyncs = new Map();
 
 export function isLearningEventSyncEnabled() {
   return ENABLED;
 }
 
-export async function syncAccountLearningEvents(accountId) {
-  if (!ENABLED) return { disabled: true };
-  const normalizedAccountId = String(accountId || '').trim();
-  if (!normalizedAccountId) throw new Error('EVENT_QUEUE_ACCOUNT_REQUIRED');
-
+async function runAccountSync(normalizedAccountId) {
   const queue = new EventQueue({ accountId: normalizedAccountId });
   const report = await replayEvents({
     queue,
@@ -27,6 +24,25 @@ export async function syncAccountLearningEvents(accountId) {
     }
   }
   return report;
+}
+
+export function syncAccountLearningEvents(accountId) {
+  if (!ENABLED) return Promise.resolve({ disabled: true });
+  const normalizedAccountId = String(accountId || '').trim();
+  if (!normalizedAccountId) return Promise.reject(new Error('EVENT_QUEUE_ACCOUNT_REQUIRED'));
+
+  // Initial app sync and post-submit sync can overlap. Share one Replay operation
+  // per account in this tab so they cannot race their local cursor and markers.
+  const existing = accountSyncs.get(normalizedAccountId);
+  if (existing) return existing;
+
+  const pending = runAccountSync(normalizedAccountId).finally(() => {
+    if (accountSyncs.get(normalizedAccountId) === pending) {
+      accountSyncs.delete(normalizedAccountId);
+    }
+  });
+  accountSyncs.set(normalizedAccountId, pending);
+  return pending;
 }
 
 export async function syncLearningEventAfterWrite(accountId) {
