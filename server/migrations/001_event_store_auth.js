@@ -77,9 +77,18 @@ export function up(sql) {
     sql`CREATE TABLE IF NOT EXISTS eng_event_sync_settings (
       id INTEGER PRIMARY KEY CHECK (id = 1),
       enabled BOOLEAN NOT NULL DEFAULT FALSE,
+      max_requests_per_minute INTEGER NOT NULL DEFAULT 60 CHECK (max_requests_per_minute > 0),
+      max_events_per_minute INTEGER NOT NULL DEFAULT 300 CHECK (max_events_per_minute > 0),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`,
     sql`INSERT INTO eng_event_sync_settings(id, enabled)
-      VALUES (1, FALSE) ON CONFLICT (id) DO NOTHING`
+      VALUES (1, FALSE) ON CONFLICT (id) DO NOTHING`,
+    sql`CREATE TABLE IF NOT EXISTS eng_event_rate_limits (
+      account_id TEXT PRIMARY KEY REFERENCES eng_users(id) ON DELETE CASCADE,
+      window_started_at TIMESTAMPTZ NOT NULL,
+      request_count INTEGER NOT NULL DEFAULT 0 CHECK (request_count >= 0),
+      event_count INTEGER NOT NULL DEFAULT 0 CHECK (event_count >= 0),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`
   ];
 }
