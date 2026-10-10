@@ -91,6 +91,27 @@ function assertEvent(event) {
   if (!event.payload || typeof event.payload !== 'object' || Array.isArray(event.payload)) {
     throw new Error('NATIVE_EVENT_PAYLOAD_INVALID');
   }
+  const payload = event.payload;
+  if (event.type === 'action') {
+    const allowed = new Set(['wordId', 'day', 'verification', 'result', 'hintLevel', 'unitId']);
+    if (Object.keys(payload).some(key => !allowed.has(key)) ||
+        typeof payload.wordId !== 'string' || !payload.wordId.trim() ||
+        !Number.isSafeInteger(payload.day) || payload.day < 0 ||
+        !['choice', 'spelling', 'dictation', 'usage'].includes(payload.verification) ||
+        !['correct', 'wrong'].includes(payload.result) ||
+        payload.hintLevel !== 'none' ||
+        (payload.unitId !== undefined && payload.unitId !== null &&
+          (typeof payload.unitId !== 'string' || !payload.unitId.trim()))) {
+      throw new Error('NATIVE_EVENT_PAYLOAD_INVALID');
+    }
+  } else {
+    const keys = Object.keys(payload);
+    if (keys.some(key => !['unitId', 'correct'].includes(key)) ||
+        typeof payload.unitId !== 'string' || !payload.unitId.trim() ||
+        typeof payload.correct !== 'boolean') {
+      throw new Error('NATIVE_EVENT_PAYLOAD_INVALID');
+    }
+  }
   assertSafeInteger(event.createdAt, 'NATIVE_EVENT_TIME_INVALID');
 }
 
