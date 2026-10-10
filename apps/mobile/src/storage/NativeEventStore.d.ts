@@ -24,6 +24,7 @@ export declare class NativeEventStore {
     accountId: string,
     options?: { limit?: number; now?: number }
   ): Promise<Array<NativeLearningEvent & { attemptCount: number }>>;
+  recordSyncFailure(accountId: string, eventIds: string[], errorCode: string): Promise<void>;
   reconcileAcks(
     accountId: string,
     acknowledgements: Array<{ eventId: string; serverSequence: number }>
