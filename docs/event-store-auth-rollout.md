@@ -20,7 +20,7 @@ Token exchange returns the short-lived Access Token in the response `Authorizati
 3. Run `npm run db:migrate` once from a trusted environment with `DATABASE_URL` configured.
 4. Verify all versions in `eng_schema_migrations`, inspect indexes and functions, and run the test suite.
 5. Enable `TOKEN_AUTH_ENABLED=true` only in a non-production environment first.
-6. Keep `EVENT_SYNC_ENABLED=false` and the database flag disabled until strict per-type payload schemas and application-level queue integration are complete and validated. The queue and Replay modules exist, but the learning-action pipeline is not yet wired to them.
+6. Keep `EVENT_SYNC_ENABLED=false` and the database flag disabled until strict per-type payload schemas, application-level queue integration, legacy-history handling, and end-to-end multi-device tests are complete and validated. The learning-action pipeline is now wired to an account-scoped queue and Replay path, but the legacy-history migration policy remains unresolved.
 7. After all hard gates pass, enable both switches in a test environment; then enable for a test account.
 
 The migration runner is explicit; application startup does not run these migrations. The legacy schema initializer still runs as part of the existing application behavior.
@@ -41,7 +41,7 @@ The HTTP handler validates the entire submitted batch before calling PostgreSQL.
 - Every Event must have a UUID v4 `eventId`, positive safe-integer `localCounter`, and non-negative safe-integer `createdAt`.
 - Payload contracts are deliberately narrow. Extend them only with a versioned contract change and corresponding tests.
 
-Event Sync validates envelope fields, payload schemas, size, Event ID, and idempotency fingerprint. The client-side queue and Replay modules persist per-account event state, device ID, local counters, retry status, applied IDs, and replay cursor. They are unit-tested, but they are not yet wired into the actual learning-action pipeline. Strict per-type payload schema tests and end-to-end application integration remain release blockers. Do not enable `EVENT_SYNC_ENABLED` until those are implemented and tested.
+Event Sync validates envelope fields, payload schemas, size, Event ID, and idempotency fingerprint. The client queue and Replay path is wired to learning submissions when `VITE_EVENT_SYNC_ENABLED=true`: it persists the queued action before updating account-scoped learning history, pushes pending events, reconciles acknowledgements, pulls server-ordered events, and applies remote actions idempotently. If local learning validation fails after queue insertion, the unsynced queue entry and its applied marker are rolled back. Replay failures are deferred so local learning remains available. The account-scoped store uses `v2:learning-events:account:<encoded-account-id>`; the legacy global `v2:learning-events` key is left untouched because it has no trustworthy account ownership metadata. This means legacy-history migration and user-visible history continuity must be resolved before production enablement. Do not enable `EVENT_SYNC_ENABLED` until migration policy and end-to-end multi-device acceptance tests pass.
 
 The database rate-limit defaults are 60 sync requests per account per minute and 300 submitted Events per account per minute. Operators can adjust `eng_event_sync_settings.max_requests_per_minute` and `max_events_per_minute` after observing real traffic. Whole-request limits return HTTP 429 with `Retry-After`; per-event limits return HTTP 200 with an individual `RATE_LIMITED` result.
 
@@ -66,7 +66,9 @@ A duplicate Event ID with identical canonical content returns its original seque
 
 - GitHub Actions runs the migrations against an ephemeral PostgreSQL 16 service and verifies concurrent Event Sync writes, contiguous server sequences, duplicate-event idempotency, conflicting-payload rejection, Event Pull pagination, refresh-token replay revocation, account-deletion tombstones, and session-deletion Token Family preservation/revocation.
 - Client queue and Replay unit tests cover persistent state, per-account isolation, ACK reconciliation, bounded retry backoff, duplicate suppression, cursor persistence, apply failure, and sequence gaps.
-- The queue and Replay modules are not yet wired into the actual learning-action pipeline. Complete that application integration before enabling Event Sync.
+- The learning-action pipeline now enqueues events under the authenticated account and runs push/ack/pull/replay when the client feature flag is enabled. Remote action history is deduplicated and replayed in server-sequence order; the algorithm keeps strict verification enforcement for new local submissions and permits replay of already-recorded remote verification choices.
+- Legacy global learning history has no account owner. It is intentionally not auto-migrated to the first account that logs in. Define and test an explicit history migration/claim policy before production enablement.
+- The current acceptance tests cover queue rollback, account-scoped local history, remote-event idempotency, server-sequence reconciliation, and payload validation. Add a browser-level multi-device test before enabling Event Sync.
 - Payload schema tests validate the currently defined v1 shapes. Confirm all production event producers against these contracts before enabling the sync endpoint.
 - The PostgreSQL integration tests run only against the disposable CI service. No production database migration has been executed.
 - The local API admin handler has been restored and its route module is tested; verify the intended ENOPARKING admin bootstrap secret/configuration before enabling admin operations.
