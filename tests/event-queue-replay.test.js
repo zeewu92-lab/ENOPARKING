@@ -210,12 +210,14 @@ test('enqueue rolls back the queue and applied marker if the marker write fails'
   };
   const queue = new EventQueue({ accountId: 'test-user', storage, createId: makeIds() });
 
+  const eventId = 'b6d2cfa9-67a7-4e4b-9b0e-000000000103';
   assert.throws(() => queue.enqueue({
+    eventId,
     type: 'action',
     payload: { wordId: 'word-1', day: 20637, verification: 'choice', result: 'correct', hintLevel: 'none' }
   }), /EVENT_QUEUE_STORAGE_UNAVAILABLE/);
 
   assert.equal(queue.list().length, 0);
   assert.equal(queue.readState().localCounter, 0);
-  assert.equal(queue.hasApplied(queue.list()[0]?.eventId || 'unused-event'), false);
+  assert.equal(queue.hasApplied(eventId), false);
 });
