@@ -63,7 +63,15 @@ export class EventProcessor {
 
     const eventId = this.nextEventId(wordId, day);
     const dimensions = DIMENSION_SETS[verification] ?? [];
-    const selectedDimension = selected.selectedDimension;
+    const dimensionForVerification = {
+      choice: 'meaning',
+      spelling: 'spelling',
+      dictation: 'listening',
+      usage: 'usage'
+    };
+    const selectedDimension = !enforceVerification && verification !== selected.verification
+      ? (dimensionForVerification[verification] || selected.selectedDimension)
+      : selected.selectedDimension;
     const effectiveness = effectivenessFor(hintLevel, result);
     const masteryBefore = this.masteryCalculator.calculate(scores);
 
