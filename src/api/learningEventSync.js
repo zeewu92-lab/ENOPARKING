@@ -1,6 +1,7 @@
 import { EventQueue } from './eventQueue.js';
 import { replayEvents } from './eventReplay.js';
 import { runSingleFlight } from './singleFlight.js';
+import { withAccountSyncLock } from './accountSyncLock.js';
 import { applyRemoteLearningEvent, setLearningEventServerSequence } from '../features/learning/learningState.js';
 
 const ENABLED = import.meta.env?.VITE_EVENT_SYNC_ENABLED === 'true';
@@ -33,7 +34,9 @@ export function syncAccountLearningEvents(accountId) {
 
   // Initial app sync and post-submit sync can overlap. Share one Replay operation
   // per account in this tab so they cannot race their local cursor and markers.
-  return runSingleFlight(normalizedAccountId, () => runAccountSync(normalizedAccountId));
+  return runSingleFlight(normalizedAccountId, () =>
+    withAccountSyncLock(normalizedAccountId, () => runAccountSync(normalizedAccountId))
+  );
 }
 
 export async function syncLearningEventAfterWrite(accountId) {
