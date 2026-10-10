@@ -1,26 +1,9 @@
 import React from 'react';
 import { SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
-import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
+import { SQLiteProvider } from 'expo-sqlite';
 import { initializeNativeEventStore } from './src/storage/NativeEventStore';
 
 function NativeStatus() {
-  const db = useSQLiteContext();
-  const [status, setStatus] = React.useState('正在初始化本機學習資料庫…');
-
-  React.useEffect(() => {
-    let alive = true;
-    initializeNativeEventStore(db)
-      .then(() => {
-        if (alive) setStatus('本機資料庫已就緒');
-      })
-      .catch(() => {
-        if (alive) setStatus('本機資料庫初始化失敗，請重新啟動或回報問題');
-      });
-    return () => {
-      alive = false;
-    };
-  }, [db]);
-
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar barStyle="dark-content" />
@@ -31,7 +14,7 @@ function NativeStatus() {
           Android 與 iOS 共用學習核心、事件契約與本機 SQLite 儲存規則。
         </Text>
         <View style={styles.status}>
-          <Text style={styles.statusText}>{status}</Text>
+          <Text style={styles.statusText}>本機資料庫已就緒</Text>
         </View>
         <Text style={styles.note}>
           目前為原生基礎建置階段，尚未接入登入、正式學習流程與事件同步。
