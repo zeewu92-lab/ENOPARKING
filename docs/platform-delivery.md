@@ -23,9 +23,11 @@ Android 與 iOS 是同等優先的正式客戶端，必須並線設計、並線�
 
 ## 現況與限制
 
-目前分支已建立 React Web 過渡端，以及共用 Expo/React Native Android 與 iOS 執行目標的初始骨架。原生端已加入 SQLite event store、帳戶隔離資料表、交易式 enqueue、ACK reconciliation、bounded exponential retry 與 Replay cursor 基礎，並建立原生端 bundle/typecheck CI。這是原生基礎階段，尚未完成登入、API transport、原生背景同步排程、正式學習 reducer、舊資料遷移與真機整合驗收，因此不得宣稱行動端功能已完成。
+目前分支已建立 React Web 過渡端，以及共用 Expo/React Native Android 與 iOS 執行目標。原生端已加入 SQLite event store、帳戶隔離資料表、交易式 enqueue、ACK reconciliation、bounded exponential retry、Replay cursor、共用 lifecycle sync coordinator，以及可注入認證與 HTTP transport 的 push/ACK/pull/replay service。Root CI 涵蓋協調器與同步服務的單元測試，原生 CI 檢查 TypeScript 並打包 Android 與 iOS JavaScript。
 
-後續必須在同一迭代補上 Android 與 iOS 的 lifecycle adapter、可靠同步排程、領域狀態 reducer、資料遷移和實機驗收，避免只完成其中一端。
+這些是共用同步核心，尚未等於可上線的原生同步。原生安全憑證簽發／輪替、HTTP transport 實作、登入 UI、背景工作排程、正式學習 reducer、舊資料遷移、真實 SQLite 故障注入及真機整合驗收仍未完成。事件同步與 Token Auth 的正式功能旗標必須保持關閉。
+
+下一階段要先定義原生端安全登入與 Refresh Token 保存契約，再把 credential provider、HTTP transport 和 lifecycle coordinator 接起來；Android 與 iOS 必須使用相同契約並行驗收。
 
 ## 共用事件契約測試素材
 
