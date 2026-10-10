@@ -187,6 +187,17 @@ export class NativeEventStore {
     return storedEvent;
   }
 
+  async getReplayCursor(accountId) {
+    requireAccountId(accountId);
+    const row = await this.db.getFirstAsync(
+      'SELECT replay_cursor AS replayCursor FROM enop_event_store_meta WHERE account_id = ?',
+      accountId
+    );
+    if (!row) return 0;
+    assertSafeInteger(row.replayCursor, 'NATIVE_REPLAY_CURSOR_INVALID');
+    return row.replayCursor;
+  }
+
   async pendingForSync(accountId, { limit = 100, now = this.clock() } = {}) {
     requireAccountId(accountId);
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
