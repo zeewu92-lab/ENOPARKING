@@ -65,3 +65,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS enop_applied_events_sequence
 -- 3. Replay: apply domain state + insert applied marker + advance cursor in one transaction per event/batch.
 -- 4. Account logout must not delete durable pending events unless the user explicitly requests data removal.
 -- 5. Never move a cursor past a missing server sequence.
+
+CREATE TABLE IF NOT EXISTS enop_learning_state (
+  account_id TEXT NOT NULL,
+  state_key TEXT NOT NULL,
+  state_json TEXT NOT NULL CHECK (json_valid(state_json)),
+  updated_at INTEGER NOT NULL CHECK (updated_at >= 0),
+  PRIMARY KEY (account_id, state_key),
+  FOREIGN KEY (account_id) REFERENCES enop_event_store_meta(account_id) ON DELETE CASCADE
+);
+
