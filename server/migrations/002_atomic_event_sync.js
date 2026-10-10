@@ -182,17 +182,6 @@ export function up(sql) {
           CONTINUE;
         END IF;
 
-        IF v_event_index > v_allowed_events THEN
-          v_retry_after_ms := GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (v_rate.window_started_at + INTERVAL '1 minute' - v_now)) * 1000)::BIGINT);
-          v_results := v_results || jsonb_build_array(jsonb_build_object(
-            'eventId', v_event_id,
-            'syncStatus', 'failed',
-            'serverSequence', NULL,
-            'error', jsonb_build_object('code', 'RATE_LIMITED', 'retryable', TRUE, 'retryAfterMs', v_retry_after_ms)
-          ));
-          CONTINUE;
-        END IF;
-
         v_fingerprint := COALESCE(v_item->>'_fingerprint', '');
         IF v_fingerprint !~ '^[0-9a-f]{64}$' THEN
           v_results := v_results || jsonb_build_array(jsonb_build_object(
@@ -225,6 +214,17 @@ export function up(sql) {
               'error', NULL
             ));
           END IF;
+          CONTINUE;
+        END IF;
+
+        IF v_event_index > v_allowed_events THEN
+          v_retry_after_ms := GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (v_rate.window_started_at + INTERVAL '1 minute' - v_now)) * 1000)::BIGINT);
+          v_results := v_results || jsonb_build_array(jsonb_build_object(
+            'eventId', v_event_id,
+            'syncStatus', 'failed',
+            'serverSequence', NULL,
+            'error', jsonb_build_object('code', 'RATE_LIMITED', 'retryable', TRUE, 'retryAfterMs', v_retry_after_ms)
+          ));
           CONTINUE;
         END IF;
 
