@@ -13,12 +13,19 @@ function getStorage(storage) {
 }
 
 function readJson(storage, key, fallback) {
+  let value;
   try {
-    const value = getStorage(storage).getItem(key);
-    return value ? JSON.parse(value) : fallback;
-  } catch (error) {
-    if (error?.message === 'EVENT_QUEUE_STORAGE_UNAVAILABLE') throw error;
-    return fallback;
+    value = getStorage(storage).getItem(key);
+  } catch {
+    throw new Error('EVENT_QUEUE_STORAGE_UNAVAILABLE');
+  }
+  if (value === null || value === undefined || value === '') return fallback;
+  try {
+    return JSON.parse(value);
+  } catch {
+    // Never replace unreadable persisted state with an empty fallback. Doing so
+    // can discard pending events or make Replay re-apply old events.
+    throw new Error('EVENT_QUEUE_STORAGE_CORRUPT');
   }
 }
 
@@ -76,7 +83,10 @@ export class EventQueue {
 
   readState() {
     const state = readJson(this.storage, this.keys.queue, newQueueState());
-    if (state?.version !== 1 || !Array.isArray(state.events)) return newQueueState();
+    if (state?.version !== 1 || !Array.isArray(state.events) ||
+        !Number.isSafeInteger(state.localCounter) || state.localCounter < 0) {
+      throw new Error('EVENT_QUEUE_STORAGE_CORRUPT');
+    }
     return {
       version: 1,
       localCounter: Number.isSafeInteger(state.localCounter) && state.localCounter >= 0 ? state.localCounter : 0,
@@ -205,8 +215,17 @@ export class EventQueue {
   }
 
   getReplayCursor() {
-    const value = Number(this.storage.getItem(this.keys.cursor) || 0);
-    return Number.isSafeInteger(value) && value >= 0 ? value : 0;
+    let raw;
+    try {
+      raw = this.storage.getItem(this.keys.cursor);
+    } catch {
+      throw new Error('EVENT_QUEUE_STORAGE_UNAVAILABLE');
+    }
+    if (raw === null || raw === undefined || raw === '') return 0;
+    if (!/^(0|[1-9]\d*)$/.test(raw)) throw new Error('EVENT_QUEUE_STORAGE_CORRUPT');
+    const value = Number(raw);
+    if (!Number.isSafeInteger(value) || value < 0) throw new Error('EVENT_QUEUE_STORAGE_CORRUPT');
+    return value;
   }
 
   setReplayCursor(value) {
@@ -216,12 +235,18 @@ export class EventQueue {
 
   hasApplied(eventId) {
     const ids = readJson(this.storage, this.keys.applied, []);
-    return Array.isArray(ids) && ids.includes(eventId);
+    if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string')) {
+      throw new Error('EVENT_QUEUE_STORAGE_CORRUPT');
+    }
+    return ids.includes(eventId);
   }
 
   markApplied(eventId) {
     const ids = readJson(this.storage, this.keys.applied, []);
-    const next = Array.isArray(ids) ? ids : [];
+    if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string')) {
+      throw new Error('EVENT_QUEUE_STORAGE_CORRUPT');
+    }
+    const next = ids;
     if (!next.includes(eventId)) next.push(eventId);
     writeJson(this.storage, this.keys.applied, next.slice(-5000));
   }
