@@ -123,3 +123,22 @@ test('remote unit outcomes are persisted and do not block replay consumers', () 
     else globalThis.window = previousWindow;
   }
 });
+
+
+test('corrupt learning history is preserved and reported instead of treated as empty', () => {
+  const previousWindow = globalThis.window;
+  const storage = makeStorage();
+  globalThis.window = { localStorage: storage };
+  try {
+    const key = 'v2:learning-events:account:user-a';
+    storage.setItem(key, '{broken-json');
+    assert.throws(() => getLearningEvents('user-a'), /LEARNING_EVENT_STORAGE_CORRUPT/);
+    assert.equal(storage.getItem(key), '{broken-json');
+    storage.setItem(key, JSON.stringify({ unexpected: true }));
+    assert.throws(() => getLearningEvents('user-a'), /LEARNING_EVENT_STORAGE_CORRUPT/);
+    assert.equal(storage.getItem(key), JSON.stringify({ unexpected: true }));
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
+});
