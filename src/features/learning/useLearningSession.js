@@ -30,12 +30,13 @@ function getGoal() {
   return grade === 'senior3' ? 50 : DEFAULT_GOAL;
 }
 
-function sessionKey(sourceKey) {
-  return SESSION_PREFIX + encodeURIComponent(todayKey() + ':' + sourceKey);
+function sessionKey(sourceKey, accountId = null) {
+  const accountScope = accountId ? ':account:' + encodeURIComponent(accountId) : '';
+  return SESSION_PREFIX + accountScope + ':' + encodeURIComponent(todayKey() + ':' + sourceKey);
 }
 
-function readSession(sourceKey) {
-  const saved = storage.getJSON(sessionKey(sourceKey), null);
+function readSession(sourceKey, accountId = null) {
+  const saved = storage.getJSON(sessionKey(sourceKey, accountId), null);
   if (!saved) return { used: 0, wordIndex: 0, stage: 1 };
   return {
     used: Math.max(0, Number(saved.used) || 0),
@@ -75,7 +76,8 @@ function getChoiceOptions(word, wordList) {
 export function useLearningSession(wordList, sourceKey, requestedGoal = null, accountId = null) {
   const goal = Math.max(1, Number(requestedGoal) || getGoal());
   const base = Math.min(goal, wordList.length);
-  const [session, setSession] = useState(() => readSession(sourceKey));
+  const scopedAccountId = isLearningEventSyncEnabled() && accountId ? String(accountId) : null;
+  const [session, setSession] = useState(() => readSession(sourceKey, scopedAccountId));
   const [phase, setPhase] = useState('idle');
   const [verification, setVerification] = useState(null);
   const [answer, setAnswer] = useState('');
@@ -94,18 +96,18 @@ export function useLearningSession(wordList, sourceKey, requestedGoal = null, ac
   );
 
   useEffect(() => {
-    const saved = readSession(sourceKey);
+    const saved = readSession(sourceKey, scopedAccountId);
     setSession(saved);
     setPhase('idle');
     setVerification(null);
     setAnswer('');
     setFeedback(null);
     setCompleted(saved.used >= Math.min(goal, wordList.length));
-  }, [goal, sourceKey, wordList.length]);
+  }, [goal, sourceKey, wordList.length, scopedAccountId]);
 
   useEffect(() => {
-    storage.setJSON(sessionKey(sourceKey), session);
-  }, [sourceKey, session]);
+    storage.setJSON(sessionKey(sourceKey, scopedAccountId), session);
+  }, [sourceKey, scopedAccountId, session]);
 
   useEffect(() => {
     if (!base) return;
@@ -125,10 +127,10 @@ export function useLearningSession(wordList, sourceKey, requestedGoal = null, ac
     const next = getNextVerification(
       word.id ?? word.word ?? word.w,
       getTodayDay(),
-      isLearningEventSyncEnabled() ? accountId : null
+      scopedAccountId
     );
     setVerification(next);
-  }, [accountId]);
+  }, [scopedAccountId]);
 
   const start = useCallback(() => {
     if (!currentWord || completed || session.used >= base) return false;
@@ -175,10 +177,10 @@ export function useLearningSession(wordList, sourceKey, requestedGoal = null, ac
       const wordId = String(currentWord.id ?? currentWord.word ?? currentWord.w);
       const day = getTodayDay();
       const eventResult = correct ? 'correct' : 'wrong';
-      const syncEnabled = isLearningEventSyncEnabled() && Boolean(accountId);
+      const syncEnabled = Boolean(scopedAccountId);
 
       if (syncEnabled) {
-        syncQueue = new EventQueue({ accountId });
+        syncQueue = new EventQueue({ accountId: scopedAccountId });
         queuedEvent = syncQueue.enqueue({
           eventId: createEventId(),
           type: 'action',
@@ -198,11 +200,11 @@ export function useLearningSession(wordList, sourceKey, requestedGoal = null, ac
         verification: verification.verification,
         result: eventResult,
         hintLevel: 'none',
-        accountId: syncEnabled ? accountId : null,
+        accountId: scopedAccountId,
         syncEventId: queuedEvent?.eventId || null
       });
 
-      if (queuedEvent) void syncLearningEventAfterWrite(accountId);
+      if (queuedEvent) void syncLearningEventAfterWrite(scopedAccountId);
 
       if (!correct) {
         setFeedback({
@@ -258,7 +260,7 @@ export function useLearningSession(wordList, sourceKey, requestedGoal = null, ac
       setBusy(false);
     }
   }, [
-    accountId,
+    scopedAccountId,
     base,
     busy,
     currentWord,
