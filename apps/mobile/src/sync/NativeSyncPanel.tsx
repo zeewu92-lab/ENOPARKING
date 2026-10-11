@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
@@ -23,6 +23,7 @@ function errorCode(error: unknown): string {
 export function NativeSyncPanel({ accountId, auth, baseUrl }: Props) {
   const db = useSQLiteContext();
   const [busy, setBusy] = useState(false);
+  const runningRef = useRef(false);
   const [message, setMessage] = useState('尚未執行同步');
 
   const service = useMemo(() => {
@@ -50,7 +51,8 @@ export function NativeSyncPanel({ accountId, auth, baseUrl }: Props) {
       pullEvents: request => transport.pullEvents(request),
       applyEvent: async (tx, event) => {
         // 將遠端事件寫入帳戶隔離的 SQLite 事件歷史；事件標記與游標由同一交易提交。
-        await tx.runAsync(
+        const transaction = tx as { runAsync: (sql: string, ...params: (string | number)[]) => Promise<unknown> };
+        await transaction.runAsync(
           `INSERT INTO enop_learning_state (account_id, state_key, state_json, updated_at)
            VALUES (?, ?, ?, ?)
            ON CONFLICT(account_id, state_key) DO NOTHING`,
@@ -64,7 +66,8 @@ export function NativeSyncPanel({ accountId, auth, baseUrl }: Props) {
   }, [db, auth, baseUrl, accountId]);
 
   async function runSync() {
-    if (busy) return;
+    if (runningRef.current) return;
+    runningRef.current = true;
     setBusy(true);
     setMessage('正在同步學習事件…');
     try {
@@ -81,6 +84,7 @@ export function NativeSyncPanel({ accountId, auth, baseUrl }: Props) {
     } catch (error) {
       setMessage('同步未完成：' + errorCode(error));
     } finally {
+      runningRef.current = false;
       setBusy(false);
     }
   }
