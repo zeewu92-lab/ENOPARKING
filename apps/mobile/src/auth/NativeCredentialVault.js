@@ -251,15 +251,19 @@ export class NativeCredentialVault {
             metadata = parsed;
           } catch { /* invalid metadata must not be used to form a storage key */ }
         }
-        const accountId = this.session?.accountId || metadata?.accountId;
-        const rotation = accountId ? this.refreshInFlight.get(accountId) : null;
-        if (rotation) {
+        const accountIds = [...new Set([this.session?.accountId, metadata?.accountId].filter(Boolean))];
+        const rotations = accountIds.map(accountId => this.refreshInFlight.get(accountId)).filter(Boolean);
+        await Promise.all(rotations.map(async rotation => {
           try { await rotation; } catch { /* clear local credentials even if refresh failed */ }
-        }
+        }));
         this.session = null;
-        const keys = metadata
-          ? [TOKEN_KEY_PREFIX + metadata.accountId, REFRESH_REQUEST_PREFIX + metadata.accountId, SESSION_KEY]
-          : [SESSION_KEY];
+        const keys = [
+          ...accountIds.flatMap(accountId => [
+            TOKEN_KEY_PREFIX + accountId,
+            REFRESH_REQUEST_PREFIX + accountId,
+          ]),
+          SESSION_KEY,
+        ];
         const cleanup = await Promise.allSettled(keys.map(key => this.secureStore.deleteItemAsync(key)));
         const failedCleanup = cleanup.find(result => result.status === 'rejected');
         if (failedCleanup) throw failedCleanup.reason;
