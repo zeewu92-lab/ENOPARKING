@@ -15,6 +15,7 @@ import { SQLiteProvider } from 'expo-sqlite';
 import { initializeNativeEventStore } from './src/storage/NativeEventStore';
 import { createNativeAuthSession } from './src/auth/NativeAuthSession';
 import { nativeCredentialVault } from './src/auth/nativeCredentialVault';
+import { NativeSyncPanel } from './src/sync/NativeSyncPanel';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || '';
 
@@ -136,7 +137,7 @@ function NativeStatus() {
               <Pressable accessibilityRole="button" onPress={handleLogout} style={styles.button}>
                 <Text style={styles.buttonText}>登出此裝置</Text>
               </Pressable>
-              <Text style={styles.small}>學習事件佇列與 Replay 尚未接入正式畫面流程。</Text>
+              {!!API_BASE_URL && auth && <NativeSyncPanel accountId={session.accountId} auth={auth} baseUrl={API_BASE_URL} />}
             </View>
           ) : (
             <View style={styles.panel}>
