@@ -1,58 +1,37 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
 import { NativeEventStore } from '../storage/NativeEventStore.js';
 import { recordNativeLearningAction } from './NativeLearningState.js';
-
-type Verification = 'choice' | 'spelling' | 'dictation' | 'usage';
-type Result = 'correct' | 'wrong';
+import { NATIVE_VOCABULARY } from './NativeVocabularyData';
 
 type Props = {
   accountId: string;
 };
 
-const VERIFICATIONS: { value: Verification; label: string }[] = [
-  { value: 'choice', label: '選擇' },
-  { value: 'spelling', label: '拼寫' },
-  { value: 'dictation', label: '聽寫' },
-  { value: 'usage', label: '運用' },
-];
+function normalizeAnswer(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, ' ');
+}
 
 export function NativeLearningPanel({ accountId }: Props) {
   const db = useSQLiteContext();
   const store = useMemo(() => new NativeEventStore(db), [db]);
-  const [wordId, setWordId] = useState('');
-  const [verification, setVerification] = useState<Verification>('choice');
-  const [result, setResult] = useState<Result>('correct');
+  const [wordIndex, setWordIndex] = useState(0);
+  const [answer, setAnswer] = useState('');
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('每次提交都會先寫入本機事件佇列，再更新學習狀態。');
+  const [answered, setAnswered] = useState(false);
+  const [message, setMessage] = useState('根據中文釋義拼寫英文單詞，答案會自動核對並保存為學習事件。');
   const [summary, setSummary] = useState({ reviewCount: 0, correctCount: 0, wrongCount: 0 });
-
-  const refreshSummary = useCallback(async () => {
-    const row = await db.getFirstAsync<{ stateJson: string }>(
-      'SELECT state_json AS stateJson FROM enop_learning_state WHERE account_id = ? AND state_key = ?',
-      accountId,
-      'word:' + wordId.trim().toLowerCase()
-    );
-    if (!row) {
-      setSummary({ reviewCount: 0, correctCount: 0, wrongCount: 0 });
-      return;
-    }
-    const state = JSON.parse(row.stateJson) as { reviewCount?: number; correctCount?: number; wrongCount?: number };
-    setSummary({
-      reviewCount: Number(state.reviewCount || 0),
-      correctCount: Number(state.correctCount || 0),
-      wrongCount: Number(state.wrongCount || 0),
-    });
-  }, [db, accountId, wordId]);
+  const word = NATIVE_VOCABULARY.length ? NATIVE_VOCABULARY[wordIndex % NATIVE_VOCABULARY.length] : null;
 
   useEffect(() => {
     let active = true;
+    if (!word) return () => { active = false; };
     void db.getFirstAsync<{ stateJson: string }>(
       'SELECT state_json AS stateJson FROM enop_learning_state WHERE account_id = ? AND state_key = ?',
       accountId,
-      'word:' + wordId.trim().toLowerCase()
+      'word:' + word.id.trim().toLowerCase()
     ).then(row => {
       if (!active) return;
       if (!row) {
@@ -69,15 +48,19 @@ export function NativeLearningPanel({ accountId }: Props) {
       if (active) setMessage('讀取本機學習狀態失敗。');
     });
     return () => { active = false; };
-  }, [db, accountId, wordId]);
+  }, [db, accountId, word?.id]);
 
-  async function submitAction() {
-    const normalizedWordId = wordId.trim();
-    if (!normalizedWordId) {
-      setMessage('請先輸入單詞識別碼。');
+  async function submitAnswer() {
+    if (!word) {
+      setMessage('目前沒有可用的教材詞彙。');
       return;
     }
-    if (busy) return;
+    if (busy || answered) return;
+    if (!answer.trim()) {
+      setMessage('請先輸入英文答案。');
+      return;
+    }
+    const correct = normalizeAnswer(answer) === normalizeAnswer(word.word);
     setBusy(true);
     setMessage('正在保存學習事件…');
     try {
@@ -85,16 +68,16 @@ export function NativeLearningPanel({ accountId }: Props) {
         store,
         accountId,
         payload: {
-          wordId: normalizedWordId,
+          wordId: word.id,
           day: Math.floor(Date.now() / 86400000),
-          verification,
-          result,
+          verification: 'spelling',
+          result: correct ? 'correct' : 'wrong',
           hintLevel: 'none',
         },
         createEventId: () => Crypto.randomUUID(),
       });
-      await refreshSummary();
-      setMessage('已保存到本機佇列，學習狀態與事件在同一交易中提交。網路恢復後可同步。');
+      setAnswered(true);
+      setMessage(correct ? '回答正確，學習事件已保存。' : '本次未答對，正確答案：' + word.word + '。事件已保存。');
     } catch (error) {
       setMessage('保存失敗：' + (error instanceof Error ? error.message : 'NATIVE_LEARNING_SAVE_FAILED'));
     } finally {
@@ -102,54 +85,51 @@ export function NativeLearningPanel({ accountId }: Props) {
     }
   }
 
+  function nextWord() {
+    if (!NATIVE_VOCABULARY.length) return;
+    setWordIndex(current => (current + 1) % NATIVE_VOCABULARY.length);
+    setAnswer('');
+    setAnswered(false);
+    setMessage('根據中文釋義拼寫英文單詞，答案會自動核對並保存為學習事件。');
+  }
+
   return (
     <View style={styles.panel}>
-      <Text style={styles.title}>原生學習事件</Text>
-      <Text style={styles.description}>此入口用於驗收 Android／iOS 共用的事件契約與本機交易。</Text>
-      <TextInput
-        accessibilityLabel="單詞識別碼"
-        autoCapitalize="none"
-        autoCorrect={false}
-        editable={!busy}
-        onChangeText={setWordId}
-        placeholder="輸入單詞識別碼，例如 word-001"
-        placeholderTextColor="#879188"
-        style={styles.input}
-        value={wordId}
-      />
-      <Text style={styles.label}>驗證方式</Text>
-      <View style={styles.options}>
-        {VERIFICATIONS.map(item => (
-          <Pressable
-            key={item.value}
-            accessibilityRole="button"
-            accessibilityState={{ selected: verification === item.value }}
-            disabled={busy}
-            onPress={() => setVerification(item.value)}
-            style={[styles.option, verification === item.value && styles.optionSelected]}
-          >
-            <Text style={[styles.optionText, verification === item.value && styles.optionTextSelected]}>{item.label}</Text>
+      <Text style={styles.title}>原生單詞練習</Text>
+      <Text style={styles.description}>使用共用教材資料；答案核對、本機事件佇列與學習狀態更新都在裝置端完成。</Text>
+      {word ? (
+        <>
+          <Text style={styles.source}>{word.textbook} · {word.unit}</Text>
+          <View style={styles.wordCard}>
+            <Text style={styles.label}>請根據中文釋義拼寫英文</Text>
+            <Text style={styles.meaning}>{word.meaning}</Text>
+            <TextInput
+              accessibilityLabel="英文答案"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!busy && !answered}
+              onChangeText={setAnswer}
+              onSubmitEditing={submitAnswer}
+              placeholder="輸入英文單詞或短語"
+              placeholderTextColor="#879188"
+              returnKeyType="done"
+              style={styles.input}
+              value={answer}
+            />
+            {answered ? <Text style={styles.answer}>標準答案：{word.word}{word.phonetic ? '  ' + word.phonetic : ''}</Text> : null}
+          </View>
+          <Pressable accessibilityRole="button" disabled={busy || answered} onPress={submitAnswer} style={[styles.submit, (busy || answered) && styles.disabled]}>
+            <Text style={styles.submitText}>{busy ? '保存中…' : '提交答案'}</Text>
           </Pressable>
-        ))}
-      </View>
-      <Text style={styles.label}>本次結果</Text>
-      <View style={styles.options}>
-        {([{ value: 'correct', label: '答對' }, { value: 'wrong', label: '答錯' }] as const).map(item => (
-          <Pressable
-            key={item.value}
-            accessibilityRole="button"
-            accessibilityState={{ selected: result === item.value }}
-            disabled={busy}
-            onPress={() => setResult(item.value)}
-            style={[styles.option, result === item.value && styles.optionSelected]}
-          >
-            <Text style={[styles.optionText, result === item.value && styles.optionTextSelected]}>{item.label}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <Pressable accessibilityRole="button" disabled={busy} onPress={submitAction} style={[styles.submit, busy && styles.disabled]}>
-        <Text style={styles.submitText}>{busy ? '保存中…' : '記錄本次學習'}</Text>
-      </Pressable>
+          {answered ? (
+            <Pressable accessibilityRole="button" onPress={nextWord} style={styles.next}>
+              <Text style={styles.nextText}>下一個單詞</Text>
+            </Pressable>
+          ) : null}
+        </>
+      ) : (
+        <Text style={styles.message}>目前沒有可用的教材詞彙。</Text>
+      )}
       <Text accessibilityLiveRegion="polite" style={styles.message}>{message}</Text>
       <View style={styles.summary}>
         <Text style={styles.summaryTitle}>目前單詞狀態</Text>
@@ -163,16 +143,17 @@ const styles = StyleSheet.create({
   panel: { marginTop: 18, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#E0E8DB' },
   title: { color: '#23352A', fontSize: 15, fontWeight: '700' },
   description: { color: '#6C756D', fontSize: 12, lineHeight: 18, marginTop: 6, marginBottom: 12 },
-  input: { backgroundColor: '#F7F9F4', borderColor: '#DDE6D9', borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 11, color: '#23352A', fontSize: 14 },
-  label: { color: '#526257', fontSize: 12, fontWeight: '700', marginTop: 12, marginBottom: 7 },
-  options: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
-  option: { borderWidth: 1, borderColor: '#DDE6D9', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#FFFFFF' },
-  optionSelected: { backgroundColor: '#E9F0E5', borderColor: '#53775B' },
-  optionText: { color: '#526257', fontSize: 13 },
-  optionTextSelected: { color: '#31583B', fontWeight: '700' },
-  submit: { backgroundColor: '#53775B', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 15 },
+  source: { color: '#6C756D', fontSize: 11, marginBottom: 8 },
+  wordCard: { backgroundColor: '#F7F9F4', borderColor: '#DDE6D9', borderWidth: 1, borderRadius: 12, padding: 14 },
+  label: { color: '#526257', fontSize: 12, fontWeight: '700' },
+  meaning: { color: '#23352A', fontSize: 17, lineHeight: 25, marginTop: 10 },
+  input: { backgroundColor: '#FFFFFF', borderColor: '#DDE6D9', borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 11, color: '#23352A', fontSize: 15, marginTop: 14 },
+  answer: { color: '#31583B', fontSize: 13, fontWeight: '700', marginTop: 10 },
+  submit: { backgroundColor: '#53775B', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 12 },
   disabled: { opacity: 0.55 },
   submitText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  next: { borderWidth: 1, borderColor: '#53775B', borderRadius: 10, paddingVertical: 11, alignItems: 'center', marginTop: 8 },
+  nextText: { color: '#31583B', fontSize: 14, fontWeight: '700' },
   message: { color: '#526257', fontSize: 12, lineHeight: 18, marginTop: 9 },
   summary: { backgroundColor: '#F7F9F4', borderRadius: 10, padding: 11, marginTop: 12 },
   summaryTitle: { color: '#31583B', fontSize: 12, fontWeight: '700' },
