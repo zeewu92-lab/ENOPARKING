@@ -191,3 +191,35 @@ test('native sync serializes overlapping requests and does not repush an acknowl
   assert.deepEqual(state.ack, [{ eventId: 'e1', serverSequence: 1 }]);
   assert.equal(results.every(result => result.status === 'synced'), true);
 });
+
+test('native sync rejects empty or oversized pull pages before replay', async () => {
+  const emptyStore = fakeStore({ pendingForSync: async () => [] });
+  const emptyService = new NativeEventSyncService(serviceOptions(emptyStore, {
+    pullEvents: async ({ afterSequence }) => ({
+      events: [],
+      nextSequence: afterSequence,
+      hasMore: true,
+    }),
+  }));
+  await assert.rejects(emptyService.syncAccount('account-a'), /NATIVE_SYNC_PULL_RESPONSE_INVALID/);
+  assert.deepEqual(emptyStore.state.replay, []);
+
+  const oversizedStore = fakeStore({ pendingForSync: async () => [] });
+  const oversizedEvents = Array.from({ length: 101 }, (_, index) => ({
+    eventId: `event-${index + 1}`,
+    type: 'action',
+    payload: { wordId: `word-${index + 1}`, day: 1, verification: 'choice', result: 'correct', hintLevel: 'none' },
+    createdAt: 10,
+    serverSequence: index + 1,
+  }));
+  const oversizedService = new NativeEventSyncService(serviceOptions(oversizedStore, {
+    pullEvents: async () => ({
+      events: oversizedEvents,
+      nextSequence: 101,
+      hasMore: false,
+    }),
+  }));
+  await assert.rejects(oversizedService.syncAccount('account-a'), /NATIVE_SYNC_PULL_RESPONSE_INVALID/);
+  assert.deepEqual(oversizedStore.state.replay, []);
+});
+
