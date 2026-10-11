@@ -43,3 +43,18 @@ export declare function recordNativeLearningAction(options: {
   createEventId: () => string | Promise<string>;
   now?: number;
 }): Promise<NativeLearningEvent>;
+
+export interface NativeWordLearningState {
+  wordId: string;
+  reviewCount: number;
+  scores: { meaning: number; spelling: number; listening: number; usage: number };
+  mastery: { covered: number; coverage: number; lowest: number; base: number; overall: number; state: string };
+  stability: { stability: number; progress: number; requiredRecovery: number };
+  lastEvent: object | null;
+  nextReviewDay: number;
+  nextVerification: 'choice' | 'spelling' | 'dictation' | 'usage';
+  selectedDimension: 'meaning' | 'spelling' | 'listening' | 'usage';
+}
+
+export declare function replayNativeWordLearning(events: any[], wordId: string, day: number): NativeWordLearningState;
+export declare function getNativeWordLearningState(db: { getAllAsync: (...args: any[]) => Promise<any[]> }, accountId: string, wordId: string, day: number): Promise<NativeWordLearningState>;
