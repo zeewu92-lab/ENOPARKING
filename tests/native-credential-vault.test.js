@@ -194,3 +194,44 @@ test('native logout waits for an in-flight refresh rotation and revokes the rota
   assert.equal(await vault.getRefreshToken('account_a'), null);
   assert.equal(await secureStore.getItemAsync('enoparking.native.session.v1'), null);
 });
+
+
+test('native logout waits for startup session restoration before revoking credentials', async () => {
+  const secureStore = fakeSecureStore();
+  const first = new NativeCredentialVault({
+    secureStore,
+    now: () => 100000,
+    createRefreshRequestId: () => 'b6b9e8b4-7d11-4f2d-9a8b-112233445566',
+  });
+  await first.saveLogin(session());
+  const restarted = new NativeCredentialVault({
+    secureStore,
+    now: () => 100000,
+    createRefreshRequestId: () => 'b6b9e8b4-7d11-4f2d-9a8b-112233445566',
+  });
+  let releaseRefresh;
+  let refreshStarted;
+  const started = new Promise(resolve => { refreshStarted = resolve; });
+  const restore = restarted.restoreSession({
+    refresh: async ({ accountId }) => {
+      refreshStarted();
+      await new Promise(resolve => { releaseRefresh = resolve; });
+      return session(accountId, token('n'), token('b'), 300000);
+    },
+  });
+  await started;
+
+  let revokedToken;
+  const logout = restarted.logout({
+    revoke: async ({ refreshToken }) => { revokedToken = refreshToken; },
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  releaseRefresh();
+  await restore;
+  const result = await logout;
+
+  assert.equal(result.status, 'signed_out');
+  assert.equal(revokedToken, token('n'));
+  assert.equal(restarted.getActiveSession(), null);
+  assert.equal(await restarted.getRefreshToken('account_a'), null);
+});
