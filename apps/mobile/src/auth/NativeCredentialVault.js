@@ -196,7 +196,6 @@ export class NativeCredentialVault {
       if (!next || next.accountId !== accountId) throw new Error('NATIVE_REFRESH_ACCOUNT_MISMATCH');
       validateSession(next);
       validateRefreshToken(next.refreshToken);
-      if (this.loggingOut.has(accountId)) throw new Error('NATIVE_LOGOUT_IN_PROGRESS');
       await this.secureStore.setItemAsync(TOKEN_KEY_PREFIX + next.accountId, next.refreshToken);
       await this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + next.accountId);
       this.session = { accountId: next.accountId, accessToken: next.accessToken, expiresAt: next.expiresAt };
