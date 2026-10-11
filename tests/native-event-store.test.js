@@ -62,6 +62,21 @@ test('native ACK batch rejects duplicate IDs and sequences before transaction', 
   assert.equal(transactions, 0);
 });
 
+test('native ACK reconciliation rejects an invalid clock before opening a transaction', async () => {
+  let transactions = 0;
+  const store = new NativeEventStore({
+    withExclusiveTransactionAsync: async operation => {
+      transactions += 1;
+      return operation({ runAsync: async () => {}, getFirstAsync: async () => null });
+    },
+  }, { clock: () => Number.NaN });
+
+  await assert.rejects(store.reconcileAcks('account-a', [
+    { eventId: 'event-1', serverSequence: 1 },
+  ]), /NATIVE_EVENT_CLOCK_INVALID/);
+  assert.equal(transactions, 0);
+});
+
 test('native replay refuses a sequence gap inside a single database transaction', async () => {
   let transactions = 0;
   const db = {
