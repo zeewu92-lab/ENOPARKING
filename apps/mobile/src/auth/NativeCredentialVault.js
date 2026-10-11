@@ -241,17 +241,25 @@ export class NativeCredentialVault {
     return this.withLifecycleLock(async () => {
       if (this.credentialCleanupInProgress) throw new Error('NATIVE_CREDENTIAL_CLEANUP_IN_PROGRESS');
       this.credentialCleanupInProgress = true;
+      const activeAccountId = this.session?.accountId || null;
+      let metadataAccountId = null;
+      let sessionReadError = null;
       try {
-        const saved = await this.secureStore.getItemAsync(SESSION_KEY);
-        let metadata = null;
+        let saved = null;
+        try {
+          saved = await this.secureStore.getItemAsync(SESSION_KEY);
+        } catch (error) {
+          sessionReadError = error;
+        }
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
             validateAccountId(parsed.accountId);
-            metadata = parsed;
+            metadataAccountId = parsed.accountId;
           } catch { /* invalid metadata must not be used to form a storage key */ }
         }
-        const accountIds = [...new Set([this.session?.accountId, metadata?.accountId].filter(Boolean))];
+
+        const accountIds = [...new Set([activeAccountId, metadataAccountId].filter(Boolean))];
         const rotations = accountIds.map(accountId => this.refreshInFlight.get(accountId)).filter(Boolean);
         await Promise.all(rotations.map(async rotation => {
           try { await rotation; } catch { /* clear local credentials even if refresh failed */ }
@@ -267,6 +275,7 @@ export class NativeCredentialVault {
         const cleanup = await Promise.allSettled(keys.map(key => this.secureStore.deleteItemAsync(key)));
         const failedCleanup = cleanup.find(result => result.status === 'rejected');
         if (failedCleanup) throw failedCleanup.reason;
+        if (sessionReadError) throw sessionReadError;
       } finally {
         this.credentialCleanupInProgress = false;
       }
