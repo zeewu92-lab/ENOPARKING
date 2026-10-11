@@ -148,7 +148,12 @@ export class NativeEventSyncService {
         }
         expected += 1;
       }
-      if (!page.events.length && page.nextSequence > afterSequence) {
+      const expectedNextSequence = page.events.length
+        ? page.events[page.events.length - 1].serverSequence
+        : afterSequence;
+      if (page.nextSequence !== expectedNextSequence) {
+        // The cursor must describe the exact end of this page. Advancing it
+        // beyond delivered events could permanently skip events on the next pull.
         throw new Error('NATIVE_SYNC_PULL_SEQUENCE_GAP');
       }
       const replay = await this.store.applyReplay(accountId, page.events, this.applyEvent);
