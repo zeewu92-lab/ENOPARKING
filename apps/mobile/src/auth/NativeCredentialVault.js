@@ -46,6 +46,7 @@ export class NativeCredentialVault {
     this.loggingOut = new Set();
     this.lifecycleQueue = Promise.resolve();
     this.sessionRestoreInFlight = null;
+    this.credentialCleanupInProgress = false;
   }
 
   withLifecycleLock(operation) {
@@ -101,6 +102,7 @@ export class NativeCredentialVault {
 
   async rotateRefreshToken({ accountId, refresh }) {
     validateAccountId(accountId);
+    if (this.credentialCleanupInProgress) throw new Error('NATIVE_CREDENTIAL_CLEANUP_IN_PROGRESS');
     if (typeof refresh !== 'function') throw new Error('NATIVE_REFRESH_ADAPTER_REQUIRED');
     if (this.loggingOut.has(accountId)) throw new Error('NATIVE_LOGOUT_IN_PROGRESS');
     if (this.refreshInFlight.has(accountId)) return this.refreshInFlight.get(accountId);
@@ -237,22 +239,33 @@ export class NativeCredentialVault {
 
   async clearAllLocalCredentials() {
     return this.withLifecycleLock(async () => {
-      this.session = null;
-      let metadata = null;
-      const saved = await this.secureStore.getItemAsync(SESSION_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          validateAccountId(parsed.accountId);
-          metadata = parsed;
-        } catch { /* invalid metadata must not be used to form a storage key */ }
+      if (this.credentialCleanupInProgress) throw new Error('NATIVE_CREDENTIAL_CLEANUP_IN_PROGRESS');
+      this.credentialCleanupInProgress = true;
+      try {
+        const saved = await this.secureStore.getItemAsync(SESSION_KEY);
+        let metadata = null;
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            validateAccountId(parsed.accountId);
+            metadata = parsed;
+          } catch { /* invalid metadata must not be used to form a storage key */ }
+        }
+        const accountId = this.session?.accountId || metadata?.accountId;
+        const rotation = accountId ? this.refreshInFlight.get(accountId) : null;
+        if (rotation) {
+          try { await rotation; } catch { /* clear local credentials even if refresh failed */ }
+        }
+        this.session = null;
+        const keys = metadata
+          ? [TOKEN_KEY_PREFIX + metadata.accountId, REFRESH_REQUEST_PREFIX + metadata.accountId, SESSION_KEY]
+          : [SESSION_KEY];
+        const cleanup = await Promise.allSettled(keys.map(key => this.secureStore.deleteItemAsync(key)));
+        const failedCleanup = cleanup.find(result => result.status === 'rejected');
+        if (failedCleanup) throw failedCleanup.reason;
+      } finally {
+        this.credentialCleanupInProgress = false;
       }
-      const keys = metadata
-        ? [TOKEN_KEY_PREFIX + metadata.accountId, REFRESH_REQUEST_PREFIX + metadata.accountId, SESSION_KEY]
-        : [SESSION_KEY];
-      const cleanup = await Promise.allSettled(keys.map(key => this.secureStore.deleteItemAsync(key)));
-      const failedCleanup = cleanup.find(result => result.status === 'rejected');
-      if (failedCleanup) throw failedCleanup.reason;
     });
   }
 
