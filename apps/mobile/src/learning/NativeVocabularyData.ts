@@ -1,10 +1,10 @@
-import requiredOne from '../../../src/data/pep-2019-required-1.json';
-import requiredTwo from '../../../src/data/pep-2019-required-2.json';
-import requiredThree from '../../../src/data/pep-2019-required-3.json';
-import selectiveOne from '../../../src/data/pep-2019-selective-1.json';
-import selectiveTwo from '../../../src/data/pep-2019-selective-2.json';
-import selectiveThree from '../../../src/data/pep-2019-selective-3.json';
-import selectiveFour from '../../../src/data/pep-2019-selective-4.json';
+import requiredOne from '../../../../src/data/pep-2019-required-1.json';
+import requiredTwo from '../../../../src/data/pep-2019-required-2.json';
+import requiredThree from '../../../../src/data/pep-2019-required-3.json';
+import selectiveOne from '../../../../src/data/pep-2019-selective-1.json';
+import selectiveTwo from '../../../../src/data/pep-2019-selective-2.json';
+import selectiveThree from '../../../../src/data/pep-2019-selective-3.json';
+import selectiveFour from '../../../../src/data/pep-2019-selective-4.json';
 
 type RawWord = {
   id?: string;
