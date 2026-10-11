@@ -55,7 +55,7 @@ export function NativeLearningPanel({ accountId }: Props) {
 
   useEffect(() => () => {
     void Speech.stop();
-  }, []);
+  }, [word?.id]);
 
   useEffect(() => {
     let active = true;
@@ -202,6 +202,7 @@ export function NativeLearningPanel({ accountId }: Props) {
       {word ? (
         <>
           <Text style={styles.source}>{word.textbook} · {word.unit}</Text>
+          <Text style={styles.progress}>今日第 {wordIndex + 1} / {dailyWords.length} 個單詞 · 已暫停 {skippedCount} 題</Text>
           <View style={styles.wordCard}>
             {verification === 'choice' ? (
               <>
@@ -303,7 +304,8 @@ const styles = StyleSheet.create({
   panel: { marginTop: 18, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#E0E8DB' },
   title: { color: '#23352A', fontSize: 15, fontWeight: '700' },
   description: { color: '#6C756D', fontSize: 12, lineHeight: 18, marginTop: 6, marginBottom: 12 },
-  source: { color: '#6C756D', fontSize: 11, marginBottom: 8 },
+  source: { color: '#6C756D', fontSize: 11, marginBottom: 5 },
+  progress: { color: '#526257', fontSize: 11, marginBottom: 9 },
   wordCard: { backgroundColor: '#F7F9F4', borderColor: '#DDE6D9', borderWidth: 1, borderRadius: 12, padding: 14 },
   label: { color: '#526257', fontSize: 12, fontWeight: '700' },
   meaning: { color: '#23352A', fontSize: 17, lineHeight: 25, marginTop: 10 },
