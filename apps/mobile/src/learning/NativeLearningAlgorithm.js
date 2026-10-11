@@ -172,14 +172,14 @@ export async function getNativeDailyBatch(db, accountId, vocabulary, day) {
     const wordId = String(word.id ?? '').trim().toLowerCase();
     if (!wordId) throw new Error('NATIVE_LEARNING_VOCABULARY_INVALID');
     const history = eventsByWord.get(wordId) || [];
-    const state = replayNativeWordLearning(history, wordId, day);
+    const state = history.length ? replayNativeWordLearning(history, wordId, day) : null;
     const orderedHistory = history.slice().sort(compareEvents);
     let errorStreakWindow = 0;
     for (let i = orderedHistory.length - 1; i >= 0; i -= 1) {
       if (orderedHistory[i].payload.result !== 'wrong') break;
       errorStreakWindow += 1;
     }
-    const scoreValues = Object.values(state.scores);
+    const scoreValues = state ? Object.values(state.scores) : [];
     const lowestDimension = scoreValues.length ? Math.min(...scoreValues) : 0;
     const lastSeenAt = orderedHistory.length
       ? Number(orderedHistory[orderedHistory.length - 1].payload.day)
@@ -187,7 +187,7 @@ export async function getNativeDailyBatch(db, accountId, vocabulary, day) {
     return {
       wordId,
       word,
-      nextReviewAt: history.length ? state.nextReviewDay : null,
+      nextReviewAt: state ? state.nextReviewDay : null,
       overdueDays: history.length ? Math.max(0, day - state.nextReviewDay) : 0,
       errorStreakWindow,
       lowestDimension,
