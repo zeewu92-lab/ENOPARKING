@@ -152,24 +152,42 @@ export function NativeLearningPanel({ accountId }: Props) {
         <>
           <Text style={styles.source}>{word.textbook} · {word.unit}</Text>
           <View style={styles.wordCard}>
-            <Text style={styles.label}>請根據中文釋義拼寫英文</Text>
-            <Text style={styles.meaning}>{word.meaning}</Text>
-            <TextInput
-              accessibilityLabel="英文答案"
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!busy && !answered}
-              onChangeText={setAnswer}
-              onSubmitEditing={submitAnswer}
-              placeholder="輸入英文單詞或短語"
-              placeholderTextColor="#879188"
-              returnKeyType="done"
-              style={styles.input}
-              value={answer}
-            />
+            {verification === 'choice' ? (
+              <>
+                <Text style={styles.label}>選擇與英文單詞相符的中文釋義</Text>
+                <Text style={styles.meaning}>{word.word}{word.phonetic ? '  ' + word.phonetic : ''}</Text>
+                <View style={styles.choices}>
+                  {choiceOptions.map(option => (
+                    <Pressable key={option.id} accessibilityRole="button" disabled={busy || answered} onPress={() => setSelectedChoice(option.meaning)} style={[styles.choice, selectedChoice === option.meaning && styles.choiceSelected]}>
+                      <Text style={styles.choiceText}>{option.meaning}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </>
+            ) : verification === 'spelling' ? (
+              <>
+                <Text style={styles.label}>請根據中文釋義拼寫英文</Text>
+                <Text style={styles.meaning}>{word.meaning}</Text>
+                <TextInput
+                  accessibilityLabel="英文答案"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!busy && !answered}
+                  onChangeText={setAnswer}
+                  onSubmitEditing={submitAnswer}
+                  placeholder="輸入英文單詞或短語"
+                  placeholderTextColor="#879188"
+                  returnKeyType="done"
+                  style={styles.input}
+                  value={answer}
+                />
+              </>
+            ) : (
+              <Text style={styles.message}>{verification === 'dictation' ? '聽辨題尚待接入原生發音播放。' : '用法題尚待補齊教材語境例句。'}目前不會記錄此題，避免寫入不符合題型的事件。</Text>
+            )}
             {answered ? <Text style={styles.answer}>標準答案：{word.word}{word.phonetic ? '  ' + word.phonetic : ''}</Text> : null}
           </View>
-          <Pressable accessibilityRole="button" disabled={busy || answered} onPress={submitAnswer} style={[styles.submit, (busy || answered) && styles.disabled]}>
+          <Pressable accessibilityRole="button" disabled={busy || answered || !supportsCurrentVerification || !algorithmState} onPress={submitAnswer} style={[styles.submit, (busy || answered || !supportsCurrentVerification || !algorithmState) && styles.disabled]>
             <Text style={styles.submitText}>{busy ? '保存中…' : '提交答案'}</Text>
           </Pressable>
           {answered ? (
@@ -207,6 +225,10 @@ const styles = StyleSheet.create({
   meaning: { color: '#23352A', fontSize: 17, lineHeight: 25, marginTop: 10 },
   input: { backgroundColor: '#FFFFFF', borderColor: '#DDE6D9', borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 11, color: '#23352A', fontSize: 15, marginTop: 14 },
   answer: { color: '#31583B', fontSize: 13, fontWeight: '700', marginTop: 10 },
+  choices: { marginTop: 10, gap: 8 },
+  choice: { borderWidth: 1, borderColor: '#DDE6D9', backgroundColor: '#FFFFFF', borderRadius: 10, padding: 11 },
+  choiceSelected: { borderColor: '#53775B', backgroundColor: '#E9F0E5' },
+  choiceText: { color: '#31583B', fontSize: 14, lineHeight: 20 },
   submit: { backgroundColor: '#53775B', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 12 },
   disabled: { opacity: 0.55 },
   submitText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
