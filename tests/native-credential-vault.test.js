@@ -262,3 +262,46 @@ test('native logout attempts to clear every credential key if one SecureStore de
   assert.equal(await secureStore.getItemAsync('enoparking.native.refresh.v1.account_a'), token('r'));
   assert.equal(vault.getActiveSession(), null);
 });
+
+
+test('native login and logout lifecycle mutations execute in invocation order', async () => {
+  const values = new Map();
+  let releaseFirstWrite;
+  let firstWriteStarted;
+  const started = new Promise(resolve => { firstWriteStarted = resolve; });
+  const secureStore = {
+    values,
+    async getItemAsync(key) { return values.has(key) ? values.get(key) : null; },
+    async setItemAsync(key, value) {
+      if (key === 'enoparking.native.refresh.v1.account_a' && !values.has(key)) {
+        firstWriteStarted();
+        await new Promise(resolve => { releaseFirstWrite = resolve; });
+      }
+      values.set(key, value);
+    },
+    async deleteItemAsync(key) { values.delete(key); },
+  };
+  const vault = new NativeCredentialVault({
+    secureStore,
+    now: () => 100000,
+    createRefreshRequestId: () => 'b6b9e8b4-7d11-4f2d-9a8b-112233445566',
+  });
+
+  const login = vault.saveLogin(session());
+  await started;
+  let logoutFinished = false;
+  const logout = vault.logout({ revoke: async () => {} }).then(result => {
+    logoutFinished = true;
+    return result;
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(logoutFinished, false);
+  releaseFirstWrite();
+  await login;
+  const result = await logout;
+
+  assert.equal(result.status, 'signed_out');
+  assert.equal(vault.getActiveSession(), null);
+  assert.equal(await vault.getRefreshToken('account_a'), null);
+  assert.equal(await secureStore.getItemAsync('enoparking.native.session.v1'), null);
+});
