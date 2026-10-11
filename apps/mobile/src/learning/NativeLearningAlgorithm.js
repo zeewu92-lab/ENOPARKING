@@ -119,3 +119,88 @@ export async function getNativeWordLearningState(db, accountId, wordId, day) {
   });
   return replayNativeWordLearning(events, wordId, day);
 }
+
+export async function getNativeDailyBatch(db, accountId, vocabulary, day) {
+  if (!db || typeof db.getAllAsync !== 'function') {
+    throw new Error('NATIVE_LEARNING_DATABASE_REQUIRED');
+  }
+  if (typeof accountId !== 'string' || !accountId.trim()) {
+    throw new Error('NATIVE_LEARNING_ACCOUNT_REQUIRED');
+  }
+  if (!Array.isArray(vocabulary)) {
+    throw new Error('NATIVE_LEARNING_VOCABULARY_INVALID');
+  }
+  if (!Number.isSafeInteger(day) || day < 0) {
+    throw new Error('NATIVE_LEARNING_DAY_INVALID');
+  }
+
+  const rows = await db.getAllAsync(
+    `SELECT event_id AS eventId, local_counter AS localCounter,
+            event_type AS type, payload_json AS payloadJson,
+            server_sequence AS serverSequence
+     FROM enop_learning_events
+     WHERE account_id = ? AND event_type = 'action'
+     ORDER BY local_counter ASC`,
+    accountId
+  );
+  const events = rows.map(row => {
+    let payload;
+    try {
+      payload = JSON.parse(row.payloadJson);
+    } catch {
+      throw new Error('NATIVE_LEARNING_HISTORY_CORRUPT');
+    }
+    return {
+      eventId: row.eventId,
+      localCounter: row.localCounter,
+      serverSequence: row.serverSequence,
+      type: row.type,
+      payload,
+    };
+  });
+
+  const eventsByWord = new Map();
+  for (const event of events) {
+    const id = String(event.payload?.wordId ?? '').trim().toLowerCase();
+    if (!id) throw new Error('NATIVE_LEARNING_HISTORY_CORRUPT');
+    const group = eventsByWord.get(id) || [];
+    group.push(event);
+    eventsByWord.set(id, group);
+  }
+
+  const candidates = vocabulary.map(word => {
+    const wordId = String(word.id ?? '').trim().toLowerCase();
+    if (!wordId) throw new Error('NATIVE_LEARNING_VOCABULARY_INVALID');
+    const history = eventsByWord.get(wordId) || [];
+    const state = replayNativeWordLearning(history, wordId, day);
+    const orderedHistory = history.slice().sort(compareEvents);
+    let errorStreakWindow = 0;
+    for (let i = orderedHistory.length - 1; i >= 0; i -= 1) {
+      if (orderedHistory[i].payload.result !== 'wrong') break;
+      errorStreakWindow += 1;
+    }
+    const scoreValues = Object.values(state.scores);
+    const lowestDimension = scoreValues.length ? Math.min(...scoreValues) : 0;
+    const lastSeenAt = orderedHistory.length
+      ? Number(orderedHistory[orderedHistory.length - 1].payload.day)
+      : -1;
+    return {
+      wordId,
+      word,
+      nextReviewAt: history.length ? state.nextReviewDay : null,
+      overdueDays: history.length ? Math.max(0, day - state.nextReviewDay) : 0,
+      errorStreakWindow,
+      lowestDimension,
+      lastSeenAt,
+      isNew: history.length === 0,
+    };
+  });
+
+  const batch = createLearningAlgorithm({
+    reviewCap: 20,
+    newTarget: 5,
+    dailyMax: 30,
+  }).dailyBatch.generate({ words: candidates, today: day });
+  return batch.map(item => item.word);
+}
+
