@@ -115,3 +115,23 @@ test('native sync service rejects a pull cursor that skips beyond delivered even
   await assert.rejects(service.syncAccount('account-a'), /NATIVE_SYNC_PULL_SEQUENCE_GAP/);
   assert.deepEqual(store.state.replay, []);
 });
+test('native sync discards a late ACK when the active account changes during push', async () => {
+  const store = fakeStore();
+  let checks = 0;
+  let pullCalls = 0;
+  const service = new NativeEventSyncService(serviceOptions(store, {
+    pullEvents: async ({ afterSequence }) => {
+      pullCalls += 1;
+      return { events: [], nextSequence: afterSequence, hasMore: false };
+    },
+  }));
+  const result = await service.syncAccount('account-a', {
+    isCurrentAccount: async () => {
+      checks += 1;
+      return checks < 3;
+    },
+  });
+  assert.equal(result.status, 'account_changed');
+  assert.equal(store.state.ack.length, 0);
+  assert.equal(pullCalls, 0);
+});
