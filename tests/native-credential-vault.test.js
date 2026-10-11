@@ -423,3 +423,24 @@ test('clearAllLocalCredentials removes credentials for both active and persisted
   assert.equal(await secureStore.getItemAsync('enoparking.native.refresh-request.v1.account_b'), null);
   assert.equal(await secureStore.getItemAsync('enoparking.native.session.v1'), null);
 });
+
+
+test('clearAllLocalCredentials attempts known-account cleanup when session metadata cannot be read', async () => {
+  const secureStore = fakeSecureStore();
+  const vault = new NativeCredentialVault({
+    secureStore,
+    now: () => 100000,
+    createRefreshRequestId: () => 'b6b9e8b4-7d11-4f2d-9a8b-112233445566',
+  });
+  await vault.saveLogin(session('account_a'));
+  const getItem = secureStore.getItemAsync.bind(secureStore);
+  secureStore.getItemAsync = async key => {
+    if (key === 'enoparking.native.session.v1') throw new Error('SECURE_STORE_READ_FAILED');
+    return getItem(key);
+  };
+
+  await assert.rejects(vault.clearAllLocalCredentials(), /SECURE_STORE_READ_FAILED/);
+  assert.equal(vault.getActiveSession(), null);
+  assert.equal(await getItem('enoparking.native.refresh.v1.account_a'), null);
+  assert.equal(await getItem('enoparking.native.session.v1'), null);
+});
