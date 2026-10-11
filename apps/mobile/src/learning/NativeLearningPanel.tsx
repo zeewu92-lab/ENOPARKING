@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
 import { NativeEventStore } from '../storage/NativeEventStore.js';
-import { recordNativeLearningAction } from './NativeLearningState.js';
+import { getNativeWordLearningState, recordNativeLearningAction } from './NativeLearningState.js';
 import { NATIVE_VOCABULARY } from './NativeVocabularyData';
 
 type Props = {
@@ -28,6 +28,7 @@ export function NativeLearningPanel({ accountId }: Props) {
   const [answered, setAnswered] = useState(false);
   const [message, setMessage] = useState('根據中文釋義拼寫英文單詞，答案會自動核對並保存為學習事件。');
   const [summary, setSummary] = useState({ reviewCount: 0, correctCount: 0, wrongCount: 0 });
+  const [algorithmState, setAlgorithmState] = useState<Awaited<ReturnType<typeof getNativeWordLearningState>> | null>(null);
   const word = NATIVE_VOCABULARY.length ? NATIVE_VOCABULARY[wordIndex % NATIVE_VOCABULARY.length] : null;
 
   useEffect(() => {
@@ -54,6 +55,22 @@ export function NativeLearningPanel({ accountId }: Props) {
     });
     return () => { active = false; };
   }, [db, accountId, word?.id]);
+
+  useEffect(() => {
+    let active = true;
+    if (!word) {
+      setAlgorithmState(null);
+      return () => { active = false; };
+    }
+    void getNativeWordLearningState(db, accountId, word.id, getLearningDay())
+      .then(state => {
+        if (active) setAlgorithmState(state);
+      })
+      .catch(() => {
+        if (active) setMessage('計算學習狀態失敗，原始學習事件仍保留在本機。');
+      });
+    return () => { active = false; };
+  }, [db, accountId, word?.id, summary.reviewCount]);
 
   async function submitAnswer() {
     if (!word) {
@@ -144,6 +161,13 @@ export function NativeLearningPanel({ accountId }: Props) {
       <View style={styles.summary}>
         <Text style={styles.summaryTitle}>目前單詞狀態</Text>
         <Text style={styles.summaryText}>複習 {summary.reviewCount} 次 · 答對 {summary.correctCount} 次 · 答錯 {summary.wrongCount} 次</Text>
+        {algorithmState && summary.reviewCount > 0 ? (
+          <>
+            <Text style={styles.algorithmText}>掌握狀態：{algorithmState.mastery.state} · 綜合掌握度 {algorithmState.mastery.overall.toFixed(1)}%</Text>
+            <Text style={styles.algorithmText}>含義 {algorithmState.scores.meaning.toFixed(0)} · 拼寫 {algorithmState.scores.spelling.toFixed(0)} · 聽辨 {algorithmState.scores.listening.toFixed(0)} · 用法 {algorithmState.scores.usage.toFixed(0)}</Text>
+            <Text style={styles.algorithmText}>穩定度 {algorithmState.stability.stability.toFixed(1)} · 下次複習日 {new Date(algorithmState.nextReviewDay * 86400000).toISOString().slice(0, 10)}</Text>
+          </>
+        ) : null}
       </View>
     </View>
   );
@@ -168,4 +192,5 @@ const styles = StyleSheet.create({
   summary: { backgroundColor: '#F7F9F4', borderRadius: 10, padding: 11, marginTop: 12 },
   summaryTitle: { color: '#31583B', fontSize: 12, fontWeight: '700' },
   summaryText: { color: '#526257', fontSize: 12, marginTop: 5 },
+  algorithmText: { color: '#31583B', fontSize: 12, lineHeight: 18, marginTop: 6 },
 });
