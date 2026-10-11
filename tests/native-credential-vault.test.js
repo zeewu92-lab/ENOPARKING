@@ -340,3 +340,26 @@ test('concurrent native startup restoration shares one refresh request', async (
   assert.equal(refreshCalls, 1);
   assert.equal(a.accountId, 'account_a');
 });
+
+
+test('clearAllLocalCredentials attempts session cleanup and reports partial SecureStore failure', async () => {
+  const secureStore = fakeSecureStore();
+  const vault = new NativeCredentialVault({
+    secureStore,
+    now: () => 100000,
+    createRefreshRequestId: () => 'b6b9e8b4-7d11-4f2d-9a8b-112233445566',
+  });
+  await vault.saveLogin(session());
+  await secureStore.setItemAsync('enoparking.native.refresh-request.v1.account_a', 'b6b9e8b4-7d11-4f2d-9a8b-112233445566');
+  const deleteItem = secureStore.deleteItemAsync.bind(secureStore);
+  secureStore.deleteItemAsync = async key => {
+    if (key === 'enoparking.native.refresh.v1.account_a') throw new Error('SECURE_STORE_DELETE_FAILED');
+    return deleteItem(key);
+  };
+
+  await assert.rejects(vault.clearAllLocalCredentials(), /SECURE_STORE_DELETE_FAILED/);
+  assert.equal(vault.getActiveSession(), null);
+  assert.equal(await secureStore.getItemAsync('enoparking.native.session.v1'), null);
+  assert.equal(await secureStore.getItemAsync('enoparking.native.refresh-request.v1.account_a'), null);
+  assert.equal(await secureStore.getItemAsync('enoparking.native.refresh.v1.account_a'), token('r'));
+});
