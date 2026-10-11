@@ -94,3 +94,24 @@ test('native sync service refuses cursor jumps and non-contiguous pull pages', a
   }));
   await assert.rejects(service.syncAccount('account-a'), /NATIVE_SYNC_PULL_SEQUENCE_GAP/);
 });
+
+test('native sync service rejects a pull cursor that skips beyond delivered events', async () => {
+  const store = fakeStore({ pendingForSync: async () => [] });
+  const service = new NativeEventSyncService(serviceOptions(store, {
+    pullEvents: async () => ({
+      events: [{
+        eventId: 'e1',
+        type: 'action',
+        payload: { wordId: 'word-1', day: 1, verification: 'choice', result: 'correct', hintLevel: 'none' },
+        createdAt: 10,
+        serverSequence: 1,
+      }],
+      // A cursor of 2 would skip sequence 2 even though this page only delivered sequence 1.
+      nextSequence: 2,
+      hasMore: false,
+    }),
+  }));
+
+  await assert.rejects(service.syncAccount('account-a'), /NATIVE_SYNC_PULL_SEQUENCE_GAP/);
+  assert.deepEqual(store.state.replay, []);
+});
