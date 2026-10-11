@@ -24,12 +24,15 @@ export function NativeLearningPanel({ accountId }: Props) {
   const store = useMemo(() => new NativeEventStore(db), [db]);
   const [wordIndex, setWordIndex] = useState(0);
   const [answer, setAnswer] = useState('');
+  const [selectedChoice, setSelectedChoice] = useState('');
   const [busy, setBusy] = useState(false);
   const [answered, setAnswered] = useState(false);
   const [message, setMessage] = useState('根據中文釋義拼寫英文單詞，答案會自動核對並保存為學習事件。');
   const [summary, setSummary] = useState({ reviewCount: 0, correctCount: 0, wrongCount: 0 });
   const [algorithmState, setAlgorithmState] = useState<Awaited<ReturnType<typeof getNativeWordLearningState>> | null>(null);
   const word = NATIVE_VOCABULARY.length ? NATIVE_VOCABULARY[wordIndex % NATIVE_VOCABULARY.length] : null;
+  const verification = algorithmState?.nextVerification ?? 'choice';
+  const supportsCurrentVerification = verification === 'choice' || verification === 'spelling';
 
   useEffect(() => {
     let active = true;
@@ -78,11 +81,21 @@ export function NativeLearningPanel({ accountId }: Props) {
       return;
     }
     if (busy || answered) return;
-    if (!answer.trim()) {
+    if (!supportsCurrentVerification) {
+      setMessage('目前選中的驗證方式尚未接入練習介面，暫停提交以避免記錄錯誤題型。');
+      return;
+    }
+    if (verification === 'choice' && !selectedChoice) {
+      setMessage('請先選擇中文釋義。');
+      return;
+    }
+    if (verification === 'spelling' && !answer.trim()) {
       setMessage('請先輸入英文答案。');
       return;
     }
-    const correct = normalizeAnswer(answer) === normalizeAnswer(word.word);
+    const correct = verification === 'choice'
+      ? selectedChoice === word.meaning
+      : normalizeAnswer(answer) === normalizeAnswer(word.word);
     setBusy(true);
     setMessage('正在保存學習事件…');
     try {
@@ -92,7 +105,7 @@ export function NativeLearningPanel({ accountId }: Props) {
         payload: {
           wordId: word.id,
           day: getLearningDay(),
-          verification: 'spelling',
+          verification,
           result: correct ? 'correct' : 'wrong',
           hintLevel: 'none',
         },
@@ -116,6 +129,7 @@ export function NativeLearningPanel({ accountId }: Props) {
     if (!NATIVE_VOCABULARY.length) return;
     setWordIndex(current => (current + 1) % NATIVE_VOCABULARY.length);
     setAnswer('');
+    setSelectedChoice('');
     setAnswered(false);
     setMessage('根據中文釋義拼寫英文單詞，答案會自動核對並保存為學習事件。');
   }
