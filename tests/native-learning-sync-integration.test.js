@@ -126,3 +126,22 @@ test('remote replay rolls back projection and cursor when event application fail
   assert.equal(snapshot.states.size, 0);
   assert.equal(snapshot.applied.size, 0);
 });
+
+test('the same event identity is isolated across two accounts', async () => {
+  const db = makeTransactionalDb();
+  const store = new NativeEventStore(db, { clock: () => 120 });
+  await store.applyReplay('account-a', [remoteEvent], (tx, event) =>
+    applyNativeLearningEvent(tx, 'account-a', event, { now: 120 }));
+  await store.applyReplay('account-b', [remoteEvent], (tx, event) =>
+    applyNativeLearningEvent(tx, 'account-b', event, { now: 120 }));
+
+  const snapshot = db.snapshot();
+  const stateA = JSON.parse(snapshot.states.get('account-a:word:word-remote-1'));
+  const stateB = JSON.parse(snapshot.states.get('account-b:word:word-remote-1'));
+  assert.equal(stateA.reviewCount, 1);
+  assert.equal(stateB.reviewCount, 1);
+  assert.equal(snapshot.applied.has('account-a:remote-event-0001'), true);
+  assert.equal(snapshot.applied.has('account-b:remote-event-0001'), true);
+  assert.equal(snapshot.meta.get('account-a').replayCursor, 1);
+  assert.equal(snapshot.meta.get('account-b').replayCursor, 1);
+});
