@@ -305,3 +305,38 @@ test('native login and logout lifecycle mutations execute in invocation order', 
   assert.equal(await vault.getRefreshToken('account_a'), null);
   assert.equal(await secureStore.getItemAsync('enoparking.native.session.v1'), null);
 });
+
+
+test('concurrent native startup restoration shares one refresh request', async () => {
+  const secureStore = fakeSecureStore();
+  const initial = new NativeCredentialVault({
+    secureStore,
+    now: () => 100000,
+    createRefreshRequestId: () => 'b6b9e8b4-7d11-4f2d-9a8b-112233445566',
+  });
+  await initial.saveLogin(session());
+  const restarted = new NativeCredentialVault({
+    secureStore,
+    now: () => 100000,
+    createRefreshRequestId: () => 'c7c9e8b4-7d11-4f2d-9a8b-112233445566',
+  });
+  let releaseRefresh;
+  let refreshStarted;
+  const started = new Promise(resolve => { refreshStarted = resolve; });
+  let refreshCalls = 0;
+  const refresh = async ({ accountId }) => {
+    refreshCalls += 1;
+    refreshStarted();
+    await new Promise(resolve => { releaseRefresh = resolve; });
+    return session(accountId, token('n'), token('b'), 300000);
+  };
+  const first = restarted.restoreSession({ refresh });
+  await started;
+  const second = restarted.restoreSession({ refresh });
+  releaseRefresh();
+  const [a, b] = await Promise.all([first, second]);
+
+  assert.deepEqual(a, b);
+  assert.equal(refreshCalls, 1);
+  assert.equal(a.accountId, 'account_a');
+});
