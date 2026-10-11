@@ -46,8 +46,16 @@ export function NativeLearningPanel({ accountId }: Props) {
       const item = candidates[(wordIndex + offset) % candidates.length];
       if (!unique.has(item.meaning)) unique.set(item.meaning, item);
     }
-    return [...unique.values(), word].sort((a, b) => a.id.localeCompare(b.id));
+    const options = [...unique.values(), word];
+    // Rotate a deterministic option order so the correct answer is not tied
+    // to one fixed lexical position while keeping tests and replay reproducible.
+    const rotation = options.length ? wordIndex % options.length : 0;
+    return options.slice(rotation).concat(options.slice(0, rotation));
   }, [word?.id, wordIndex]);
+
+  useEffect(() => () => {
+    void Speech.stop();
+  }, []);
 
   useEffect(() => {
     let active = true;
