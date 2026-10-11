@@ -135,3 +135,43 @@ test('native sync discards a late ACK when the active account changes during pus
   assert.equal(store.state.ack.length, 0);
   assert.equal(pullCalls, 0);
 });
+
+
+test('native sync serializes overlapping requests for the same account', async () => {
+  const store = fakeStore();
+  let releaseFirst;
+  let signalFirstStarted;
+  const firstStarted = new Promise(resolve => { signalFirstStarted = resolve; });
+  const firstGate = new Promise(resolve => { releaseFirst = resolve; });
+  let activePushes = 0;
+  let maxActivePushes = 0;
+  let pushCalls = 0;
+  const service = new NativeEventSyncService(serviceOptions(store, {
+    pushEvents: async ({ events }) => {
+      pushCalls += 1;
+      activePushes += 1;
+      maxActivePushes = Math.max(maxActivePushes, activePushes);
+      if (pushCalls === 1) {
+        signalFirstStarted();
+        await firstGate;
+      }
+      activePushes -= 1;
+      return { results: events.map(event => ({
+        eventId: event.eventId,
+        syncStatus: 'confirmed',
+        serverSequence: pushCalls,
+      })) };
+    },
+  }));
+
+  const first = service.syncAccount('account-a');
+  await firstStarted;
+  const second = service.syncAccount('account-a');
+  await Promise.resolve();
+  assert.equal(pushCalls, 1);
+  releaseFirst();
+  const results = await Promise.all([first, second]);
+  assert.equal(maxActivePushes, 1);
+  assert.equal(pushCalls, 2);
+  assert.equal(results.every(result => result.status === 'synced'), true);
+});
