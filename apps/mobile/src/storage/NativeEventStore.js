@@ -80,6 +80,17 @@ function assertSafeInteger(value, code, minimum = 0) {
   if (!Number.isSafeInteger(value) || value < minimum) throw new Error(code);
 }
 
+
+function canonicalJson(value) {
+  if (Array.isArray(value)) return '[' + value.map(canonicalJson).join(',') + ']';
+  if (value && typeof value === 'object') {
+    return '{' + Object.keys(value).sort().map(key =>
+      JSON.stringify(key) + ':' + canonicalJson(value[key])
+    ).join(',') + '}';
+  }
+  return JSON.stringify(value);
+}
+
 function assertEvent(event) {
   if (!event || typeof event !== 'object' || Array.isArray(event)) {
     throw new Error('NATIVE_EVENT_INVALID');
@@ -425,6 +436,16 @@ export class NativeEventStore {
           );
           appliedCount += 1;
         } else if (idMarker.serverSequence === null) {
+          const localEvent = await tx.getFirstAsync(
+            `SELECT event_type AS type, payload_json AS payloadJson, created_at AS createdAt
+             FROM enop_learning_events WHERE account_id = ? AND event_id = ?`,
+            accountId, event.eventId
+          );
+          if (!localEvent || localEvent.type !== event.type ||
+              localEvent.createdAt !== event.createdAt ||
+              canonicalJson(JSON.parse(localEvent.payloadJson)) !== canonicalJson(event.payload)) {
+            throw new Error('NATIVE_REPLAY_LOCAL_EVENT_CONFLICT');
+          }
           await tx.runAsync(
             `UPDATE enop_applied_events SET server_sequence = ?
              WHERE account_id = ? AND event_id = ?`,
