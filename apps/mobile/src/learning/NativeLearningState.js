@@ -150,3 +150,5 @@ export async function recordNativeLearningAction({
     applyOptimisticState: (tx, event) => applyNativeLearningEvent(tx, accountId, event, { now })
   });
 }
+
+export { getNativeWordLearningState, replayNativeWordLearning } from './NativeLearningAlgorithm.js';
