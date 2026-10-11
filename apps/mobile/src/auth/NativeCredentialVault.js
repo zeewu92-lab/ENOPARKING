@@ -238,25 +238,21 @@ export class NativeCredentialVault {
   async clearAllLocalCredentials() {
     return this.withLifecycleLock(async () => {
       this.session = null;
+      let metadata = null;
       const saved = await this.secureStore.getItemAsync(SESSION_KEY);
       if (saved) {
-        let metadata;
         try {
-          metadata = JSON.parse(saved);
-          validateAccountId(metadata.accountId);
-        } catch {
-          metadata = null;
-        }
-        if (metadata) {
-          const cleanup = await Promise.allSettled([
-            this.secureStore.deleteItemAsync(TOKEN_KEY_PREFIX + metadata.accountId),
-            this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + metadata.accountId),
-          ]);
-          const failedCleanup = cleanup.find(result => result.status === 'rejected');
-          if (failedCleanup) throw failedCleanup.reason;
-        }
+          const parsed = JSON.parse(saved);
+          validateAccountId(parsed.accountId);
+          metadata = parsed;
+        } catch { /* invalid metadata must not be used to form a storage key */ }
       }
-      await this.secureStore.deleteItemAsync(SESSION_KEY);
+      const keys = metadata
+        ? [TOKEN_KEY_PREFIX + metadata.accountId, REFRESH_REQUEST_PREFIX + metadata.accountId, SESSION_KEY]
+        : [SESSION_KEY];
+      const cleanup = await Promise.allSettled(keys.map(key => this.secureStore.deleteItemAsync(key)));
+      const failedCleanup = cleanup.find(result => result.status === 'rejected');
+      if (failedCleanup) throw failedCleanup.reason;
     });
   }
 
