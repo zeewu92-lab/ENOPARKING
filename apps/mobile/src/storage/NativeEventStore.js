@@ -328,6 +328,7 @@ export class NativeEventStore {
     }
 
     const now = this.clock();
+    assertSafeInteger(now, 'NATIVE_EVENT_CLOCK_INVALID');
     await this.db.withExclusiveTransactionAsync(async tx => {
       for (const ack of acknowledgements) {
         const row = await tx.getFirstAsync(
