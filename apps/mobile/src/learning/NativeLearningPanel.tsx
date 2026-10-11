@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
+import * as Speech from 'expo-speech';
 import { NativeEventStore } from '../storage/NativeEventStore.js';
 import { getNativeWordLearningState, recordNativeLearningAction } from './NativeLearningState.js';
 import { getNativeDailyBatch } from './NativeLearningAlgorithm.js';
@@ -26,6 +27,7 @@ export function NativeLearningPanel({ accountId }: Props) {
   const [wordIndex, setWordIndex] = useState(0);
   const [dailyWords, setDailyWords] = useState<typeof NATIVE_VOCABULARY>([]);
   const [batchLoading, setBatchLoading] = useState(true);
+  const [skippedCount, setSkippedCount] = useState(0);
   const [answer, setAnswer] = useState('');
   const [selectedChoice, setSelectedChoice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -35,7 +37,7 @@ export function NativeLearningPanel({ accountId }: Props) {
   const [algorithmState, setAlgorithmState] = useState<Awaited<ReturnType<typeof getNativeWordLearningState>> | null>(null);
   const word = dailyWords[wordIndex] ?? null;
   const verification = algorithmState?.nextVerification ?? 'choice';
-  const supportsCurrentVerification = verification === 'choice' || verification === 'spelling';
+  const supportsCurrentVerification = verification === 'choice' || verification === 'spelling' || verification === 'dictation';
   const choiceOptions = useMemo(() => {
     if (!word) return [];
     const candidates = NATIVE_VOCABULARY.filter(item => item.id !== word.id && item.meaning !== word.meaning);
@@ -54,6 +56,7 @@ export function NativeLearningPanel({ accountId }: Props) {
     setDailyWords([]);
     setAlgorithmState(null);
     setSummary({ reviewCount: 0, correctCount: 0, wrongCount: 0 });
+    setSkippedCount(0);
     void getNativeDailyBatch(db, accountId, NATIVE_VOCABULARY, getLearningDay())
       .then(words => {
         if (!active) return;
@@ -125,7 +128,7 @@ export function NativeLearningPanel({ accountId }: Props) {
       setMessage('請先選擇中文釋義。');
       return;
     }
-    if (verification === 'spelling' && !answer.trim()) {
+    if ((verification === 'spelling' || verification === 'dictation') && !answer.trim()) {
       setMessage('請先輸入英文答案。');
       return;
     }
@@ -159,6 +162,18 @@ export function NativeLearningPanel({ accountId }: Props) {
     } finally {
       setBusy(false);
     }
+  }
+
+  function skipCurrentWord() {
+    if (!word || busy || answered || !dailyWords.length) return;
+    setSkippedCount(current => current + 1);
+    setWordIndex(current => Math.min(current + 1, dailyWords.length));
+    setAlgorithmState(null);
+    setSummary({ reviewCount: 0, correctCount: 0, wrongCount: 0 });
+    setAnswer('');
+    setSelectedChoice('');
+    setAnswered(false);
+    setMessage('此題已暫停，未記錄學習事件。');
   }
 
   function nextWord() {
@@ -210,14 +225,47 @@ export function NativeLearningPanel({ accountId }: Props) {
                   value={answer}
                 />
               </>
+            ) : verification === 'dictation' ? (
+              <>
+                <Text style={styles.label}>請聽英文發音並輸入單詞</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={busy || answered}
+                  onPress={() => {
+                    void Speech.stop();
+                    Speech.speak(word.word, { language: 'en-US', rate: 0.82 });
+                  }}
+                  style={styles.speakButton}
+                >
+                  <Text style={styles.speakText}>播放英文發音</Text>
+                </Pressable>
+                <TextInput
+                  accessibilityLabel="聽寫答案"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!busy && !answered}
+                  onChangeText={setAnswer}
+                  onSubmitEditing={submitAnswer}
+                  placeholder="聽完後輸入英文單詞"
+                  placeholderTextColor="#879188"
+                  returnKeyType="done"
+                  style={styles.input}
+                  value={answer}
+                />
+              </>
             ) : (
-              <Text style={styles.message}>{verification === 'dictation' ? '聽辨題尚待接入原生發音播放。' : '用法題尚待補齊教材語境例句。'}目前不會記錄此題，避免寫入不符合題型的事件。</Text>
+              <Text style={styles.message}>用法題尚待補齊可驗證的教材語境例句。目前不會記錄此題，避免寫入不符合題型的事件。</Text>
             )}
             {answered ? <Text style={styles.answer}>標準答案：{word.word}{word.phonetic ? '  ' + word.phonetic : ''}</Text> : null}
           </View>
           <Pressable accessibilityRole="button" disabled={busy || answered || !supportsCurrentVerification || !algorithmState} onPress={submitAnswer} style={[styles.submit, (busy || answered || !supportsCurrentVerification || !algorithmState) && styles.disabled]}>
             <Text style={styles.submitText}>{busy ? '保存中…' : '提交答案'}</Text>
           </Pressable>
+          {!supportsCurrentVerification && !answered ? (
+            <Pressable accessibilityRole="button" disabled={busy} onPress={skipCurrentWord} style={styles.skipButton}>
+              <Text style={styles.skipText}>暫停此題，繼續下一個單詞</Text>
+            </Pressable>
+          ) : null}
           {answered ? (
             <Pressable accessibilityRole="button" onPress={nextWord} style={styles.next}>
               <Text style={styles.nextText}>{wordIndex + 1 >= dailyWords.length ? '完成今日批次' : '下一個單詞'}</Text>
@@ -225,7 +273,7 @@ export function NativeLearningPanel({ accountId }: Props) {
           ) : null}
         </>
       ) : (
-        <Text style={styles.message}>{batchLoading ? '正在安排今日學習批次…' : wordIndex >= dailyWords.length && dailyWords.length > 0 ? '今日學習批次已完成。' : NATIVE_VOCABULARY.length === 0 ? '目前沒有可用的教材詞彙。' : '今日沒有到期複習或可安排的新單詞。'}</Text>
+        <Text style={styles.message}>{batchLoading ? '正在安排今日學習批次…' : wordIndex >= dailyWords.length && dailyWords.length > 0 ? '今日學習批次已完成。已暫停 ' + skippedCount + ' 題。' : NATIVE_VOCABULARY.length === 0 ? '目前沒有可用的教材詞彙。' : '今日沒有到期複習或可安排的新單詞。'}</Text>
       )}
       <Text accessibilityLiveRegion="polite" style={styles.message}>{message}</Text>
       <View style={styles.summary}>
@@ -262,6 +310,10 @@ const styles = StyleSheet.create({
   submitText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
   next: { borderWidth: 1, borderColor: '#53775B', borderRadius: 10, paddingVertical: 11, alignItems: 'center', marginTop: 8 },
   nextText: { color: '#31583B', fontSize: 14, fontWeight: '700' },
+  speakButton: { backgroundColor: '#E9F0E5', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 14 },
+  speakText: { color: '#31583B', fontSize: 14, fontWeight: '700' },
+  skipButton: { borderWidth: 1, borderColor: '#DDE6D9', borderRadius: 10, paddingVertical: 11, alignItems: 'center', marginTop: 8 },
+  skipText: { color: '#526257', fontSize: 13, fontWeight: '600' },
   message: { color: '#526257', fontSize: 12, lineHeight: 18, marginTop: 9 },
   summary: { backgroundColor: '#F7F9F4', borderRadius: 10, padding: 11, marginTop: 12 },
   summaryTitle: { color: '#31583B', fontSize: 12, fontWeight: '700' },
