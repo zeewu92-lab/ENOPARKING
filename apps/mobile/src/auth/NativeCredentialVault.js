@@ -1,7 +1,7 @@
 const TOKEN_KEY_PREFIX = 'enoparking.native.refresh.v1.';
 const SESSION_KEY = 'enoparking.native.session.v1';
 const REFRESH_REQUEST_PREFIX = 'enoparking.native.refresh-request.v1.';
-const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function validateAccountId(accountId) {
   if (typeof accountId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(accountId)) {
@@ -43,6 +43,7 @@ export class NativeCredentialVault {
     this.createRefreshRequestId = createRefreshRequestId;
     this.session = null;
     this.refreshInFlight = new Map();
+    this.loggingOut = new Set();
   }
 
   async saveLogin({ accountId, accessToken, refreshToken, expiresAt }) {
@@ -50,6 +51,7 @@ export class NativeCredentialVault {
     validateRefreshToken(refreshToken);
     const session = { accountId, accessToken, expiresAt };
     validateSession(session);
+    if (this.loggingOut.has(accountId)) throw new Error('NATIVE_LOGOUT_IN_PROGRESS');
     // Persist new account's refresh token before switching the in-memory session.
     await this.secureStore.setItemAsync(TOKEN_KEY_PREFIX + accountId, refreshToken);
     await this.secureStore.setItemAsync(SESSION_KEY, JSON.stringify({ accountId }));
@@ -89,6 +91,7 @@ export class NativeCredentialVault {
   async rotateRefreshToken({ accountId, refresh }) {
     validateAccountId(accountId);
     if (typeof refresh !== 'function') throw new Error('NATIVE_REFRESH_ADAPTER_REQUIRED');
+    if (this.loggingOut.has(accountId)) throw new Error('NATIVE_LOGOUT_IN_PROGRESS');
     if (this.refreshInFlight.has(accountId)) return this.refreshInFlight.get(accountId);
     const operation = (async () => {
       const session = this.session;
@@ -116,8 +119,15 @@ export class NativeCredentialVault {
 
   async logout({ revoke } = {}) {
     const active = this.session;
-    this.session = null;
-    const saved = await this.secureStore.getItemAsync(SESSION_KEY);
+    let saved = null;
+    let sessionReadError = null;
+    try {
+      saved = await this.secureStore.getItemAsync(SESSION_KEY);
+    } catch (error) {
+      sessionReadError = error;
+      if (!active?.accountId) throw error;
+    }
+
     let accountId = active?.accountId;
     if (!accountId && saved) {
       try {
@@ -129,19 +139,38 @@ export class NativeCredentialVault {
         return { status: 'signed_out' };
       }
     }
-    if (!accountId) return { status: 'signed_out' };
-    const key = TOKEN_KEY_PREFIX + accountId;
-    const refreshToken = await this.secureStore.getItemAsync(key);
-    try {
-      if (typeof revoke === 'function' && refreshToken) {
-        await revoke({ accountId, refreshToken });
-      }
-    } finally {
-      await this.secureStore.deleteItemAsync(key);
-      await this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + accountId);
+    if (!accountId) {
+      this.session = null;
       await this.secureStore.deleteItemAsync(SESSION_KEY);
+      if (sessionReadError) throw sessionReadError;
+      return { status: 'signed_out' };
     }
-    return { status: 'signed_out', accountId };
+
+    this.loggingOut.add(accountId);
+    try {
+      // Finish an in-flight rotation first so logout revokes the latest token,
+      // rather than racing it with an obsolete refresh token.
+      const rotation = this.refreshInFlight.get(accountId);
+      if (rotation) {
+        try { await rotation; } catch { /* still clear local credentials below */ }
+      }
+      if (this.session?.accountId === accountId) this.session = null;
+      const key = TOKEN_KEY_PREFIX + accountId;
+      let refreshToken = null;
+      try {
+        refreshToken = await this.secureStore.getItemAsync(key);
+        if (typeof revoke === 'function' && refreshToken) {
+          await revoke({ accountId, refreshToken });
+        }
+      } finally {
+        await this.secureStore.deleteItemAsync(key);
+        await this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + accountId);
+        await this.secureStore.deleteItemAsync(SESSION_KEY);
+      }
+      return { status: 'signed_out', accountId };
+    } finally {
+      this.loggingOut.delete(accountId);
+    }
   }
 
   async restoreSession({ refresh }) {
@@ -151,17 +180,20 @@ export class NativeCredentialVault {
     let metadata;
     try { metadata = JSON.parse(saved); } catch { throw new Error('NATIVE_SESSION_METADATA_CORRUPT'); }
     validateAccountId(metadata?.accountId);
-    const refreshToken = await this.getRefreshToken(metadata.accountId);
+    const accountId = metadata.accountId;
+    if (this.loggingOut.has(accountId)) throw new Error('NATIVE_LOGOUT_IN_PROGRESS');
+    const refreshToken = await this.getRefreshToken(accountId);
     if (!refreshToken) {
       await this.secureStore.deleteItemAsync(SESSION_KEY);
       return null;
     }
     validateRefreshToken(refreshToken);
-    const refreshRequestId = await this.getOrCreateRefreshRequestId(metadata.accountId);
-    const next = await refresh({ accountId: metadata.accountId, refreshToken, refreshRequestId });
-    if (!next || next.accountId !== metadata.accountId) throw new Error('NATIVE_REFRESH_ACCOUNT_MISMATCH');
+    const refreshRequestId = await this.getOrCreateRefreshRequestId(accountId);
+    const next = await refresh({ accountId, refreshToken, refreshRequestId });
+    if (!next || next.accountId !== accountId) throw new Error('NATIVE_REFRESH_ACCOUNT_MISMATCH');
     validateSession(next);
     validateRefreshToken(next.refreshToken);
+    if (this.loggingOut.has(accountId)) throw new Error('NATIVE_LOGOUT_IN_PROGRESS');
     await this.secureStore.setItemAsync(TOKEN_KEY_PREFIX + next.accountId, next.refreshToken);
     await this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + next.accountId);
     this.session = { accountId: next.accountId, accessToken: next.accessToken, expiresAt: next.expiresAt };
