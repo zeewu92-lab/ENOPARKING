@@ -53,19 +53,19 @@ export class NativeCredentialVault {
     return next;
   }
 
-  async saveLogin({ accountId, accessToken, refreshToken, expiresAt }) {
-    return this.withLifecycleLock(async () => { accountId, accessToken, refreshToken, expiresAt }) {
-    validateAccountId(accountId);
-    validateRefreshToken(refreshToken);
-    const session = { accountId, accessToken, expiresAt };
-    validateSession(session);
-    if (this.loggingOut.has(accountId)) throw new Error('NATIVE_LOGOUT_IN_PROGRESS');
-    // Persist new account's refresh token before switching the in-memory session.
-    await this.secureStore.setItemAsync(TOKEN_KEY_PREFIX + accountId, refreshToken);
-    await this.secureStore.setItemAsync(SESSION_KEY, JSON.stringify({ accountId }));
-    this.session = session;
-    return { ...session };
-  
+  async saveLogin(input) {
+    const { accountId, accessToken, refreshToken, expiresAt } = input || {};
+    return this.withLifecycleLock(async () => {
+      validateAccountId(accountId);
+      validateRefreshToken(refreshToken);
+      const session = { accountId, accessToken, expiresAt };
+      validateSession(session);
+      if (this.loggingOut.has(accountId)) throw new Error('NATIVE_LOGOUT_IN_PROGRESS');
+      // Persist new account's refresh token before switching the in-memory session.
+      await this.secureStore.setItemAsync(TOKEN_KEY_PREFIX + accountId, refreshToken);
+      await this.secureStore.setItemAsync(SESSION_KEY, JSON.stringify({ accountId }));
+      this.session = session;
+      return { ...session };
     });
   }
 
@@ -127,67 +127,66 @@ export class NativeCredentialVault {
     }
   }
 
-  async logout({ revoke } = {}) {
-    return this.withLifecycleLock(async () => { revoke } = {}) {
-    const active = this.session;
-    let saved = null;
-    let sessionReadError = null;
-    try {
-      saved = await this.secureStore.getItemAsync(SESSION_KEY);
-    } catch (error) {
-      sessionReadError = error;
-      if (!active?.accountId) throw error;
-    }
-
-    let accountId = active?.accountId;
-    if (!accountId && saved) {
+  async logout(options = {}) {
+    const { revoke } = options;
+    return this.withLifecycleLock(async () => {
+      const active = this.session;
+      let saved = null;
+      let sessionReadError = null;
       try {
-        const metadata = JSON.parse(saved);
-        validateAccountId(metadata?.accountId);
-        accountId = metadata.accountId;
-      } catch {
+        saved = await this.secureStore.getItemAsync(SESSION_KEY);
+      } catch (error) {
+        sessionReadError = error;
+        if (!active?.accountId) throw error;
+      }
+
+      let accountId = active?.accountId;
+      if (!accountId && saved) {
+        try {
+          const metadata = JSON.parse(saved);
+          validateAccountId(metadata?.accountId);
+          accountId = metadata.accountId;
+        } catch {
+          await this.secureStore.deleteItemAsync(SESSION_KEY);
+          return { status: 'signed_out' };
+        }
+      }
+      if (!accountId) {
+        this.session = null;
         await this.secureStore.deleteItemAsync(SESSION_KEY);
+        if (sessionReadError) throw sessionReadError;
         return { status: 'signed_out' };
       }
-    }
-    if (!accountId) {
-      this.session = null;
-      await this.secureStore.deleteItemAsync(SESSION_KEY);
-      if (sessionReadError) throw sessionReadError;
-      return { status: 'signed_out' };
-    }
 
-    this.loggingOut.add(accountId);
-    try {
-      // Finish an in-flight rotation first so logout revokes the latest token,
-      // rather than racing it with an obsolete refresh token.
-      const rotation = this.refreshInFlight.get(accountId);
-      if (rotation) {
-        try { await rotation; } catch { /* still clear local credentials below */ }
-      }
-      if (this.session?.accountId === accountId) this.session = null;
-      const key = TOKEN_KEY_PREFIX + accountId;
-      let refreshToken = null;
+      this.loggingOut.add(accountId);
       try {
-        refreshToken = await this.secureStore.getItemAsync(key);
-        if (typeof revoke === 'function' && refreshToken) {
-          await revoke({ accountId, refreshToken });
+        // Finish an in-flight rotation first so logout revokes the latest token.
+        const rotation = this.refreshInFlight.get(accountId);
+        if (rotation) {
+          try { await rotation; } catch { /* still clear local credentials below */ }
         }
+        if (this.session?.accountId === accountId) this.session = null;
+        const key = TOKEN_KEY_PREFIX + accountId;
+        let refreshToken = null;
+        try {
+          refreshToken = await this.secureStore.getItemAsync(key);
+          if (typeof revoke === 'function' && refreshToken) {
+            await revoke({ accountId, refreshToken });
+          }
+        } finally {
+          // Attempt every cleanup even if SecureStore fails on one key.
+          const cleanup = await Promise.allSettled([
+            this.secureStore.deleteItemAsync(key),
+            this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + accountId),
+            this.secureStore.deleteItemAsync(SESSION_KEY),
+          ]);
+          const failedCleanup = cleanup.find(result => result.status === 'rejected');
+          if (failedCleanup) throw failedCleanup.reason;
+        }
+        return { status: 'signed_out', accountId };
       } finally {
-        // Attempt every cleanup even if SecureStore fails on one key.
-        const cleanup = await Promise.allSettled([
-          this.secureStore.deleteItemAsync(key),
-          this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + accountId),
-          this.secureStore.deleteItemAsync(SESSION_KEY),
-        ]);
-        const failedCleanup = cleanup.find(result => result.status === 'rejected');
-        if (failedCleanup) throw failedCleanup.reason;
+        this.loggingOut.delete(accountId);
       }
-      return { status: 'signed_out', accountId };
-    } finally {
-      this.loggingOut.delete(accountId);
-    }
-  
     });
   }
 
