@@ -363,3 +363,41 @@ test('clearAllLocalCredentials attempts session cleanup and reports partial Secu
   assert.equal(await secureStore.getItemAsync('enoparking.native.refresh-request.v1.account_a'), null);
   assert.equal(await secureStore.getItemAsync('enoparking.native.refresh.v1.account_a'), token('r'));
 });
+
+
+test('clearAllLocalCredentials waits for in-flight rotation and removes the rotated token', async () => {
+  const secureStore = fakeSecureStore();
+  const vault = new NativeCredentialVault({
+    secureStore,
+    now: () => 100000,
+    createRefreshRequestId: () => 'b6b9e8b4-7d11-4f2d-9a8b-112233445566',
+  });
+  await vault.saveLogin(session());
+  let releaseRefresh;
+  let refreshStarted;
+  const started = new Promise(resolve => { refreshStarted = resolve; });
+  const rotation = vault.rotateRefreshToken({
+    accountId: 'account_a',
+    refresh: async ({ accountId }) => {
+      refreshStarted();
+      await new Promise(resolve => { releaseRefresh = resolve; });
+      return session(accountId, token('n'), token('b'), 300000);
+    },
+  });
+  await started;
+  let cleanupFinished = false;
+  const cleanup = vault.clearAllLocalCredentials().then(() => { cleanupFinished = true; });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(cleanupFinished, false);
+  await assert.rejects(vault.rotateRefreshToken({
+    accountId: 'account_a',
+    refresh: async () => session('account_a', token('x'), token('y'), 300000),
+  }), /NATIVE_CREDENTIAL_CLEANUP_IN_PROGRESS/);
+  releaseRefresh();
+  await rotation;
+  await cleanup;
+
+  assert.equal(vault.getActiveSession(), null);
+  assert.equal(await vault.getRefreshToken('account_a'), null);
+  assert.equal(await secureStore.getItemAsync('enoparking.native.session.v1'), null);
+});
