@@ -163,9 +163,14 @@ export class NativeCredentialVault {
           await revoke({ accountId, refreshToken });
         }
       } finally {
-        await this.secureStore.deleteItemAsync(key);
-        await this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + accountId);
-        await this.secureStore.deleteItemAsync(SESSION_KEY);
+        // Attempt every cleanup even if SecureStore fails on one key.
+        const cleanup = await Promise.allSettled([
+          this.secureStore.deleteItemAsync(key),
+          this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + accountId),
+          this.secureStore.deleteItemAsync(SESSION_KEY),
+        ]);
+        const failedCleanup = cleanup.find(result => result.status === 'rejected');
+        if (failedCleanup) throw failedCleanup.reason;
       }
       return { status: 'signed_out', accountId };
     } finally {
