@@ -137,8 +137,25 @@ test('native sync discards a late ACK when the active account changes during pus
 });
 
 
-test('native sync serializes overlapping requests for the same account', async () => {
-  const store = fakeStore();
+test('native sync serializes overlapping requests and does not repush an acknowledged event', async () => {
+  let pending = true;
+  const state = { cursor: 0, ack: [], replay: [], failures: [] };
+  const store = {
+    state,
+    async getReplayCursor() { return state.cursor; },
+    async pendingForSync() {
+      return pending ? [{ eventId: 'e1', localCounter: 1, type: 'action', payload: {}, createdAt: 10 }] : [];
+    },
+    async reconcileAcks(_account, acks) {
+      state.ack.push(...acks);
+      pending = false;
+    },
+    async recordSyncFailure(_account, ids, code) { state.failures.push({ ids, code }); },
+    async applyReplay(_account, events) {
+      state.replay.push(...events.map(event => event.eventId));
+      return { appliedCount: events.length };
+    },
+  };
   let releaseFirst;
   let signalFirstStarted;
   const firstStarted = new Promise(resolve => { signalFirstStarted = resolve; });
@@ -151,15 +168,13 @@ test('native sync serializes overlapping requests for the same account', async (
       pushCalls += 1;
       activePushes += 1;
       maxActivePushes = Math.max(maxActivePushes, activePushes);
-      if (pushCalls === 1) {
-        signalFirstStarted();
-        await firstGate;
-      }
+      signalFirstStarted();
+      await firstGate;
       activePushes -= 1;
       return { results: events.map(event => ({
         eventId: event.eventId,
         syncStatus: 'confirmed',
-        serverSequence: pushCalls,
+        serverSequence: 1,
       })) };
     },
   }));
@@ -172,6 +187,7 @@ test('native sync serializes overlapping requests for the same account', async (
   releaseFirst();
   const results = await Promise.all([first, second]);
   assert.equal(maxActivePushes, 1);
-  assert.equal(pushCalls, 2);
+  assert.equal(pushCalls, 1);
+  assert.deepEqual(state.ack, [{ eventId: 'e1', serverSequence: 1 }]);
   assert.equal(results.every(result => result.status === 'synced'), true);
 });
