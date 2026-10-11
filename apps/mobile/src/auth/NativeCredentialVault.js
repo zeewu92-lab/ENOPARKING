@@ -240,14 +240,21 @@ export class NativeCredentialVault {
       this.session = null;
       const saved = await this.secureStore.getItemAsync(SESSION_KEY);
       if (saved) {
+        let metadata;
         try {
-          const metadata = JSON.parse(saved);
+          metadata = JSON.parse(saved);
           validateAccountId(metadata.accountId);
-          await Promise.allSettled([
+        } catch {
+          metadata = null;
+        }
+        if (metadata) {
+          const cleanup = await Promise.allSettled([
             this.secureStore.deleteItemAsync(TOKEN_KEY_PREFIX + metadata.accountId),
             this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + metadata.accountId),
           ]);
-        } catch { /* invalid metadata must not be used to form a storage key */ }
+          const failedCleanup = cleanup.find(result => result.status === 'rejected');
+          if (failedCleanup) throw failedCleanup.reason;
+        }
       }
       await this.secureStore.deleteItemAsync(SESSION_KEY);
     });
