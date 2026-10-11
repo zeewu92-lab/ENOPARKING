@@ -90,7 +90,7 @@ function NativeStatus() {
       const result = await auth.login({ username: username.trim(), password });
       setSession({ accountId: result.accountId, expiresAt: result.expiresAt });
       setPassword('');
-      setNotice('登入成功。學習事件同步尚待整合與驗收。');
+      setNotice('登入成功。可以在下方執行學習事件同步。');
     } catch (error) {
       setNotice(describeAuthError(error));
     } finally {
