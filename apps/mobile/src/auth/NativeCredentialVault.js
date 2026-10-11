@@ -190,53 +190,61 @@ export class NativeCredentialVault {
     });
   }
 
-  async restoreSession({ refresh }) {
-    if (typeof refresh !== 'function') throw new Error('NATIVE_REFRESH_ADAPTER_REQUIRED');
-    const saved = await this.secureStore.getItemAsync(SESSION_KEY);
-    if (!saved) return null;
-    let metadata;
-    try { metadata = JSON.parse(saved); } catch { throw new Error('NATIVE_SESSION_METADATA_CORRUPT'); }
-    validateAccountId(metadata?.accountId);
-    const accountId = metadata.accountId;
-    if (this.loggingOut.has(accountId)) throw new Error('NATIVE_LOGOUT_IN_PROGRESS');
-    if (this.refreshInFlight.has(accountId)) return this.refreshInFlight.get(accountId);
+  async restoreSession(options = {}) {
+    const { refresh } = options;
+    return this.withLifecycleLock(async () => {
+      if (typeof refresh !== 'function') throw new Error('NATIVE_REFRESH_ADAPTER_REQUIRED');
+      const saved = await this.secureStore.getItemAsync(SESSION_KEY);
+      if (!saved) return null;
+      let metadata;
+      try { metadata = JSON.parse(saved); } catch { throw new Error('NATIVE_SESSION_METADATA_CORRUPT'); }
+      validateAccountId(metadata?.accountId);
+      const accountId = metadata.accountId;
+      if (this.loggingOut.has(accountId)) throw new Error('NATIVE_LOGOUT_IN_PROGRESS');
+      if (this.refreshInFlight.has(accountId)) return this.refreshInFlight.get(accountId);
 
-    const operation = (async () => {
-      const refreshToken = await this.getRefreshToken(accountId);
-      if (!refreshToken) {
-        await this.secureStore.deleteItemAsync(SESSION_KEY);
-        return null;
+      const operation = (async () => {
+        const refreshToken = await this.getRefreshToken(accountId);
+        if (!refreshToken) {
+          await this.secureStore.deleteItemAsync(SESSION_KEY);
+          return null;
+        }
+        validateRefreshToken(refreshToken);
+        const refreshRequestId = await this.getOrCreateRefreshRequestId(accountId);
+        const next = await refresh({ accountId, refreshToken, refreshRequestId });
+        if (!next || next.accountId !== accountId) throw new Error('NATIVE_REFRESH_ACCOUNT_MISMATCH');
+        validateSession(next);
+        validateRefreshToken(next.refreshToken);
+        await this.secureStore.setItemAsync(TOKEN_KEY_PREFIX + next.accountId, next.refreshToken);
+        await this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + next.accountId);
+        this.session = { accountId: next.accountId, accessToken: next.accessToken, expiresAt: next.expiresAt };
+        return { ...this.session };
+      })();
+      this.refreshInFlight.set(accountId, operation);
+      try {
+        return await operation;
+      } finally {
+        if (this.refreshInFlight.get(accountId) === operation) this.refreshInFlight.delete(accountId);
       }
-      validateRefreshToken(refreshToken);
-      const refreshRequestId = await this.getOrCreateRefreshRequestId(accountId);
-      const next = await refresh({ accountId, refreshToken, refreshRequestId });
-      if (!next || next.accountId !== accountId) throw new Error('NATIVE_REFRESH_ACCOUNT_MISMATCH');
-      validateSession(next);
-      validateRefreshToken(next.refreshToken);
-      await this.secureStore.setItemAsync(TOKEN_KEY_PREFIX + next.accountId, next.refreshToken);
-      await this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + next.accountId);
-      this.session = { accountId: next.accountId, accessToken: next.accessToken, expiresAt: next.expiresAt };
-      return { ...this.session };
-    })();
-    this.refreshInFlight.set(accountId, operation);
-    try {
-      return await operation;
-    } finally {
-      if (this.refreshInFlight.get(accountId) === operation) this.refreshInFlight.delete(accountId);
-    }
+    });
   }
 
   async clearAllLocalCredentials() {
-    this.session = null;
-    const saved = await this.secureStore.getItemAsync(SESSION_KEY);
-    if (saved) {
-      try {
-        const metadata = JSON.parse(saved);
-        validateAccountId(metadata.accountId);
-        await this.secureStore.deleteItemAsync(TOKEN_KEY_PREFIX + metadata.accountId);
-        await this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + metadata.accountId);
-      } catch { /* invalid metadata must not be used to form a storage key */ }
-    }
-    await this.secureStore.deleteItemAsync(SESSION_KEY);
+    return this.withLifecycleLock(async () => {
+      this.session = null;
+      const saved = await this.secureStore.getItemAsync(SESSION_KEY);
+      if (saved) {
+        try {
+          const metadata = JSON.parse(saved);
+          validateAccountId(metadata.accountId);
+          await Promise.allSettled([
+            this.secureStore.deleteItemAsync(TOKEN_KEY_PREFIX + metadata.accountId),
+            this.secureStore.deleteItemAsync(REFRESH_REQUEST_PREFIX + metadata.accountId),
+          ]);
+        } catch { /* invalid metadata must not be used to form a storage key */ }
+      }
+      await this.secureStore.deleteItemAsync(SESSION_KEY);
+    });
   }
+
 }
