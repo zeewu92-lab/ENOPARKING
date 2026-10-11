@@ -290,3 +290,34 @@ test('native replay confirms an identical local event echo without applying it t
   assert.equal(db.writes.some(write => write.sql.includes("SET sync_status = 'confirmed'")), true);
   assert.equal(db.writes.some(write => write.sql.includes('SET replay_cursor')), true);
 });
+
+
+test('native replay rejects duplicate event IDs and server sequences before opening a transaction', async () => {
+  let transactions = 0;
+  const store = new NativeEventStore({
+    withExclusiveTransactionAsync: async operation => {
+      transactions += 1;
+      return operation({
+        getFirstAsync: async () => ({ replayCursor: 0 }),
+        runAsync: async () => ({ changes: 1 }),
+      });
+    },
+  }, { clock: () => 100 });
+  const event = {
+    eventId: 'b6b9e8b4-7d11-4f2d-9a8b-112233445566',
+    type: 'action',
+    payload: { wordId: 'word-1', day: 1, verification: 'choice', result: 'correct', hintLevel: 'none' },
+    createdAt: 10,
+    serverSequence: 1,
+  };
+
+  await assert.rejects(store.applyReplay('account-a', [
+    event,
+    { ...event, serverSequence: 2 },
+  ], async () => {}), /NATIVE_REPLAY_DUPLICATE_EVENT/);
+  await assert.rejects(store.applyReplay('account-a', [
+    event,
+    { ...event, eventId: 'c7c9e8b4-7d11-4f2d-9a8b-112233445566' },
+  ], async () => {}), /NATIVE_REPLAY_DUPLICATE_EVENT/);
+  assert.equal(transactions, 0);
+});
