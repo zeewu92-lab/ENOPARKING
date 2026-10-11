@@ -6,6 +6,7 @@ import { NativeEventStore } from '../storage/NativeEventStore.js';
 import { NativeEventSyncService } from './NativeEventSyncService.js';
 import { createNativeEventSyncTransport } from './NativeEventSyncTransport.js';
 import type { NativeAuthSessionController } from '../auth/NativeAuthSession.js';
+import { applyNativeLearningEvent } from '../learning/NativeLearningState.js';
 
 type Props = {
   accountId: string;
@@ -50,17 +51,12 @@ export function NativeSyncPanel({ accountId, auth, baseUrl }: Props) {
       pushEvents: request => transport.pushEvents(request),
       pullEvents: request => transport.pullEvents(request),
       applyEvent: async (tx, event) => {
-        // 將遠端事件寫入帳戶隔離的 SQLite 事件歷史；事件標記與游標由同一交易提交。
-        const transaction = tx as { runAsync: (sql: string, ...params: (string | number)[]) => Promise<unknown> };
-        await transaction.runAsync(
-          `INSERT INTO enop_learning_state (account_id, state_key, state_json, updated_at)
-           VALUES (?, ?, ?, ?)
-           ON CONFLICT(account_id, state_key) DO NOTHING`,
-          accountId,
-          'event:' + event.eventId,
-          JSON.stringify(event),
-          Date.now()
-        );
+        // 遠端事件歷史與單詞／單元投影在 Replay 的同一 SQLite 交易中更新。
+        const transaction = tx as {
+          getFirstAsync: (sql: string, ...params: (string | number)[]) => Promise<{ stateJson: string } | null>;
+          runAsync: (sql: string, ...params: (string | number)[]) => Promise<unknown>;
+        };
+        await applyNativeLearningEvent(transaction, accountId, event);
       },
     });
   }, [db, auth, baseUrl, accountId]);
