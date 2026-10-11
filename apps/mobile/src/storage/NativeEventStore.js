@@ -391,7 +391,19 @@ export class NativeEventStore {
     if (!Array.isArray(events) || typeof applyEvent !== 'function') {
       throw new Error('NATIVE_REPLAY_INPUT_INVALID');
     }
+    const seenEventIds = new Set();
+    const seenSequences = new Set();
+    for (const event of events) {
+      assertEvent(event);
+      assertSafeInteger(event.serverSequence, 'NATIVE_REPLAY_SEQUENCE_INVALID', 1);
+      if (seenEventIds.has(event.eventId) || seenSequences.has(event.serverSequence)) {
+        throw new Error('NATIVE_REPLAY_DUPLICATE_EVENT');
+      }
+      seenEventIds.add(event.eventId);
+      seenSequences.add(event.serverSequence);
+    }
     const now = this.clock();
+    assertSafeInteger(now, 'NATIVE_EVENT_CLOCK_INVALID');
     let appliedCount = 0;
 
     await this.db.withExclusiveTransactionAsync(async tx => {
@@ -403,8 +415,6 @@ export class NativeEventStore {
       let cursor = meta.replayCursor;
 
       for (const event of events) {
-        assertEvent({ ...event, type: event.type, createdAt: event.createdAt });
-        assertSafeInteger(event.serverSequence, 'NATIVE_REPLAY_SEQUENCE_INVALID', 1);
         if (event.serverSequence <= cursor) continue;
         if (event.serverSequence !== cursor + 1) {
           throw new Error('NATIVE_REPLAY_SEQUENCE_GAP');
