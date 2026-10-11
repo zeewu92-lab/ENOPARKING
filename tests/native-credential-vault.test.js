@@ -150,3 +150,47 @@ test('native credential vault reuses the persisted refresh request ID after a lo
   assert.equal(retryRequestId, firstRequestId);
   assert.equal(await secureStore.getItemAsync(requestKey), null);
 });
+
+
+test('native logout waits for an in-flight refresh rotation and revokes the rotated token', async () => {
+  const secureStore = fakeSecureStore();
+  const vault = new NativeCredentialVault({
+    secureStore,
+    now: () => 100000,
+    createRefreshRequestId: () => 'b6b9e8b4-7d11-4f2d-9a8b-112233445566',
+  });
+  await vault.saveLogin(session());
+  let releaseRefresh;
+  let refreshStarted;
+  const started = new Promise(resolve => { refreshStarted = resolve; });
+  const rotation = vault.rotateRefreshToken({
+    accountId: 'account_a',
+    refresh: async ({ accountId }) => {
+      refreshStarted();
+      await new Promise(resolve => { releaseRefresh = resolve; });
+      return session(accountId, token('n'), token('b'), 300000);
+    },
+  });
+  await started;
+
+  let revokedToken;
+  let logoutFinished = false;
+  const logout = vault.logout({
+    revoke: async ({ refreshToken }) => { revokedToken = refreshToken; },
+  }).then(result => {
+    logoutFinished = true;
+    return result;
+  });
+
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(logoutFinished, false);
+  releaseRefresh();
+  await rotation;
+  const result = await logout;
+
+  assert.equal(result.status, 'signed_out');
+  assert.equal(revokedToken, token('n'));
+  assert.equal(vault.getActiveSession(), null);
+  assert.equal(await vault.getRefreshToken('account_a'), null);
+  assert.equal(await secureStore.getItemAsync('enoparking.native.session.v1'), null);
+});
