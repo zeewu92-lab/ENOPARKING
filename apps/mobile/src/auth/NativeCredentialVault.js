@@ -45,6 +45,7 @@ export class NativeCredentialVault {
     this.refreshInFlight = new Map();
     this.loggingOut = new Set();
     this.lifecycleQueue = Promise.resolve();
+    this.sessionRestoreInFlight = null;
   }
 
   withLifecycleLock(operation) {
@@ -190,9 +191,10 @@ export class NativeCredentialVault {
     });
   }
 
-  async restoreSession(options = {}) {
+  restoreSession(options = {}) {
+    if (this.sessionRestoreInFlight) return this.sessionRestoreInFlight;
     const { refresh } = options;
-    return this.withLifecycleLock(async () => {
+    const operation = this.withLifecycleLock(async () => {
       if (typeof refresh !== 'function') throw new Error('NATIVE_REFRESH_ADAPTER_REQUIRED');
       const saved = await this.secureStore.getItemAsync(SESSION_KEY);
       if (!saved) return null;
@@ -226,6 +228,10 @@ export class NativeCredentialVault {
       } finally {
         if (this.refreshInFlight.get(accountId) === operation) this.refreshInFlight.delete(accountId);
       }
+    });
+    this.sessionRestoreInFlight = operation;
+    return operation.finally(() => {
+      if (this.sessionRestoreInFlight === operation) this.sessionRestoreInFlight = null;
     });
   }
 
