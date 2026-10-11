@@ -14,6 +14,11 @@ function normalizeAnswer(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
+function getLearningDay(): number {
+  const now = new Date();
+  return Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
+}
+
 export function NativeLearningPanel({ accountId }: Props) {
   const db = useSQLiteContext();
   const store = useMemo(() => new NativeEventStore(db), [db]);
@@ -69,7 +74,7 @@ export function NativeLearningPanel({ accountId }: Props) {
         accountId,
         payload: {
           wordId: word.id,
-          day: Math.floor(Date.now() / 86400000),
+          day: getLearningDay(),
           verification: 'spelling',
           result: correct ? 'correct' : 'wrong',
           hintLevel: 'none',
@@ -77,6 +82,11 @@ export function NativeLearningPanel({ accountId }: Props) {
         createEventId: () => Crypto.randomUUID(),
       });
       setAnswered(true);
+      setSummary(current => ({
+        reviewCount: current.reviewCount + 1,
+        correctCount: current.correctCount + (correct ? 1 : 0),
+        wrongCount: current.wrongCount + (correct ? 0 : 1),
+      }));
       setMessage(correct ? '回答正確，學習事件已保存。' : '本次未答對，正確答案：' + word.word + '。事件已保存。');
     } catch (error) {
       setMessage('保存失敗：' + (error instanceof Error ? error.message : 'NATIVE_LEARNING_SAVE_FAILED'));
