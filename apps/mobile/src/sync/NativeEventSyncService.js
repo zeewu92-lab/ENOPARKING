@@ -152,9 +152,12 @@ export class NativeEventSyncService {
         afterSequence,
         limit: 100,
       });
-      if (!page || !Array.isArray(page.events) ||
+      if (!page || !Array.isArray(page.events) || page.events.length > 100 ||
           !Number.isSafeInteger(page.nextSequence) || page.nextSequence < afterSequence ||
           typeof page.hasMore !== 'boolean') {
+        throw new Error('NATIVE_SYNC_PULL_RESPONSE_INVALID');
+      }
+      if (page.hasMore && page.events.length === 0) {
         throw new Error('NATIVE_SYNC_PULL_RESPONSE_INVALID');
       }
       let expected = afterSequence + 1;
