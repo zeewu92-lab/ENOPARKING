@@ -4,6 +4,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
 import { NativeEventStore } from '../storage/NativeEventStore.js';
 import { getNativeWordLearningState, recordNativeLearningAction } from './NativeLearningState.js';
+import { getNativeDailyBatch } from './NativeLearningAlgorithm.js';
 import { NATIVE_VOCABULARY } from './NativeVocabularyData';
 
 type Props = {
@@ -23,6 +24,8 @@ export function NativeLearningPanel({ accountId }: Props) {
   const db = useSQLiteContext();
   const store = useMemo(() => new NativeEventStore(db), [db]);
   const [wordIndex, setWordIndex] = useState(0);
+  const [dailyWords, setDailyWords] = useState<typeof NATIVE_VOCABULARY>([]);
+  const [batchLoading, setBatchLoading] = useState(true);
   const [answer, setAnswer] = useState('');
   const [selectedChoice, setSelectedChoice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -30,7 +33,7 @@ export function NativeLearningPanel({ accountId }: Props) {
   const [message, setMessage] = useState('根據中文釋義拼寫英文單詞，答案會自動核對並保存為學習事件。');
   const [summary, setSummary] = useState({ reviewCount: 0, correctCount: 0, wrongCount: 0 });
   const [algorithmState, setAlgorithmState] = useState<Awaited<ReturnType<typeof getNativeWordLearningState>> | null>(null);
-  const word = NATIVE_VOCABULARY.length ? NATIVE_VOCABULARY[wordIndex % NATIVE_VOCABULARY.length] : null;
+  const word = dailyWords[wordIndex] ?? null;
   const verification = algorithmState?.nextVerification ?? 'choice';
   const supportsCurrentVerification = verification === 'choice' || verification === 'spelling';
   const choiceOptions = useMemo(() => {
@@ -43,6 +46,26 @@ export function NativeLearningPanel({ accountId }: Props) {
     }
     return [...unique.values(), word].sort((a, b) => a.id.localeCompare(b.id));
   }, [word?.id, wordIndex]);
+
+  useEffect(() => {
+    let active = true;
+    setBatchLoading(true);
+    setWordIndex(0);
+    void getNativeDailyBatch(db, accountId, NATIVE_VOCABULARY, getLearningDay())
+      .then(words => {
+        if (!active) return;
+        setDailyWords(words);
+        setBatchLoading(false);
+        setMessage(words.length ? '已載入今日學習批次。' : '今日沒有到期複習或可安排的新單詞。');
+      })
+      .catch(() => {
+        if (!active) return;
+        setDailyWords([]);
+        setBatchLoading(false);
+        setMessage('載入今日學習批次失敗，原始學習事件仍保留在本機。');
+      });
+    return () => { active = false; };
+  }, [db, accountId]);
 
   useEffect(() => {
     let active = true;
@@ -136,12 +159,12 @@ export function NativeLearningPanel({ accountId }: Props) {
   }
 
   function nextWord() {
-    if (!NATIVE_VOCABULARY.length) return;
-    setWordIndex(current => (current + 1) % NATIVE_VOCABULARY.length);
+    if (!dailyWords.length) return;
+    setWordIndex(current => Math.min(current + 1, dailyWords.length));
     setAnswer('');
     setSelectedChoice('');
     setAnswered(false);
-    setMessage('根據中文釋義拼寫英文單詞，答案會自動核對並保存為學習事件。');
+    setMessage(wordIndex + 1 >= dailyWords.length ? '今日學習批次已完成。' : '準備下一個單詞。');
   }
 
   return (
@@ -187,17 +210,17 @@ export function NativeLearningPanel({ accountId }: Props) {
             )}
             {answered ? <Text style={styles.answer}>標準答案：{word.word}{word.phonetic ? '  ' + word.phonetic : ''}</Text> : null}
           </View>
-          <Pressable accessibilityRole="button" disabled={busy || answered || !supportsCurrentVerification || !algorithmState} onPress={submitAnswer} style={[styles.submit, (busy || answered || !supportsCurrentVerification || !algorithmState) && styles.disabled]>
+          <Pressable accessibilityRole="button" disabled={busy || answered || !supportsCurrentVerification || !algorithmState} onPress={submitAnswer} style={[styles.submit, (busy || answered || !supportsCurrentVerification || !algorithmState) && styles.disabled]}>
             <Text style={styles.submitText}>{busy ? '保存中…' : '提交答案'}</Text>
           </Pressable>
           {answered ? (
             <Pressable accessibilityRole="button" onPress={nextWord} style={styles.next}>
-              <Text style={styles.nextText}>下一個單詞</Text>
+              <Text style={styles.nextText}>{wordIndex + 1 >= dailyWords.length ? '完成今日批次' : '下一個單詞'}</Text>
             </Pressable>
           ) : null}
         </>
       ) : (
-        <Text style={styles.message}>目前沒有可用的教材詞彙。</Text>
+        <Text style={styles.message}>{batchLoading ? '正在安排今日學習批次…' : wordIndex >= dailyWords.length && dailyWords.length > 0 ? '今日學習批次已完成。' : NATIVE_VOCABULARY.length === 0 ? '目前沒有可用的教材詞彙。' : '今日沒有到期複習或可安排的新單詞。'}</Text>
       )}
       <Text accessibilityLiveRegion="polite" style={styles.message}>{message}</Text>
       <View style={styles.summary}>
