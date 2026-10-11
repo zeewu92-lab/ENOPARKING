@@ -1,0 +1,20 @@
+name: Event Store Foundation Checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feature/event-store-auth-foundation]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run check:server
+      - run: npm run test:event-sync
+      - run: npm run build

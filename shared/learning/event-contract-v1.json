@@ -1,0 +1,72 @@
+{
+  "contractVersion": 1,
+  "description": "Shared conformance fixtures for Android, iOS, and transitional Web clients. Event envelopes use the same field names and canonical payload rules.",
+  "validEvents": [
+    {
+      "eventId": "b6d2cfa9-67a7-4e4b-9b0e-2ec1d4a63b28",
+      "type": "action",
+      "localCounter": 1,
+      "payload": {
+        "wordId": "word-1",
+        "day": 20637,
+        "verification": "choice",
+        "result": "correct",
+        "hintLevel": "none",
+        "unitId": "unit-1"
+      },
+      "createdAt": 1791500000000
+    },
+    {
+      "eventId": "b6d2cfa9-67a7-4e4b-9b0e-2ec1d4a63b29",
+      "type": "action",
+      "localCounter": 2,
+      "payload": {
+        "wordId": "word-2",
+        "day": 20637,
+        "verification": "spelling",
+        "result": "wrong",
+        "hintLevel": "none"
+      },
+      "createdAt": 1791500000001
+    },
+    {
+      "eventId": "b6d2cfa9-67a7-4e4b-9b0e-2ec1d4a63b2a",
+      "type": "unit_outcome",
+      "localCounter": 3,
+      "payload": {
+        "unitId": "unit-1",
+        "correct": true
+      },
+      "createdAt": 1791500000002
+    }
+  ],
+  "invalidPayloads": [
+    {
+      "type": "action",
+      "payload": {
+        "wordId": "word-1",
+        "day": 20637,
+        "verification": "guess",
+        "result": "correct",
+        "hintLevel": "none"
+      }
+    },
+    {
+      "type": "action",
+      "payload": {
+        "wordId": "word-1",
+        "day": 20637,
+        "verification": "choice",
+        "result": "skip",
+        "hintLevel": "none"
+      }
+    },
+    {
+      "type": "unit_outcome",
+      "payload": {
+        "unitId": "unit-1",
+        "correct": 1
+      }
+    }
+  ]
+}

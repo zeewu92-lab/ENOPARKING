@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { zhanghuMe, tuichuZhanghu } from '../api/account.js';
 import { huoquVocab } from '../api/vocab.js';
 import { storage } from '../utils/storage.js';
+import { clearEventSyncAuth, initializeEventSyncAuth } from '../api/eventSyncAuth.js';
+import { syncAccountLearningEvents } from '../api/learningEventSync.js';
 import AccountScreen from '../features/account/AccountScreen.jsx';
 import HomePage from '../features/home/HomePage.jsx';
 import SetupPage from '../features/home/SetupPage.jsx';
@@ -35,6 +37,31 @@ export default function AppShell() {
       .catch(() => setUser(null))
       .finally(() => setAuthChecked(true));
   }, []);
+
+  const previousUserId = useRef(undefined);
+
+  useEffect(() => {
+    if (!authChecked) return;
+    const userId = user?.id || null;
+    if (previousUserId.current === undefined) {
+      previousUserId.current = userId;
+    } else if (previousUserId.current !== userId) {
+      clearEventSyncAuth();
+      previousUserId.current = userId;
+    }
+    if (userId && import.meta.env.VITE_EVENT_SYNC_ENABLED === 'true') {
+      initializeEventSyncAuth().catch(error => {
+        console.warn('[event-sync] auth bootstrap failed:', error?.code || 'UNKNOWN');
+      });
+    }
+  }, [authChecked, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || import.meta.env?.VITE_EVENT_SYNC_ENABLED !== 'true') return;
+    syncAccountLearningEvents(user.id).catch(error => {
+      console.warn('[event-sync] initial learning replay deferred:', error?.code || error?.message || 'UNKNOWN');
+    });
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) return;
@@ -71,6 +98,7 @@ export default function AppShell() {
 
   async function logout() {
     try { await tuichuZhanghu(); } catch {}
+    clearEventSyncAuth();
     setUser(null);
     setView('home');
   }
@@ -93,6 +121,7 @@ export default function AppShell() {
         wordList={words}
         sourceKey={sourceKey}
         goal={config.goal}
+        accountId={user.id}
         onExit={() => setView('home')}
         onGarden={() => setView('garden')}
       />

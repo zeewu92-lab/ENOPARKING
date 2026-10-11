@@ -234,10 +234,17 @@ export async function chuliAuth(req, res, action) {
       }
 
       const passwordHash = await hashPassword(newPassword);
-      await sql`UPDATE eng_users SET password_hash = ${passwordHash} WHERE id = ${rows[0].id}`;
-      await sql`UPDATE eng_recovery_codes SET used_at = NOW() WHERE id = ${recovery[0].id}`;
-      await sql`DELETE FROM eng_sessions WHERE user_id = ${rows[0].id}`;
-      return json(res, 200, { ok: true });
+      await sql.transaction([
+        sql`UPDATE eng_users SET password_hash = ${passwordHash} WHERE id = ${rows[0].id}`,
+        sql`UPDATE eng_recovery_codes SET used_at = NOW() WHERE id = ${recovery[0].id} AND used_at IS NULL`,
+        sql`DELETE FROM eng_sessions WHERE user_id = ${rows[0].id}`
+      ]);
+      res.setHeader('Set-Cookie', [
+        cookie('engnocrazy_session', '', 0),
+        'enoparking_refresh=; Path=/api/token; Max-Age=0; HttpOnly; SameSite=Lax' +
+          (process.env.NODE_ENV === 'development' ? '' : '; Secure')
+      ]);
+      return json(res, 200, { ok: true, requireLogin: true });
     }
 
     if (action === 'register' && req.method === 'POST') {
@@ -345,10 +352,16 @@ export async function chuliAuth(req, res, action) {
       if (!validPassword(newPassword)) return json(res, 400, { error: '新密碼需為 8 至 128 位' });
       if (currentPassword === newPassword) return json(res, 400, { error: '新密碼不能與目前密碼相同' });
       const passwordHash = await hashPassword(newPassword);
-      await sql`UPDATE eng_users SET password_hash = ${passwordHash} WHERE id = ${user.id}`;
-      await sql`DELETE FROM eng_sessions WHERE user_id = ${user.id}`;
-      await createSession(user.id, res);
-      return json(res, 200, { ok: true });
+      await sql.transaction([
+        sql`UPDATE eng_users SET password_hash = ${passwordHash} WHERE id = ${user.id}`,
+        sql`DELETE FROM eng_sessions WHERE user_id = ${user.id}`
+      ]);
+      res.setHeader('Set-Cookie', [
+        cookie('engnocrazy_session', '', 0),
+        'enoparking_refresh=; Path=/api/token; Max-Age=0; HttpOnly; SameSite=Lax' +
+          (process.env.NODE_ENV === 'development' ? '' : '; Secure')
+      ]);
+      return json(res, 200, { ok: true, requireLogin: true });
     }
 
     if (action === 'profile' && req.method === 'POST') {
@@ -385,7 +398,11 @@ export async function chuliAuth(req, res, action) {
       const cookies = parseCookies(req);
       const rawToken = cookies.engnocrazy_session;
       if (rawToken) await sql`DELETE FROM eng_sessions WHERE token_hash = ${hashToken(rawToken)}`;
-      res.setHeader('Set-Cookie', cookie('engnocrazy_session', '', 0));
+      res.setHeader('Set-Cookie', [
+        cookie('engnocrazy_session', '', 0),
+        'enoparking_refresh=; Path=/api/token; Max-Age=0; HttpOnly; SameSite=Lax' +
+          (process.env.NODE_ENV === 'development' ? '' : '; Secure')
+      ]);
       return json(res, 200, { ok: true });
     }
 

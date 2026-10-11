@@ -1,0 +1,30 @@
+name: native-client-verify
+
+on:
+  push:
+    paths:
+      - 'apps/mobile/**'
+      - 'shared/learning/**'
+      - '.github/workflows/native-client-verify.yml'
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+      - 'shared/learning/**'
+      - '.github/workflows/native-client-verify.yml'
+  workflow_dispatch:
+
+jobs:
+  android-ios-bundle:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run typecheck
+      - name: Bundle Android and iOS JavaScript
+        run: npx expo export --platform android --platform ios

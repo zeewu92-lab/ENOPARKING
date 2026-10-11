@@ -25,10 +25,10 @@ const INTENSITY_MAP = Object.freeze({
 const INTENSITY_ORDER = ['Strong', 'Normal', 'Weak', 'Unstable'];
 
 const PLAN_TEMPLATES = Object.freeze({
-  Strong: ['P0'],
-  Normal: ['P0', 'S0'],
-  Weak: ['P0', 'P1'],
-  Unstable: ['P0', 'P1', 'S0'],
+  Strong: ['P@0'],
+  Normal: ['P@0', 'S@0'],
+  Weak: ['P@0', 'P@1'],
+  Unstable: ['P@0', 'P@1', 'S@0'],
 });
 
 const NEW_PLAN_TEMPLATE = ['meaning@0'];

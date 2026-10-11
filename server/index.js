@@ -4,6 +4,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { chuliAuth } from './auth.js';
+import { chuliTokenAuth } from './token-auth.js';
+import { chuliEventSync } from './event-sync.js';
+import { chuliEventPull } from './event-pull.js';
 import { chuliAdmin } from './admin.js';
 import { chuliHaoyouList } from './friends.js';
 
@@ -38,8 +41,11 @@ app.use(cors());
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'engnocrazy-api', port: PORT });
 });
-app.use(express.json());
+app.use(express.json({ limit: '8mb' }));
 app.all('/api/auth/:action', (req, res) => chuliAuth(req, res, req.params.action));
+app.all('/api/token/:action', (req, res) => chuliTokenAuth(req, res, req.params.action));
+app.all('/api/events/sync', (req, res) => chuliEventSync(req, res));
+app.all('/api/events/pull', (req, res) => chuliEventPull(req, res));
 app.all('/api/friends/:action', (req, res) => chuliHaoyouList(req, res, req.params.action));
 app.all('/api/admin/:action', (req, res) => chuliAdmin(req, res, req.params.action));
 

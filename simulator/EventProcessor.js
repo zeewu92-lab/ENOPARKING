@@ -48,12 +48,12 @@ export class EventProcessor {
     return VERIFICATION_EVIDENCE[bucket][verification];
   }
 
-  process({ wordId, day, verification, result = 'correct', hintLevel = 'none', scores }) {
+  process({ wordId, day, verification, result = 'correct', hintLevel = 'none', scores, enforceVerification = true }) {
     const selector = this.selectorFor(wordId);
     const reviewCountBefore = selector.reviewCount;
     const selected = selector.select(day);
 
-    if (verification !== selected.verification) {
+    if (enforceVerification && verification !== selected.verification) {
       throw new Error(
         'Verification mismatch for ' + wordId +
         ': expected ' + selected.verification +
@@ -63,7 +63,15 @@ export class EventProcessor {
 
     const eventId = this.nextEventId(wordId, day);
     const dimensions = DIMENSION_SETS[verification] ?? [];
-    const selectedDimension = selected.selectedDimension;
+    const dimensionForVerification = {
+      choice: 'meaning',
+      spelling: 'spelling',
+      dictation: 'listening',
+      usage: 'usage'
+    };
+    const selectedDimension = !enforceVerification && verification !== selected.verification
+      ? (dimensionForVerification[verification] || selected.selectedDimension)
+      : selected.selectedDimension;
     const effectiveness = effectivenessFor(hintLevel, result);
     const masteryBefore = this.masteryCalculator.calculate(scores);
 

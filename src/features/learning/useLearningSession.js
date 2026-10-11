@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { jiluDanciLearned, jiluStageCompleted } from '../../utils/learningStats.js';
 import { recordLearningSeed } from '../../utils/seedLedger.js';
 import { storage } from '../../utils/storage.js';
+import { EventQueue, createEventId } from '../../api/eventQueue.js';
+import { isLearningEventSyncEnabled, syncLearningEventAfterWrite } from '../../api/learningEventSync.js';
 import {
   getNextVerification,
   getTodayDay,
@@ -28,12 +30,14 @@ function getGoal() {
   return grade === 'senior3' ? 50 : DEFAULT_GOAL;
 }
 
-function sessionKey(sourceKey) {
-  return SESSION_PREFIX + encodeURIComponent(todayKey() + ':' + sourceKey);
+function sessionKey(sourceKey, accountId = null) {
+  const session = encodeURIComponent(todayKey() + ':' + sourceKey);
+  if (!accountId) return SESSION_PREFIX + session;
+  return SESSION_PREFIX + 'account:' + encodeURIComponent(accountId) + ':' + session;
 }
 
-function readSession(sourceKey) {
-  const saved = storage.getJSON(sessionKey(sourceKey), null);
+function readSession(sourceKey, accountId = null) {
+  const saved = storage.getJSON(sessionKey(sourceKey, accountId), null);
   if (!saved) return { used: 0, wordIndex: 0, stage: 1 };
   return {
     used: Math.max(0, Number(saved.used) || 0),
@@ -70,10 +74,11 @@ function getChoiceOptions(word, wordList) {
   });
 }
 
-export function useLearningSession(wordList, sourceKey, requestedGoal = null) {
+export function useLearningSession(wordList, sourceKey, requestedGoal = null, accountId = null) {
   const goal = Math.max(1, Number(requestedGoal) || getGoal());
   const base = Math.min(goal, wordList.length);
-  const [session, setSession] = useState(() => readSession(sourceKey));
+  const scopedAccountId = isLearningEventSyncEnabled() && accountId ? String(accountId) : null;
+  const [session, setSession] = useState(() => readSession(sourceKey, scopedAccountId));
   const [phase, setPhase] = useState('idle');
   const [verification, setVerification] = useState(null);
   const [answer, setAnswer] = useState('');
@@ -92,18 +97,18 @@ export function useLearningSession(wordList, sourceKey, requestedGoal = null) {
   );
 
   useEffect(() => {
-    const saved = readSession(sourceKey);
+    const saved = readSession(sourceKey, scopedAccountId);
     setSession(saved);
     setPhase('idle');
     setVerification(null);
     setAnswer('');
     setFeedback(null);
     setCompleted(saved.used >= Math.min(goal, wordList.length));
-  }, [goal, sourceKey, wordList.length]);
+  }, [goal, sourceKey, wordList.length, scopedAccountId]);
 
   useEffect(() => {
-    storage.setJSON(sessionKey(sourceKey), session);
-  }, [sourceKey, session]);
+    storage.setJSON(sessionKey(sourceKey, scopedAccountId), session);
+  }, [sourceKey, scopedAccountId, session]);
 
   useEffect(() => {
     if (!base) return;
@@ -120,9 +125,13 @@ export function useLearningSession(wordList, sourceKey, requestedGoal = null) {
       setVerification(null);
       return;
     }
-    const next = getNextVerification(word.id ?? word.word ?? word.w, getTodayDay());
+    const next = getNextVerification(
+      word.id ?? word.word ?? word.w,
+      getTodayDay(),
+      scopedAccountId
+    );
     setVerification(next);
-  }, []);
+  }, [scopedAccountId]);
 
   const start = useCallback(() => {
     if (!currentWord || completed || session.used >= base) return false;
@@ -163,14 +172,42 @@ export function useLearningSession(wordList, sourceKey, requestedGoal = null) {
     setBusy(true);
     setFeedback(null);
 
+    let syncQueue = null;
+    let queuedEvent = null;
+    let learningEventRecorded = false;
     try {
-      const result = recordLearningEvent({
-        wordId: currentWord.id ?? currentWord.word ?? currentWord.w,
-        day: getTodayDay(),
+      const wordId = String(currentWord.id ?? currentWord.word ?? currentWord.w);
+      const day = getTodayDay();
+      const eventResult = correct ? 'correct' : 'wrong';
+      const syncEnabled = Boolean(scopedAccountId);
+
+      if (syncEnabled) {
+        syncQueue = new EventQueue({ accountId: scopedAccountId });
+        queuedEvent = syncQueue.enqueue({
+          eventId: createEventId(),
+          type: 'action',
+          payload: {
+            wordId,
+            day,
+            verification: verification.verification,
+            result: eventResult,
+            hintLevel: 'none'
+          }
+        });
+      }
+
+      recordLearningEvent({
+        wordId,
+        day,
         verification: verification.verification,
-        result: correct ? 'correct' : 'wrong',
-        hintLevel: 'none'
+        result: eventResult,
+        hintLevel: 'none',
+        accountId: scopedAccountId,
+        syncEventId: queuedEvent?.eventId || null
       });
+      learningEventRecorded = true;
+
+      if (queuedEvent) void syncLearningEventAfterWrite(scopedAccountId);
 
       if (!correct) {
         setFeedback({
@@ -214,15 +251,21 @@ export function useLearningSession(wordList, sourceKey, requestedGoal = null) {
 
       return true;
     } catch (error) {
+      if (!learningEventRecorded && syncQueue && queuedEvent) {
+        try { syncQueue.discardPending(queuedEvent.eventId); } catch {}
+      }
       setFeedback({
         ok: false,
-        message: error?.message || '學習事件寫入失敗，這次不計入進度。'
+        message: learningEventRecorded
+          ? (error?.message || '學習事件已記錄，但進度更新未完成。')
+          : (error?.message || '學習事件寫入失敗，這次不計入進度。')
       });
       return false;
     } finally {
       setBusy(false);
     }
   }, [
+    scopedAccountId,
     base,
     busy,
     currentWord,

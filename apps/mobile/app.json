@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "ENOPARKING",
+    "slug": "enoparking",
+    "scheme": "enoparking",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "top.timezzw.enoparking"
+    },
+    "android": {
+      "package": "top.timezzw.enoparking"
+    },
+    "plugins": [
+      [
+        "expo-sqlite",
+        {
+          "enableFTS": false
+        }
+      ]
+    ]
+  }
+}
