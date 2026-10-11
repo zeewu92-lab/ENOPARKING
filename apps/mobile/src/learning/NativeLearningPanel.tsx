@@ -51,6 +51,9 @@ export function NativeLearningPanel({ accountId }: Props) {
     let active = true;
     setBatchLoading(true);
     setWordIndex(0);
+    setDailyWords([]);
+    setAlgorithmState(null);
+    setSummary({ reviewCount: 0, correctCount: 0, wrongCount: 0 });
     void getNativeDailyBatch(db, accountId, NATIVE_VOCABULARY, getLearningDay())
       .then(words => {
         if (!active) return;
@@ -161,6 +164,8 @@ export function NativeLearningPanel({ accountId }: Props) {
   function nextWord() {
     if (!dailyWords.length) return;
     setWordIndex(current => Math.min(current + 1, dailyWords.length));
+    setAlgorithmState(null);
+    setSummary({ reviewCount: 0, correctCount: 0, wrongCount: 0 });
     setAnswer('');
     setSelectedChoice('');
     setAnswered(false);
