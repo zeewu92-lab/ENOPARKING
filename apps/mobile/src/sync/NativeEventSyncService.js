@@ -46,9 +46,26 @@ export class NativeEventSyncService {
       store, getCredentials, getDeviceId, pushEvents, pullEvents, applyEvent,
       clientVersion, maxPullBatches
     });
+    this.accountQueues = new Map();
   }
 
-  async syncAccount(accountId, { isCurrentAccount = async () => true } = {}) {
+  async syncAccount(accountId, options = {}) {
+    if (typeof accountId !== 'string' || !accountId.trim()) {
+      throw new Error('NATIVE_SYNC_ACCOUNT_REQUIRED');
+    }
+    const previous = this.accountQueues.get(accountId) || Promise.resolve();
+    const operation = previous.catch(() => {}).then(() => this.performSyncAccount(accountId, options));
+    this.accountQueues.set(accountId, operation);
+    try {
+      return await operation;
+    } finally {
+      if (this.accountQueues.get(accountId) === operation) {
+        this.accountQueues.delete(accountId);
+      }
+    }
+  }
+
+  async performSyncAccount(accountId, { isCurrentAccount = async () => true } = {}) {
     if (typeof accountId !== 'string' || !accountId.trim()) throw new Error('NATIVE_SYNC_ACCOUNT_REQUIRED');
     const report = { pushed: 0, confirmed: 0, retried: 0, replayed: 0, skipped: 0, cursor: await this.store.getReplayCursor(accountId) };
     if (!(await isCurrentAccount())) return { ...report, status: 'account_changed' };
