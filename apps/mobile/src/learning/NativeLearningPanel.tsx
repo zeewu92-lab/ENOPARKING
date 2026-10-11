@@ -33,6 +33,16 @@ export function NativeLearningPanel({ accountId }: Props) {
   const word = NATIVE_VOCABULARY.length ? NATIVE_VOCABULARY[wordIndex % NATIVE_VOCABULARY.length] : null;
   const verification = algorithmState?.nextVerification ?? 'choice';
   const supportsCurrentVerification = verification === 'choice' || verification === 'spelling';
+  const choiceOptions = useMemo(() => {
+    if (!word) return [];
+    const candidates = NATIVE_VOCABULARY.filter(item => item.id !== word.id && item.meaning !== word.meaning);
+    const unique = new Map();
+    for (let offset = 0; offset < candidates.length && unique.size < 3; offset += 1) {
+      const item = candidates[(wordIndex + offset) % candidates.length];
+      if (!unique.has(item.meaning)) unique.set(item.meaning, item);
+    }
+    return [...unique.values(), word].sort((a, b) => a.id.localeCompare(b.id));
+  }, [word?.id, wordIndex]);
 
   useEffect(() => {
     let active = true;
