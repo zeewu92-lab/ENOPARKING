@@ -227,3 +227,66 @@ test('native enqueue commits event, counter, and applied marker together on succ
     applied: [{ accountId: 'account-a', eventId: event.eventId, serverSequence: null }]
   });
 });
+
+function makeLocalEchoDatabase(localPayload) {
+  const writes = [];
+  const localEvent = {
+    type: 'action',
+    payloadJson: JSON.stringify(localPayload),
+    createdAt: 10
+  };
+  return {
+    writes,
+    async withExclusiveTransactionAsync(operation) {
+      return operation({
+        async getFirstAsync(sql) {
+          if (sql.includes('replay_cursor AS replayCursor')) return { replayCursor: 0 };
+          if (sql.includes('server_sequence AS serverSequence FROM enop_applied_events')) {
+            return { serverSequence: null };
+          }
+          if (sql.includes('event_id AS eventId FROM enop_applied_events')) return null;
+          if (sql.includes('FROM enop_learning_events WHERE account_id = ? AND event_id = ?')) {
+            return localEvent;
+          }
+          return null;
+        },
+        async runAsync(sql, ...params) {
+          writes.push({ sql, params });
+          return { changes: 1 };
+        }
+      });
+    }
+  };
+}
+
+const echoEvent = {
+  eventId: 'local-echo-1',
+  type: 'action',
+  payload: { wordId: 'word-1', day: 1, verification: 'choice', result: 'correct', hintLevel: 'none' },
+  createdAt: 10,
+  serverSequence: 1
+};
+
+test('native replay rejects a server echo whose payload conflicts with the local event', async () => {
+  const db = makeLocalEchoDatabase({ ...echoEvent.payload, result: 'wrong' });
+  const store = new NativeEventStore(db, { clock: () => 20 });
+  let applied = false;
+  await assert.rejects(
+    store.applyReplay('account-a', [echoEvent], async () => { applied = true; }),
+    /NATIVE_REPLAY_LOCAL_EVENT_CONFLICT/
+  );
+  assert.equal(applied, false);
+  assert.equal(db.writes.some(write => write.sql.includes('SET replay_cursor')), false);
+  assert.equal(db.writes.some(write => write.sql.includes('SET server_sequence')), false);
+});
+
+test('native replay confirms an identical local event echo without applying it twice', async () => {
+  const db = makeLocalEchoDatabase(echoEvent.payload);
+  const store = new NativeEventStore(db, { clock: () => 20 });
+  let applied = false;
+  const result = await store.applyReplay('account-a', [echoEvent], async () => { applied = true; });
+  assert.deepEqual(result, { appliedCount: 0 });
+  assert.equal(applied, false);
+  assert.equal(db.writes.some(write => write.sql.includes("SET sync_status = 'confirmed'")), true);
+  assert.equal(db.writes.some(write => write.sql.includes('SET replay_cursor')), true);
+});
