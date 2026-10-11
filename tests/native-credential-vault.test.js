@@ -401,3 +401,25 @@ test('clearAllLocalCredentials waits for in-flight rotation and removes the rota
   assert.equal(await vault.getRefreshToken('account_a'), null);
   assert.equal(await secureStore.getItemAsync('enoparking.native.session.v1'), null);
 });
+
+
+test('clearAllLocalCredentials removes credentials for both active and persisted account metadata', async () => {
+  const secureStore = fakeSecureStore();
+  const vault = new NativeCredentialVault({
+    secureStore,
+    now: () => 100000,
+    createRefreshRequestId: () => 'b6b9e8b4-7d11-4f2d-9a8b-112233445566',
+  });
+  await vault.saveLogin(session('account_a'));
+  await secureStore.setItemAsync('enoparking.native.refresh.v1.account_b', token('b'));
+  await secureStore.setItemAsync('enoparking.native.refresh-request.v1.account_b', 'c7c9e8b4-7d11-4f2d-9a8b-112233445566');
+  await secureStore.setItemAsync('enoparking.native.session.v1', JSON.stringify({ accountId: 'account_b' }));
+
+  await vault.clearAllLocalCredentials();
+
+  assert.equal(await vault.getRefreshToken('account_a'), null);
+  assert.equal(await vault.getRefreshToken('account_b'), null);
+  assert.equal(await secureStore.getItemAsync('enoparking.native.refresh-request.v1.account_a'), null);
+  assert.equal(await secureStore.getItemAsync('enoparking.native.refresh-request.v1.account_b'), null);
+  assert.equal(await secureStore.getItemAsync('enoparking.native.session.v1'), null);
+});
