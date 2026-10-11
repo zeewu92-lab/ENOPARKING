@@ -48,9 +48,10 @@ const TEXTBOOKS = [
 ] as unknown as RawTextbook[];
 
 function flattenTextbook(source: RawTextbook): NativeVocabularyWord[] {
-  const textbookId = source.textbook?.id;
-  if (!textbookId || !source.units) return [];
-  const textbookName = [source.textbook.name, source.textbook.volume].filter(Boolean).join(' ');
+  const textbook = source.textbook;
+  const textbookId = textbook?.id;
+  if (!textbook || !textbookId || !source.units) return [];
+  const textbookName = [textbook.name, textbook.volume].filter(Boolean).join(' ');
   const result: NativeVocabularyWord[] = [];
 
   for (const [unitKey, unit] of Object.entries(source.units)) {
