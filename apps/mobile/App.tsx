@@ -16,6 +16,7 @@ import { initializeNativeEventStore } from './src/storage/NativeEventStore';
 import { createNativeAuthSession } from './src/auth/NativeAuthSession';
 import { nativeCredentialVault } from './src/auth/nativeCredentialVault';
 import { NativeSyncPanel } from './src/sync/NativeSyncPanel';
+import { NativeLearningPanel } from './src/learning/NativeLearningPanel';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || '';
 
@@ -137,6 +138,7 @@ function NativeStatus() {
               <Pressable accessibilityRole="button" onPress={handleLogout} style={styles.button}>
                 <Text style={styles.buttonText}>登出此裝置</Text>
               </Pressable>
+              <NativeLearningPanel accountId={session.accountId} />
               {!!API_BASE_URL && auth && <NativeSyncPanel accountId={session.accountId} auth={auth} baseUrl={API_BASE_URL} />}
             </View>
           ) : (
