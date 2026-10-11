@@ -44,9 +44,17 @@ export class NativeCredentialVault {
     this.session = null;
     this.refreshInFlight = new Map();
     this.loggingOut = new Set();
+    this.lifecycleQueue = Promise.resolve();
+  }
+
+  withLifecycleLock(operation) {
+    const next = this.lifecycleQueue.then(operation, operation);
+    this.lifecycleQueue = next.then(() => undefined, () => undefined);
+    return next;
   }
 
   async saveLogin({ accountId, accessToken, refreshToken, expiresAt }) {
+    return this.withLifecycleLock(async () => { accountId, accessToken, refreshToken, expiresAt }) {
     validateAccountId(accountId);
     validateRefreshToken(refreshToken);
     const session = { accountId, accessToken, expiresAt };
@@ -57,6 +65,8 @@ export class NativeCredentialVault {
     await this.secureStore.setItemAsync(SESSION_KEY, JSON.stringify({ accountId }));
     this.session = session;
     return { ...session };
+  
+    });
   }
 
   getActiveSession() {
@@ -118,6 +128,7 @@ export class NativeCredentialVault {
   }
 
   async logout({ revoke } = {}) {
+    return this.withLifecycleLock(async () => { revoke } = {}) {
     const active = this.session;
     let saved = null;
     let sessionReadError = null;
@@ -176,6 +187,8 @@ export class NativeCredentialVault {
     } finally {
       this.loggingOut.delete(accountId);
     }
+  
+    });
   }
 
   async restoreSession({ refresh }) {
