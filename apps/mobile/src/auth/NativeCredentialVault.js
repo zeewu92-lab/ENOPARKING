@@ -1,7 +1,7 @@
 const TOKEN_KEY_PREFIX = 'enoparking.native.refresh.v1.';
 const SESSION_KEY = 'enoparking.native.session.v1';
 const REFRESH_REQUEST_PREFIX = 'enoparking.native.refresh-request.v1.';
-const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function validateAccountId(accountId) {
   if (typeof accountId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(accountId)) {
