@@ -31,7 +31,8 @@ function defaultState(date = todayKey()) {
     version: 1,
     dailyGarden: { date, harvestedToday: 0 },
     tree: { growth: 0, stage: 0 },
-    petals: 0
+    petals: 0,
+    nectarHistory: {}
   };
 }
 
@@ -53,7 +54,8 @@ function readState() {
         growth,
         stage: getTreeStage(growth)
       },
-      petals: Math.max(0, Number(parsed?.petals) || 0)
+      petals: Math.max(0, Number(parsed?.petals) || 0),
+      nectarHistory: parsed?.nectarHistory && typeof parsed.nectarHistory === 'object' && !Array.isArray(parsed.nectarHistory) ? parsed.nectarHistory : {}
     };
 
     if (next.dailyGarden.date !== todayKey()) {
@@ -88,7 +90,8 @@ export function saveGardenState(state) {
       growth,
       stage: getTreeStage(growth)
     },
-    petals: Math.max(0, Number(state?.petals) || 0)
+    petals: Math.max(0, Number(state?.petals) || 0),
+    nectarHistory: state?.nectarHistory && typeof state.nectarHistory === 'object' && !Array.isArray(state.nectarHistory) ? state.nectarHistory : {}
   };
 
   writeState(next);
@@ -110,6 +113,8 @@ export function applyHarvestToGarden(count, { date = todayKey() } = {}) {
   state.tree = { growth, stage: getTreeStage(growth) };
   state.petals = Math.max(0, Number(state.petals) || 0) +
     harvested * GARDEN_TUNING.petalsPerSeed;
+  if (!state.nectarHistory || typeof state.nectarHistory !== 'object' || Array.isArray(state.nectarHistory)) state.nectarHistory = {};
+  state.nectarHistory[date] = (Number(state.nectarHistory[date]) || 0) + harvested * GARDEN_TUNING.petalsPerSeed;
 
   writeState(state);
   return state;
