@@ -62,3 +62,98 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:no
 .v2-option{min-height:54px;text-align:left;line-height:1.45}
 .v2-speak-button{margin-top:14px;min-width:170px}
 .v2-usage-example{width:min(620px,100%);font-size:18px;text-align:left;margin-top:22px}
+
+
+/* Homepage v3: quiet editorial layout, botanical colors, no fixed tab bar */
+:root {
+  --bg: #f8f8f1;
+  --panel: #fffef9;
+  --text: #263b30;
+  --muted: #778278;
+  --line: #e3e8dc;
+  --accent: #52785c;
+  --green: #6f956e;
+  --shadow: none;
+}
+body {
+  background:
+    radial-gradient(ellipse at 88% 8%, rgba(225, 234, 207, .55), transparent 27rem),
+    linear-gradient(180deg, #fbfbf5 0%, #f7f8f0 68%, #f4f6ed 100%);
+}
+.v2-app { padding-bottom: 28px; }
+.v2-home { padding: 22px 24px 28px; max-width: 790px; }
+.home-topline { display:flex; align-items:center; justify-content:space-between; margin:0 0 48px; }
+.home-wordmark { display:inline-flex; align-items:center; gap:10px; text-decoration:none; color:var(--text); font-size:19px; font-weight:850; letter-spacing:.04em; }
+.home-mark { display:grid; place-items:center; width:34px; height:34px; border-radius:50%; color:#fff; background:#6d8a69; font-size:21px; }
+.home-profile-link { border:0; padding:0; background:transparent; }
+.home-avatar { display:grid; place-items:center; width:38px; height:38px; border:1px solid #dce5d7; border-radius:50%; background:#eef2e6; color:#4e6b51; font-size:15px; font-weight:800; }
+.home-welcome { padding:0 0 36px; }
+.home-date { margin:0 0 20px; color:#849081; font-size:13px; letter-spacing:.04em; }
+.home-welcome h1 { margin:0; color:#2b4034; font-size:clamp(32px,7vw,48px); font-weight:750; line-height:1.34; letter-spacing:-.055em; }
+.home-welcome h1 em { color:#73916c; font-style:normal; }
+.home-intro { margin:17px 0 0; color:#818b7e; font-size:14px; line-height:1.8; }
+.home-learning { padding:27px 0 18px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.home-section-line { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.home-section-line .v2-eyebrow { margin-bottom:7px; color:#879281; font-size:10px; letter-spacing:.15em; }
+.home-section-line h2 { margin:0; font-size:22px; letter-spacing:-.04em; }
+.home-calendar-pill { display:flex; align-items:center; gap:8px; border:1px solid #dfe7d8; border-radius:999px; background:rgba(255,255,255,.62); padding:10px 13px; color:#5d765e; font-size:12px; font-weight:700; white-space:nowrap; }
+.home-progress-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(125px, 210px); align-items:center; gap:20px; padding:28px 0 18px; }
+.home-progress-label { margin:0 0 7px; color:#7a8879; font-size:13px; }
+.home-progress-count { color:#2c4435; font-size:clamp(43px,10vw,60px); font-weight:780; letter-spacing:-.065em; line-height:1.1; }
+.home-progress-count span { color:#8c9688; font-size:15px; font-weight:600; letter-spacing:0; }
+.home-progress-note { margin:10px 0 0; color:#8b9487; font-size:12px; }
+.home-start-button { display:flex; align-items:center; justify-content:space-between; gap:24px; min-width:164px; margin-top:20px; padding:0 18px; border-radius:999px; background:#52785c; box-shadow:none; }
+.home-start-button span { font-size:18px; font-weight:500; }
+.home-growth-visual { position:relative; height:190px; overflow:hidden; border-radius:110px 110px 20px 20px; background:linear-gradient(180deg,#eef2e3 0%,#f5f3df 64%,#e9edda 100%); }
+.home-sun { position:absolute; top:24px; right:27px; width:35px; height:35px; border-radius:50%; background:#e4c98a; opacity:.88; }
+.home-hill { position:absolute; width:155%; height:105px; left:-28%; border-radius:50% 50% 0 0; }
+.home-hill-back { bottom:-34px; transform:rotate(-10deg); background:#d4e0c6; }
+.home-hill-front { bottom:-57px; left:-7%; background:#b7cba8; transform:rotate(12deg); }
+.home-sprout { position:absolute; z-index:2; left:50%; bottom:34px; width:4px; height:57px; border-radius:5px; background:#62825e; transform:translateX(-50%) rotate(3deg); }
+.home-sprout span,.home-sprout i,.home-sprout b { position:absolute; display:block; width:26px; height:14px; border-radius:100% 0 100% 0; background:#789b6c; }
+.home-sprout span { top:8px; left:-22px; transform:rotate(14deg); }
+.home-sprout i { top:23px; left:1px; transform:rotate(-17deg) scaleX(-1); }
+.home-sprout b { top:-3px; left:0; width:18px; height:10px; background:#90ac7e; transform:rotate(-24deg); }
+.home-progress-ring { position:absolute; z-index:3; right:12px; bottom:12px; display:grid; place-items:center; width:48px; height:48px; border-radius:50%; background:conic-gradient(#62845e var(--progress),rgba(255,255,255,.72) 0); }
+.home-progress-ring:before { content:""; position:absolute; inset:4px; border-radius:50%; background:#f7f8ef; }
+.home-progress-ring span { position:relative; color:#4d6a4e; font-size:12px; font-weight:800; }
+.home-progress-ring small { font-size:8px; }
+.home-progress-track { height:4px; overflow:hidden; border-radius:99px; background:#e7ebdf; }
+.home-progress-track span { display:block; height:100%; border-radius:inherit; background:#7c9b72; transition:width .3s ease; }
+.home-learning-foot { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:14px; color:#8a9385; font-size:11px; }
+.home-learning-foot button,.home-footer button { border:0; background:transparent; padding:4px 0; color:#58775c; font-size:12px; font-weight:750; white-space:nowrap; }
+.home-statistics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); padding:26px 0 29px; border-bottom:1px solid var(--line); }
+.home-statistics>div { position:relative; min-width:0; padding:0 12px; }
+.home-statistics>div:first-child { padding-left:0; }
+.home-statistics>div+div { border-left:1px solid var(--line); }
+.home-stat-icon { display:block; color:#8aa17e; font-size:19px; margin-bottom:11px; }
+.home-statistics p { margin:0 0 8px; color:#899184; font-size:11px; }
+.home-statistics strong { display:inline-block; color:#354c3b; font-size:26px; font-weight:750; letter-spacing:-.04em; }
+.home-statistics small { margin-left:5px; color:#8d9789; font-size:10px; }
+.home-garden-entry { position:relative; display:flex; align-items:center; gap:20px; padding:28px 0 26px; border-bottom:1px solid var(--line); }
+.home-garden-art { position:relative; flex:0 0 98px; height:110px; overflow:hidden; border-radius:60px 60px 18px 18px; background:linear-gradient(180deg,#edf1e2,#dfe8d5); }
+.home-garden-art span { position:absolute; z-index:2; top:17px; left:32px; color:#d4a4a1; font-size:37px; text-shadow:0 0 0 #fff; }
+.home-garden-art i { position:absolute; left:48px; bottom:15px; width:3px; height:47px; background:#6d8b62; transform:rotate(-7deg); }
+.home-garden-art b { position:absolute; left:28px; bottom:40px; width:27px; height:14px; border-radius:100% 0 100% 0; background:#88a578; transform:rotate(8deg); }
+.home-garden-copy { flex:1; min-width:0; }
+.home-garden-copy .v2-eyebrow { margin-bottom:8px; font-size:9px; letter-spacing:.12em; }
+.home-garden-copy h2 { margin:0; color:#334a38; font-size:20px; line-height:1.5; letter-spacing:-.04em; }
+.home-garden-copy>p:last-child { margin:8px 0 0; color:#879183; font-size:12px; }
+.home-garden-open { flex:0 0 36px; width:36px; height:36px; border:1px solid #dce5d7; border-radius:50%; background:transparent; color:#5c795e; font-size:17px; }
+.home-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:21px 0 0; color:#9aa292; font-size:11px; letter-spacing:.03em; }
+.home-return-wrap { padding:0 24px 24px; }
+@media(min-width:760px) {
+  .v2-home { padding-top:28px; }
+  .home-topline { margin-bottom:58px; }
+  .home-growth-visual { height:205px; }
+}
+@media(max-width:420px) {
+  .v2-home { padding-left:20px; padding-right:20px; }
+  .home-progress-row { grid-template-columns:minmax(0,1fr) 118px; gap:12px; }
+  .home-growth-visual { height:170px; }
+  .home-start-button { min-width:146px; padding:0 14px; gap:12px; }
+  .home-garden-art { flex-basis:78px; height:96px; }
+  .home-garden-art span { left:22px; }
+  .home-garden-art i { left:38px; }
+  .home-garden-art b { left:18px; }
+}
