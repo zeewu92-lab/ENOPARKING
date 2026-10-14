@@ -26,6 +26,7 @@ function defaultStats() {
     nightStudy: 0,
     bonusUses: 0,
     studyDates: [],
+    dailyWordCounts: {},
     completedStages: []
   };
 }
@@ -55,6 +56,8 @@ export function jiluDanciLearned({ completedDailyGoal = false } = {}) {
 
   stats.totalWords += 1;
   stats.todayWords = stats.lastStudyDate === today ? Number(stats.todayWords || 0) + 1 : 1;
+  if (!stats.dailyWordCounts || typeof stats.dailyWordCounts !== 'object' || Array.isArray(stats.dailyWordCounts)) stats.dailyWordCounts = {};
+  stats.dailyWordCounts[today] = stats.todayWords;
 
   if (!Array.isArray(stats.studyDates)) stats.studyDates = [];
   if (!stats.studyDates.includes(today)) stats.studyDates.push(today);
