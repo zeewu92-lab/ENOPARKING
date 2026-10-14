@@ -60,10 +60,10 @@ export async function zhanghuMe() {
 }
 
 // 这里负责本地和云端状态同步，先处理数据差异，再保存最终结果。
-export async function zhuceZhanghu({ username, password, nickname = '' }) {
+export async function zhuceZhanghu({ username, password, nickname = '', recoveryEmail = '', recoveryPhoneCountryCode = '', recoveryPhone = '' }) {
   return qingqiu('/api/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ username, password, nickname })
+    body: JSON.stringify({ username, password, nickname, recoveryEmail, recoveryPhoneCountryCode, recoveryPhone })
   });
 }
 
