@@ -304,3 +304,68 @@ body {
 .flower-calendar-footer i { color:#d65f91; font-size:14px; font-style:normal; }
 .flower-calendar-footer strong { color:#a45b79; font-size:11px; }
 .profile-learning-total { margin-bottom:18px; }
+
+
+/* 首页进度信息精简与种花日历增强 */
+.home-section-line { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; }
+.home-today-tag { padding:5px 9px; border-radius:999px; background:#f8edf1; color:#a85878; font-size:10px; font-weight:750; white-space:nowrap; }
+.home-progress-row { display:block; padding:18px 0 14px; }
+.home-progress-main { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:10px; }
+.home-progress-main .home-progress-count { min-width:0; }
+.home-progress-ring { position:relative; flex:0 0 54px; right:auto; bottom:auto; width:54px; height:54px; background:conic-gradient(#d96d99 var(--progress),#f3e8ec 0); }
+.home-progress-ring:before { background:#fffdfb; }
+.home-progress-ring span { color:#a34d71; font-size:12px; }
+.home-progress-meta { margin:0 0 8px; color:#69786a; font-size:12px; }
+.home-learning-foot { align-items:center; }
+.home-learning-foot>span { color:#788477; font-size:11px; }
+.home-challenge-strip { display:flex; align-items:center; gap:11px; width:100%; min-height:66px; margin-top:15px; padding:11px 13px; border:1px solid #eee1e5; border-radius:15px; background:#fffaf9; color:#4d5749; text-align:left; cursor:pointer; }
+.home-challenge-icon { display:grid; place-items:center; flex:0 0 38px; width:38px; height:38px; border-radius:12px; background:#f9e7ec; font-size:21px; }
+.home-challenge-copy { display:flex; flex:1; min-width:0; flex-direction:column; gap:4px; }
+.home-challenge-copy strong { font-size:13px; font-weight:800; }
+.home-challenge-copy small { color:#898d81; font-size:10px; }
+.home-challenge-action { display:flex; align-items:center; gap:5px; color:#b45179; font-size:11px; font-weight:750; white-space:nowrap; }
+.home-challenge-action b { font-size:17px; font-weight:500; }
+.home-garden-entry { margin-top:16px; }
+.home-garden-info { padding:14px 17px 15px; }
+.home-garden-info p { margin:6px 0 0; }
+.home-garden-bottom { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:9px; }
+.home-garden-bottom small { color:#888f81; font-size:11px; }
+.home-garden-bottom>span { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #ead8df; border-radius:999px; color:#a95175; font-size:11px; font-weight:750; }
+.home-garden-bottom b { font-size:15px; font-weight:500; }
+.flower-calendar-dialog { max-height:calc(100dvh - 32px); overflow-y:auto; }
+.flower-calendar-weekdays { color:#555f53; font-weight:750; }
+.flower-calendar-day { position:relative; padding:0; border:1px solid transparent; background:transparent; font-family:inherit; cursor:pointer; }
+.flower-calendar-day:disabled { cursor:default; }
+.flower-calendar-day.is-future { color:#c9c9c0; opacity:.45; }
+.flower-calendar-day.is-selected { border-color:#c76b91; background:#fff5f8; box-shadow:inset 0 0 0 1px #f2d4df; }
+.flower-calendar-day.is-today:not(.is-selected) { outline:1px solid #d98aaa; outline-offset:-1px; }
+.flower-calendar-day.is-sprout { background:#f5f2df; color:#8c925b; }
+.flower-calendar-day.is-bud { background:#f9e3ec; color:#b24f7b; }
+.flower-calendar-day.is-bloom { background:#edb9cd; color:#8e315b; }
+.flower-calendar-day.is-sprout i { font-size:10px; }
+.flower-calendar-day.is-bud i { color:#bd5881; font-size:12px; }
+.flower-calendar-day.is-bloom i { color:#92345f; font-size:14px; }
+.flower-calendar-detail { margin-top:13px; padding:12px 13px; border:1px solid #f0e2e7; border-radius:14px; background:#fff8fa; }
+.flower-calendar-detail>div:first-child { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.flower-calendar-detail>div:first-child strong { color:#514a46; font-size:13px; }
+.flower-calendar-detail>div:first-child span { color:#8e817d; font-size:10px; }
+.flower-calendar-detail-stats { display:flex; gap:22px; margin-top:9px; color:#8b8580; font-size:11px; }
+.flower-calendar-detail-stats b { color:#a74c73; font-size:17px; }
+.flower-calendar-legend { display:flex; justify-content:space-between; gap:7px; margin-top:11px; color:#777b70; font-size:9px; }
+.flower-calendar-legend span { display:flex; align-items:center; gap:4px; }
+.flower-calendar-legend i { font-size:13px; font-style:normal; }
+.legend-sprout { color:#92945b; }
+.legend-bud { color:#bd5881; }
+.legend-bloom { color:#9f3d69; }
+.flower-calendar-footer { flex-wrap:wrap; margin-top:12px; padding-top:11px; font-size:10px; }
+.flower-calendar-footer span b { color:#a74c73; }
+.flower-calendar-footer strong { font-size:10px; }
+.flower-calendar-milestone { margin:10px 0 0; padding:8px 10px; border-radius:10px; background:#f8edf1; color:#a34d71; font-size:10px; text-align:center; }
+@media (max-width:380px) {
+  .home-progress-count { font-size:42px; }
+  .home-progress-ring { flex-basis:48px; width:48px; height:48px; }
+  .flower-calendar-dialog { padding:17px; }
+  .flower-calendar-grid { gap:3px; }
+  .flower-calendar-day { min-height:35px; }
+  .flower-calendar-legend { font-size:8px; }
+}
