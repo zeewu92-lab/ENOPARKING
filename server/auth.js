@@ -175,6 +175,27 @@ export async function chuliAuth(req, res, action) {
     await baozhengSchema();
     const sql = huoquSql();
 
+    if (action === 'admin-setup' && req.method === 'POST') {
+      const body = await readBody(req);
+      const suppliedKey = String(body.key || '');
+      const username = normalizeUsername(body.username);
+      const configuredKey = process.env.ENGNOCRAZY_ADMIN_SETUP_KEY || '';
+      if (!configuredKey || !suppliedKey || !crypto.timingSafeEqual(
+        crypto.createHash('sha256').update(suppliedKey).digest(),
+        crypto.createHash('sha256').update(configuredKey).digest()
+      )) {
+        return json(res, 403, { error: '管理员初始化密钥无效或尚未配置' });
+      }
+      if (!validUsername(username)) return json(res, 400, { error: '账号格式不正确' });
+      const target = await sql`SELECT id FROM eng_users WHERE username = ${username} LIMIT 1`;
+      if (!target[0]) return json(res, 404, { error: '账户不存在，请先正常注册' });
+      const claimed = await sql`UPDATE eng_admin_setup SET used_at = NOW() WHERE id = 1 AND used_at IS NULL RETURNING id`;
+      if (!claimed[0]) return json(res, 409, { error: '管理员初始化密钥已使用' });
+      await sql`UPDATE eng_users SET role = 'admin', disabled = FALSE WHERE id = ${target[0].id}`;
+      await auditAdminSetup(sql, target[0].id, username);
+      return json(res, 200, { ok: true, message: '管理员权限已启用，请重新登录' });
+    }
+
     if (action === 'recovery-request' && req.method === 'POST') {
       const body = await readBody(req);
       const userming = normalizeUsername(body.username);
@@ -507,4 +528,9 @@ function mergeJiyiRecords(base, incoming) {
     out[key] = xiayi;
   });
   return out;
+}
+
+async function auditAdminSetup(sql, userId, username) {
+  await sql`INSERT INTO eng_admin_audit(actor_user_id, target_user_id, action, metadata)
+    VALUES (${userId}, ${userId}, 'admin-setup', ${JSON.stringify({ username })}::jsonb)`;
 }
