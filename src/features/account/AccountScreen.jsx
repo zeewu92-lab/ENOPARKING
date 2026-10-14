@@ -57,11 +57,11 @@ export default function AccountScreen({ onAuthenticated }) {
 
   return (
     <main className="v2-account">
-      <div className="v2-account-mark">語未央</div>
+      <div className="v2-account-mark">语未央</div>
       <section className="v2-account-panel">
         <p className="v2-eyebrow">{login ? '欢迎回来' : register ? '开始学习' : '账户安全'}</p>
         <h1>{login ? '回到语未央' : register ? '开垦你的第一片土地' : requesting ? '找回账户' : '重设密码'}</h1>
-        <p className="v2-muted">学习进度、错词与花园记忆都会跟着你的账户保存。</p>
+        <p className="v2-muted">学习进度、错词与花园记忆都会跟随账户保存。</p>
 
         <form onSubmit={submit} className="v2-form">
           <label>账号
@@ -80,7 +80,7 @@ export default function AccountScreen({ onAuthenticated }) {
             <label>找回手机号
               <input type="tel" value={recoveryPhone} onChange={e => { setRecoveryPhone(e.target.value); if (e.target.value) setRecoveryEmail(''); }} autoComplete="tel" />
             </label>
-            <p className="v2-muted">设置邮箱或手机号，之后才能通过对应方式找回密码。找回服务需完成邮件或短信通道配置。</p>
+            <p className="v2-muted">设置邮箱或手机号，之后才能通过对应方式找回密码。找回服务需要完成邮件或短信通道配置。</p>
           </>}
           {(login || register) && <label>密码
             <input value={password} onChange={e => setPassword(e.target.value)} type="password" minLength={8} maxLength={128} autoComplete={login ? 'current-password' : 'new-password'} required />
@@ -94,7 +94,7 @@ export default function AccountScreen({ onAuthenticated }) {
             </label>
           </>}
           {resetting && <>
-            <label>6 位验证码
+            <label>6位验证码
               <input value={code} onChange={e => setCode(e.target.value)} inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required />
             </label>
             <label>新密码
@@ -103,12 +103,12 @@ export default function AccountScreen({ onAuthenticated }) {
           </>}
           {error && <p className="v2-error" role="alert">{error}</p>}
           {notice && <p className="v2-muted" role="status">{notice}</p>}
-          <button className="v2-primary" disabled={busy}>{busy ? '正在处理…' : login ? '登录' : register ? '建立账户' : requesting ? '发送验证码' : '重设密码'}</button>
+          <button className="v2-primary" disabled={busy}>{busy ? '正在处理…' : login ? '登录' : register ? '创建账户' : requesting ? '发送验证码' : '重设密码'}</button>
         </form>
 
         <div className="v2-account-links">
           {login && <>
-            <button className="v2-text-button" onClick={() => { setMode('register'); setError(''); setNotice(''); }}>还没有账户？建立账户</button>
+            <button className="v2-text-button" onClick={() => { setMode('register'); setError(''); setNotice(''); }}>还没有账户？创建账户</button>
             <button className="v2-text-button" onClick={() => { setMode('recover-request'); setError(''); setNotice(''); }}>忘记密码</button>
           </>}
           {register && <button className="v2-text-button" onClick={() => { setMode('login'); setError(''); setNotice(''); }}>已有账户？登录</button>}
