@@ -1,7 +1,15 @@
-import { useMemo } from 'react';
 import { huoquXuexiTongji } from '../../utils/learningStats.js';
 import { getGardenState } from '../../utils/gardenState.js';
 import { getSeedLedger } from '../../utils/seedLedger.js';
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 6) return '凌晨好';
+  if (hour < 12) return '上午好';
+  if (hour < 14) return '中午好';
+  if (hour < 18) return '下午好';
+  return '晚上好';
+}
 
 function formatDate() {
   return new Intl.DateTimeFormat('zh-CN', {
@@ -11,7 +19,7 @@ function formatDate() {
   }).format(new Date());
 }
 
-export default function HomePage({ wordCount, goal, onStart, onSetup, onGarden, onArchive, onProfile }) {
+export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGarden, onArchive, onProfile }) {
   const stats = huoquXuexiTongji();
   const garden = getGardenState();
   const seeds = getSeedLedger();
@@ -21,22 +29,23 @@ export default function HomePage({ wordCount, goal, onStart, onSetup, onGarden, 
   const progress = goal > 0 ? Math.min(100, Math.round(today / goal * 100)) : 0;
   const watered = Math.min(50, Math.max(0, Number(garden.tree?.growth) || 0));
   const nectar = Math.max(0, Number(garden.petals) || 0);
-  const greeting = useMemo(() => complete ? '今天的花开了' : `今天还有 ${remaining} 个词等你浇灌`, [complete, remaining]);
+  const greeting = getGreeting();
+  const username = String(user?.nickname || user?.username || '学习者').trim() || '学习者';
+  const avatarText = username.slice(0, 1);
 
   return (
     <main className="v2-page v2-home">
       <header className="home-topline">
-        <a className="home-wordmark" href="/" aria-label="语未央首页"><span className="home-mark" aria-hidden="true">✿</span><span>语未央</span></a>
+        <button className="home-user-heading" onClick={onProfile} aria-label="打开个人资料"><span className="home-user-avatar">{avatarText}</span><span className="home-user-name">{username}</span></button>
         <div className="home-top-actions">
           <button className="home-nectar" onClick={onGarden} aria-label="查看花蜜"><span aria-hidden="true">✦</span><span>花蜜</span><strong>{nectar}</strong></button>
-          <button className="home-profile-link" onClick={onProfile} aria-label="个人设定"><span className="home-avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.3"/><path d="M5.5 20c.6-3.4 2.8-5.1 6.5-5.1s5.9 1.7 6.5 5.1"/></svg></span></button>
+          
         </div>
       </header>
 
       <section className="home-welcome">
-        <div className="home-welcome-line"><p className="home-date">{formatDate()}</p><span className="home-greeting">{complete ? '今日目标已达成' : '慢慢来，持续就好'}</span></div>
-        <h1>{greeting}</h1>
-        <p className="home-intro">记住一个单词，就讓花园多一点生機。</p>
+        <div className="home-welcome-line"><h1 className="home-greeting-title">{greeting}</h1><span className="home-greeting-status">{complete ? '今日目标已达成' : '今天继续加油'}</span></div>
+        <p className="home-date">{formatDate()}</p>
       </section>
 
       <section className={`home-learning ${complete ? 'is-complete' : ''}`} aria-labelledby="home-learning-title">
