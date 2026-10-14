@@ -11,14 +11,6 @@ function getGreeting() {
   return '晚上好';
 }
 
-function formatDate() {
-  return new Intl.DateTimeFormat('zh-CN', {
-    month: 'long',
-    day: 'numeric',
-    weekday: 'long',
-  }).format(new Date());
-}
-
 export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGarden, onArchive, onProfile }) {
   const stats = huoquXuexiTongji();
   const garden = getGardenState();
@@ -36,17 +28,12 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
   return (
     <main className="v2-page v2-home">
       <header className="home-topline">
-        <button className="home-user-heading" onClick={onProfile} aria-label="打开个人资料"><span className="home-user-avatar">{avatarText}</span><span className="home-user-name">{username}</span></button>
+        <button className="home-user-heading" onClick={onProfile} aria-label="打开个人资料"><span className="home-user-avatar">{avatarText}</span><span className="home-user-greeting">{greeting}，</span><span className="home-user-name">{username}</span></button>
         <div className="home-top-actions">
           <button className="home-nectar" onClick={onGarden} aria-label="查看花蜜"><span aria-hidden="true">✦</span><span>花蜜</span><strong>{nectar}</strong></button>
           
         </div>
       </header>
-
-      <section className="home-welcome">
-        <div className="home-welcome-line"><h1 className="home-greeting-title">{greeting}</h1><span className="home-greeting-status">{complete ? '今日目标已达成' : '今天继续加油'}</span></div>
-        <p className="home-date">{formatDate()}</p>
-      </section>
 
       <section className={`home-learning ${complete ? 'is-complete' : ''}`} aria-labelledby="home-learning-title">
         <div className="home-section-line">
