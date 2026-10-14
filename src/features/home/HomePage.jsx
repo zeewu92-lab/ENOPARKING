@@ -31,14 +31,13 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
         <button className="home-user-heading" onClick={onProfile} aria-label="打开个人资料"><span className="home-user-avatar">{avatarText}</span><span className="home-user-greeting">{greeting}，</span><span className="home-user-name">{username}</span></button>
         <div className="home-top-actions">
           <button className="home-nectar" onClick={onGarden} aria-label="查看花蜜"><span aria-hidden="true">✦</span><span>花蜜</span><strong>{nectar}</strong></button>
-          
+          <button className="home-calendar-pill" onClick={onArchive}>种花日历 <span aria-hidden="true">›</span></button>
         </div>
       </header>
 
       <section className={`home-learning ${complete ? 'is-complete' : ''}`} aria-labelledby="home-learning-title">
         <div className="home-section-line">
           <div><p className="v2-eyebrow">TODAY</p><h2 id="home-learning-title">今日学习</h2></div>
-          <button className="home-calendar-pill" onClick={onArchive}>种花日历 <span aria-hidden="true">›</span></button>
         </div>
         <div className="home-progress-row">
           <div className="home-progress-copy">
