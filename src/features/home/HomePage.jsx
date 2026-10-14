@@ -39,7 +39,7 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
         <div className="home-section-line">
           <div><p className="v2-eyebrow">TODAY</p><h2 id="home-learning-title">今日学习</h2></div>
         </div>
-        <div className="home-progress-row">
+        <div className="home-progress-row" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
           <div className="home-progress-copy">
             <p className="home-progress-label">{complete ? '本日目标' : '待浇灌'}</p>
             <div className="home-progress-count">{complete ? '完成' : remaining}<span>{complete ? ' ✓' : ' 个单词'}</span></div>
@@ -50,19 +50,8 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
               <button className="home-review-button" onClick={onStart}><span aria-hidden="true">↻</span> 复习</button>
             </div>
           </div>
-          <button className="home-growth-visual" onClick={onGarden} aria-label="进入花园，查看植物成长">
-            <div className="home-sun" /><div className="home-hill home-hill-back" /><div className="home-hill home-hill-front" />
-            <div className={`home-sprout stage-${Math.min(4, Number(garden.tree?.stage) || 0)}`}><span /><i /><b /><em>✿</em></div>
-            <span className="home-growth-label">{Math.min(100, Number(garden.tree?.growth) || 0)} 成长值</span>
-          </button>
         </div>
         <div className="home-learning-foot"><button onClick={onSetup}>调整每日计划 <span aria-hidden="true">›</span></button><span>{complete ? '今天的努力已经开花' : `还差 ${remaining} 个单词达标`}</span></div>
-      </section>
-
-      <section className="home-quick-actions" aria-label="学习捷径">
-        <button onClick={onStart}><span className="home-quick-icon review-icon" aria-hidden="true">↻</span><span><strong>待复习</strong><small>回顾学过的单词</small></span><b aria-hidden="true">›</b></button>
-        <button onClick={onArchive}><span className="home-quick-icon error-icon" aria-hidden="true">●</span><span><strong>错词挑战</strong><small>重新练习易错单词</small></span><b aria-hidden="true">›</b></button>
-        <button onClick={onSetup}><span className="home-quick-icon task-icon" aria-hidden="true">✓</span><span><strong>今日任务</strong><small>{complete ? '今日目标已完成' : `完成 ${remaining} 个单词`}</small></span><b aria-hidden="true">›</b></button>
       </section>
 
       <section className="home-statistics" aria-label="学习记錄">
