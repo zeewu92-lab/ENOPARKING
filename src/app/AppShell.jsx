@@ -112,20 +112,21 @@ export default function AppShell() {
             goal={config.goal}
             onStart={() => setView(config.selectedUnits.length ? 'learning' : 'setup')}
             onSetup={() => setView('setup')}
+            onGarden={() => setView('garden')}
+            onArchive={() => setView('archive')}
+            onProfile={() => setView('profile')}
           />
         )}
         {view === 'archive' && <ArchivePage />}
         {view === 'profile' && <ProfilePage user={user} onGoalChange={updateGoal} onLogout={logout} />}
+        {view !== 'home' && (
+          <div className="home-return-wrap">
+            <button className="v2-text-button" onClick={() => setView('home')}>← 返回学习首页</button>
+          </div>
+        )}
         {error && <p className="v2-global-error">{error}</p>}
         {loadingWords && <div className="v2-loading-strip">正在整理词库…</div>}
       </div>
-
-      <nav className="v2-nav" aria-label="主导航">
-        <button className={view === 'home' ? 'active' : ''} onClick={() => setView('home')}><span>⌂</span>学习</button>
-        <button className={view === 'garden' ? 'active' : ''} onClick={() => setView('garden')}><span>✿</span>花园</button>
-        <button className={view === 'archive' ? 'active' : ''} onClick={() => setView('archive')}><span>▦</span>档案</button>
-        <button className={view === 'profile' ? 'active' : ''} onClick={() => setView('profile')}><span>○</span>我的</button>
-      </nav>
     </div>
   );
 }
