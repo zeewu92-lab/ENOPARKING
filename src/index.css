@@ -369,3 +369,30 @@ body {
   .flower-calendar-day { min-height:35px; }
   .flower-calendar-legend { font-size:8px; }
 }
+
+
+.home-quick-strip { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:9px; margin-top:13px; }
+.home-quick-strip .home-challenge-strip { min-width:0; min-height:68px; margin:0; padding:9px; gap:8px; border-radius:14px; }
+.home-quick-strip .home-challenge-icon { flex-basis:31px; width:31px; height:31px; font-size:17px; }
+.home-quick-strip .home-challenge-copy strong { font-size:11px; }
+.home-quick-strip .home-challenge-copy small { font-size:9px; line-height:1.35; }
+.home-quick-strip .home-challenge-action { gap:2px; font-size:9px; }
+.home-task-strip { display:flex; align-items:center; min-width:0; gap:8px; padding:9px; border:1px solid #e6e9dc; border-radius:14px; background:#fbfcf5; color:#4d5749; text-align:left; cursor:pointer; }
+.home-task-icon { display:grid; place-items:center; flex:0 0 31px; width:31px; height:31px; border-radius:11px; background:#e8efdf; color:#63805b; font-size:16px; font-weight:800; }
+.archive-wrong-words { margin-top:22px; }
+.archive-wrong-words>header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.archive-wrong-words>header .v2-eyebrow { margin:0 0 4px; color:#a85b7b; font-size:9px; letter-spacing:.12em; }
+.archive-wrong-words>header h2 { margin:0; color:#35483a; font-size:20px; }
+.archive-wrong-words>header>span { color:#a85b7b; font-size:12px; font-weight:750; }
+.archive-wrong-words ul { list-style:none; margin:0; padding:0; border-top:1px solid #eee7e1; }
+.archive-wrong-words li { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 0; border-bottom:1px solid #eee7e1; }
+.archive-wrong-words li>div { display:flex; min-width:0; flex-direction:column; gap:4px; }
+.archive-wrong-words li strong { color:#344538; font-size:15px; }
+.archive-wrong-words li span { overflow:hidden; color:#888c80; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+.archive-wrong-words li small { flex-shrink:0; color:#ad5b7b; font-size:10px; }
+.archive-wrong-empty { padding:16px 0; color:#858b7e; font-size:12px; }
+@media (max-width:380px) {
+  .home-quick-strip { gap:7px; }
+  .home-quick-strip .home-challenge-strip,.home-task-strip { gap:6px; padding:8px 7px; }
+  .home-quick-strip .home-challenge-icon,.home-task-icon { flex-basis:27px; width:27px; height:27px; }
+}
