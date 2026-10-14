@@ -10,7 +10,7 @@ function verificationTitle(type) {
 
 function exampleText(word) {
   const example = String(word?.example || '').trim();
-  return example || '請根据单词含义完成验证。';
+  return example || '请根据单词含义完成验证。';
 }
 
 export default function LearningPage({ wordList, sourceKey, goal, onExit, onGarden }) {
@@ -73,8 +73,8 @@ export default function LearningPage({ wordList, sourceKey, goal, onExit, onGard
         <section className="v2-learning-intro">
           <p className="v2-eyebrow">第 {session.stage} 阶段</p>
           <h1>准备种下下一颗种子</h1>
-          <p className="v2-muted">今天的学习目标是 {session.base} 个單詞。</p>
-          <button className="v2-primary" onClick={session.start}>開始</button>
+          <p className="v2-muted">今天的学习目标是 {session.base} 个单词。</p>
+          <button className="v2-primary" onClick={session.start}>开始</button>
         </section>
       )}
 
@@ -133,7 +133,7 @@ export default function LearningPage({ wordList, sourceKey, goal, onExit, onGard
 
           {type === 'dictation' && (
             <>
-              <p className="v2-muted">先聽發音，再输入你听到的单词。</p>
+              <p className="v2-muted">先听发音，再输入你听到的单词。</p>
               <button
                 type="button"
                 className="v2-secondary v2-speak-button"
