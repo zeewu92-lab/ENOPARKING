@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { huoquXuexiTongji } from '../../utils/learningStats.js';
 import { getGardenState } from '../../utils/gardenState.js';
 import { getSeedLedger } from '../../utils/seedLedger.js';
@@ -12,6 +13,8 @@ function getGreeting() {
 }
 
 export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGarden, onArchive, onProfile }) {
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const stats = huoquXuexiTongji();
   const garden = getGardenState();
   const seeds = getSeedLedger();
@@ -24,6 +27,14 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
   const greeting = getGreeting();
   const username = String(user?.nickname || user?.username || '学习者').trim() || '学习者';
   const avatarText = username.slice(0, 1);
+  const year = calendarMonth.getFullYear();
+  const month = calendarMonth.getMonth();
+  const monthStart = new Date(year, month, 1);
+  const monthDays = new Date(year, month + 1, 0).getDate();
+  const calendarCells = [...Array(monthStart.getDay()).fill(null), ...Array.from({ length: monthDays }, (_, index) => index + 1)];
+  const studyDates = new Set(Array.isArray(stats.studyDates) ? stats.studyDates : []);
+  const now = new Date();
+  const todayKey = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
 
   return (
     <main className="v2-page v2-home">
@@ -31,7 +42,7 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
         <button className="home-user-heading" onClick={onProfile} aria-label="打开个人资料"><span className="home-user-avatar">{avatarText}</span><span className="home-user-greeting">{greeting}，</span><span className="home-user-name">{username}</span></button>
         <div className="home-top-actions">
           <button className="home-nectar" onClick={onGarden} aria-label="查看花蜜"><span aria-hidden="true">✦</span><span>花蜜</span><strong>{nectar}</strong></button>
-          <button className="home-calendar-pill" onClick={onArchive}>种花日历 <span aria-hidden="true">›</span></button>
+          <button className="home-calendar-pill" onClick={() => setCalendarOpen(true)} aria-haspopup="dialog" aria-expanded={calendarOpen}>种花日历 <span aria-hidden="true">›</span></button>
         </div>
       </header>
 
@@ -54,11 +65,6 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
         <div className="home-learning-foot"><button onClick={onSetup}>调整每日计划 <span aria-hidden="true">›</span></button><span>{complete ? '今天的努力已经开花' : `还差 ${remaining} 个单词达标`}</span></div>
       </section>
 
-      <section className="home-statistics" aria-label="学习记錄">
-        <div><span className="home-stat-icon" aria-hidden="true">⌁</span><p>连续学习</p><strong>{stats.streak}</strong><small>天</small></div>
-        <div><span className="home-stat-icon" aria-hidden="true">✳</span><p>累计单词</p><strong>{stats.totalWords}</strong><small>个</small></div>
-      </section>
-
       <button className="home-garden-entry" onClick={onGarden}>
         <div className="home-garden-scene" aria-hidden="true">
           <div className="garden-cloud cloud-one" /><div className="garden-cloud cloud-two" /><div className="garden-sun" />
@@ -70,6 +76,32 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
       </button>
 
       <footer className="home-footer"><span>语未央，词无尽。</span><button onClick={onArchive}>学习档案 <span aria-hidden="true">›</span></button></footer>
+
+      {calendarOpen && (
+        <div className="flower-calendar-backdrop" onClick={() => setCalendarOpen(false)}>
+          <section className="flower-calendar-dialog" role="dialog" aria-modal="true" aria-label="种花日历" onClick={event => event.stopPropagation()}>
+            <header className="flower-calendar-header">
+              <div><p className="v2-eyebrow">MY LEARNING</p><h2>种花日历</h2><p>每一次学习，都值得留下记号。</p></div>
+              <button className="flower-calendar-close" onClick={() => setCalendarOpen(false)} aria-label="关闭日历">×</button>
+            </header>
+            <div className="flower-calendar-month">
+              <button onClick={() => setCalendarMonth(new Date(year, month - 1, 1))} aria-label="上个月">‹</button>
+              <strong>{year}年 {month + 1}月</strong>
+              <button onClick={() => setCalendarMonth(new Date(year, month + 1, 1))} aria-label="下个月">›</button>
+            </div>
+            <div className="flower-calendar-grid flower-calendar-weekdays">{['日', '一', '二', '三', '四', '五', '六'].map(day => <span key={day}>{day}</span>)}</div>
+            <div className="flower-calendar-grid flower-calendar-days">
+              {calendarCells.map((day, index) => {
+                if (!day) return <span className="flower-calendar-empty" key={'empty-' + index} />;
+                const dateKey = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+                const learned = studyDates.has(dateKey);
+                return <span key={dateKey} className={'flower-calendar-day' + (learned ? ' is-learned' : '') + (dateKey === todayKey ? ' is-today' : '')} title={learned ? '这一天完成过学习' : undefined}><span>{day}</span>{learned && <i aria-label="完成学习">✿</i>}</span>;
+              })}
+            </div>
+            <footer className="flower-calendar-footer"><span><i>✿</i> 已完成学习</span><strong>连续学习 {stats.streak} 天</strong></footer>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
