@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { storage } from '../../utils/storage.js';
+import { huoquXuexiTongji } from '../../utils/learningStats.js';
 
 export default function ProfilePage({ user, onGoalChange, onLogout }) {
   const [goal, setGoal] = useState(() => Number(localStorage.getItem('engnocrazy:dailyGoal')) || 10);
@@ -20,6 +21,10 @@ export default function ProfilePage({ user, onGoalChange, onLogout }) {
       <section className="v2-profile">
         <div className="v2-avatar">{String(user?.nickname || user?.username || '语').slice(0, 1)}</div>
         <div><h2>{user?.nickname || '语未央学习者'}</h2><p>{user?.username || ''}</p></div>
+      </section>
+
+      <section className="v2-list profile-learning-total" aria-label="学习统计">
+        <div className="v2-list-row"><span>累计学习单词</span><b>{stats.totalWords} 个</b></div>
       </section>
 
       <section className="v2-setting">
