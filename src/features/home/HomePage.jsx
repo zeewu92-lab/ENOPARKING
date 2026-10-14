@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { huoquXuexiTongji } from '../../utils/learningStats.js';
 import { getGardenState } from '../../utils/gardenState.js';
-import { getSeedLedger } from '../../utils/seedLedger.js';
 import { huoquCuowuShu } from '../../utils/wrongBook.js';
 
 function dateKey(date) {
@@ -24,7 +23,6 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
   const [selectedDate, setSelectedDate] = useState(() => dateKey(new Date()));
   const stats = huoquXuexiTongji();
   const garden = getGardenState();
-  const seeds = getSeedLedger();
   const wrongWords = huoquCuowuShu();
   const today = Math.max(0, Number(stats.todayWords) || 0);
   const complete = goal > 0 && today >= goal;
@@ -49,7 +47,8 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
   const monthStudyDates = [...studyDates].filter(date => date.startsWith(year + '-' + String(month + 1).padStart(2, '0')));
   const monthWordCount = monthStudyDates.reduce((sum, date) => sum + (Number(dailyCounts[date]) || (date === todayKey ? today : 1)), 0);
   const selectedIsFuture = selectedDate > todayKey;
-  const selectedDateLabel = selectedDate.split('-').map((part, index) => index === 0 ? part + '年' : index === 1 ? Number(part) + '月' : Number(part) + '日').join('');
+  const selectedDateParts = selectedDate.split('-');
+  const selectedDateLabel = selectedDateParts[0] + '年' + Number(selectedDateParts[1]) + '月' + Number(selectedDateParts[2]) + '日';
 
   return (
     <main className="v2-page v2-home">
