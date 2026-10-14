@@ -144,7 +144,9 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
               <span>本月学习 <b>{monthStudyDates.length}</b> 天 · 可统计 <b>{monthWordCount}</b> 词</span>
               <strong>最长连续 {stats.longestStreak || 0} 天</strong>
             </footer>
-            {stats.streak >= 7 && <p className="flower-calendar-milestone">✦ 已连续学习 {stats.streak} 天，继续保持</p>}
+            {(stats.streak >= 30 || stats.longestStreak >= 30) && <p className="flower-calendar-milestone">✦ 已达成连续学习 30 天里程碑</p>}
+            {stats.streak >= 7 && stats.streak < 30 && <p className="flower-calendar-milestone">✦ 已连续学习 {stats.streak} 天，继续保持</p>}
+            {stats.streak < 7 && stats.longestStreak >= 7 && stats.longestStreak < 30 && <p className="flower-calendar-milestone">✦ 已达成连续学习 7 天里程碑</p>}
           </section>
         </div>
       )}
