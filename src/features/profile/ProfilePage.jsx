@@ -3,6 +3,7 @@ import { storage } from '../../utils/storage.js';
 import { huoquXuexiTongji } from '../../utils/learningStats.js';
 
 export default function ProfilePage({ user, onGoalChange, onLogout }) {
+  const stats = huoquXuexiTongji();
   const [goal, setGoal] = useState(() => Number(localStorage.getItem('engnocrazy:dailyGoal')) || 10);
   const [saved, setSaved] = useState(false);
 
