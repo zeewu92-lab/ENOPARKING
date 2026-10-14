@@ -42,10 +42,12 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
   const gardenNectarHistory = garden.nectarHistory && typeof garden.nectarHistory === 'object' ? garden.nectarHistory : {};
   const now = new Date();
   const todayKey = dateKey(now);
-  const selectedCount = Number(dailyCounts[selectedDate]) || (selectedDate === todayKey ? today : studyDates.has(selectedDate) ? 1 : 0);
+  const hasSelectedCount = Object.prototype.hasOwnProperty.call(dailyCounts, selectedDate) || selectedDate === todayKey;
+  const selectedCount = Number(dailyCounts[selectedDate]) || (selectedDate === todayKey ? today : null);
+  const hasSelectedNectar = Object.prototype.hasOwnProperty.call(gardenNectarHistory, selectedDate);
   const selectedNectar = Number(gardenNectarHistory[selectedDate]) || 0;
   const monthStudyDates = [...studyDates].filter(date => date.startsWith(year + '-' + String(month + 1).padStart(2, '0')));
-  const monthWordCount = monthStudyDates.reduce((sum, date) => sum + (Number(dailyCounts[date]) || (date === todayKey ? today : 1)), 0);
+  const monthWordCount = monthStudyDates.reduce((sum, date) => sum + (Number(dailyCounts[date]) || (date === todayKey ? today : 0)), 0);
   const selectedIsFuture = selectedDate > todayKey;
   const selectedDateParts = selectedDate.split('-');
   const selectedDateLabel = selectedDateParts[0] + '年' + Number(selectedDateParts[1]) + '月' + Number(selectedDateParts[2]) + '日';
@@ -83,11 +85,18 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
         <div className="home-learning-foot"><button onClick={onSetup}>调整每日计划 <span aria-hidden="true">›</span></button><span>词库 {wordCount} 个</span></div>
       </section>
 
-      <button className="home-challenge-strip" onClick={onArchive}>
-        <span className="home-challenge-icon" aria-hidden="true">🐞</span>
-        <span className="home-challenge-copy"><strong>错词挑战</strong><small>{wrongWords.length ? `有 ${wrongWords.length} 个单词需要巩固` : '保持准确，继续积累'}</small></span>
-        <span className="home-challenge-action">{wrongWords.length ? '查看错词' : '学习档案'} <b aria-hidden="true">›</b></span>
-      </button>
+      <section className="home-quick-strip" aria-label="学习快捷入口">
+        <button className="home-challenge-strip" onClick={onArchive}>
+          <span className="home-challenge-icon" aria-hidden="true">🐞</span>
+          <span className="home-challenge-copy"><strong>错词挑战</strong><small>{wrongWords.length ? `有 ${wrongWords.length} 个单词需要巩固` : '检查并巩固错词'}</small></span>
+          <span className="home-challenge-action">{wrongWords.length ? '查看错词' : '查看'} <b aria-hidden="true">›</b></span>
+        </button>
+        <button className="home-task-strip" onClick={onStart}>
+          <span className="home-task-icon" aria-hidden="true">✓</span>
+          <span className="home-challenge-copy"><strong>今日任务</strong><small>{complete ? '今日目标已完成' : `今日已学 ${today}/${goal} 个`}</small></span>
+          <span className="home-challenge-action">{complete ? '再复习' : '继续'} <b aria-hidden="true">›</b></span>
+        </button>
+      </section>
 
       <button className="home-garden-entry" onClick={onGarden}>
         <div className="home-garden-scene" aria-hidden="true">
@@ -128,11 +137,11 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
             </div>
             <section className="flower-calendar-detail" aria-live="polite">
               <div><strong>{selectedDateLabel}</strong><span>{selectedIsFuture ? '还没到这一天' : selectedCount ? '有学习记录' : '暂无学习记录'}</span></div>
-              <div className="flower-calendar-detail-stats"><span><b>{selectedCount}</b> 个单词</span><span><b>{selectedNectar}</b> 花蜜</span></div>
+              <div className="flower-calendar-detail-stats"><span><b>{hasSelectedCount ? selectedCount : studyDates.has(selectedDate) ? '有' : 0}</b> {hasSelectedCount ? '个单词' : studyDates.has(selectedDate) ? '学习记录' : '个单词'}</span><span><b>{hasSelectedNectar ? selectedNectar : '—'}</b> {hasSelectedNectar ? '花蜜' : '花蜜未记录'}</span></div>
             </section>
             <div className="flower-calendar-legend"><span><i className="legend-sprout">🌱</i> 1–2 个</span><span><i className="legend-bud">❀</i> 3–5 个</span><span><i className="legend-bloom">✿</i> 6 个以上</span></div>
             <footer className="flower-calendar-footer">
-              <span>本月学习 <b>{monthStudyDates.length}</b> 天 · 记录 <b>{monthWordCount}</b> 词</span>
+              <span>本月学习 <b>{monthStudyDates.length}</b> 天 · 可统计 <b>{monthWordCount}</b> 词</span>
               <strong>最长连续 {stats.longestStreak || 0} 天</strong>
             </footer>
             {stats.streak >= 7 && <p className="flower-calendar-milestone">✦ 已连续学习 {stats.streak} 天，继续保持</p>}
