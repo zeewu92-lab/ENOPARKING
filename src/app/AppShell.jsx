@@ -108,6 +108,7 @@ export default function AppShell() {
       <div className="v2-content">
         {view === 'home' && (
           <HomePage
+            user={user}
             wordCount={words.length}
             goal={config.goal}
             onStart={() => setView(config.selectedUnits.length ? 'learning' : 'setup')}
