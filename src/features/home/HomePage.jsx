@@ -17,7 +17,7 @@ function getGreeting() {
   return '晚上好';
 }
 
-export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGarden, onArchive, onProfile }) {
+export default function HomePage({ user, goal, onStart, onLongWordChallenge, onSetup, onGarden, onArchive, onProfile }) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState(() => dateKey(new Date()));
@@ -64,25 +64,24 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
 
       <section className={`home-learning ${complete ? 'is-complete' : ''}`} aria-labelledby="home-learning-title">
         <div className="home-section-line">
-          <div><p className="v2-eyebrow">TODAY</p><h2 id="home-learning-title">今日学习</h2></div>
-          <span className="home-today-tag">今日目标 {goal} 词</span>
+          <h2 id="home-learning-title">学习</h2>
         </div>
         <div className="home-progress-row">
           <div className="home-progress-copy">
-            <p className="home-progress-label">{complete ? '今日目标已完成' : '今日还需学习'}</p>
             <div className="home-progress-main">
-              <div className="home-progress-count">{Math.max(0, goal - today)}<span>{complete ? ' 个' : ' 个单词'}</span></div>
-              <div className="home-progress-ring" style={{ '--progress': progress + '%' }} aria-label={`今日进度 ${progress}%`}><span>{progress}<small>%</small></span></div>
+              <div className="home-progress-count">{Math.max(0, goal - today)}<span> 个待澆灌</span></div>
             </div>
-            <p className="home-progress-meta">今日已学 {today} / {goal} 个单词</p>
-            <div className="home-progress-track" role="progressbar" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100"><span style={{ width: `${progress}%` }} /></div>
+            <div className="home-progress-track-wrap">
+              <div className="home-progress-track" role="progressbar" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100" aria-label="今日学习进度"><span style={{ width: `${progress}%` }} /></div>
+              <span className="home-progress-endpoint">{Math.min(today, goal)}/{goal}</span>
+            </div>
             <div className="home-learning-actions">
-              <button className="v2-primary home-start-button" onClick={complete ? onGarden : onStart}>{complete ? '今日目标已完成' : '开始学习'} <span aria-hidden="true">›</span></button>
+              <button className="v2-primary home-start-button" onClick={onStart}>{today > 0 ? '继续学习' : '开始学习'} <span aria-hidden="true">›</span></button>
               <button className="home-review-button" onClick={onStart}><span aria-hidden="true">↻</span> 复习</button>
             </div>
           </div>
         </div>
-        <div className="home-learning-foot"><button onClick={onSetup}>调整每日计划 <span aria-hidden="true">›</span></button><span>词库 {wordCount} 个</span></div>
+        <div className="home-learning-foot"><button onClick={onSetup}>调整每日计划 <span aria-hidden="true">›</span></button></div>
       </section>
 
       <section className="home-quick-strip" aria-label="学习快捷入口">
@@ -91,10 +90,10 @@ export default function HomePage({ user, wordCount, goal, onStart, onSetup, onGa
           <span className="home-challenge-copy"><strong>错词挑战</strong><small>{wrongWords.length ? `有 ${wrongWords.length} 个单词需要巩固` : '检查并巩固错词'}</small></span>
           <span className="home-challenge-action">{wrongWords.length ? '查看错词' : '查看'} <b aria-hidden="true">›</b></span>
         </button>
-        <button className="home-task-strip" onClick={onStart}>
-          <span className="home-task-icon" aria-hidden="true">✓</span>
-          <span className="home-challenge-copy"><strong>今日任务</strong><small>{complete ? '今日目标已完成' : `今日已学 ${today}/${goal} 个`}</small></span>
-          <span className="home-challenge-action">{complete ? '再复习' : '继续'} <b aria-hidden="true">›</b></span>
+        <button className="home-task-strip home-long-word-task" onClick={onLongWordChallenge}>
+          <span className="home-task-icon" aria-hidden="true">Aa</span>
+          <span className="home-challenge-copy"><strong>长词突破</strong><small>完成挑战，领取奖励</small></span>
+          <span className="home-challenge-action">+10 花蜜 <b aria-hidden="true">›</b></span>
         </button>
       </section>
 
