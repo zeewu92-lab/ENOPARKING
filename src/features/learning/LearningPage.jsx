@@ -13,7 +13,7 @@ function exampleText(word) {
   return example || '请根据单词含义完成验证。';
 }
 
-export default function LearningPage({ wordList, sourceKey, goal, onExit, onGarden }) {
+export default function LearningPage({ wordList, sourceKey, goal, onExit, onGarden, challengeMode = false, challengeRewarded = false, onChallengeComplete }) {
   const session = useLearningSession(wordList, sourceKey, goal);
   const word = session.currentWord;
   const type = session.verification?.verification;
@@ -51,7 +51,7 @@ export default function LearningPage({ wordList, sourceKey, goal, onExit, onGard
         <p className="v2-eyebrow">第 {session.stage} 阶段完成</p>
         <div className="v2-complete-symbol">✦</div>
         <h1>这一阶段完成了</h1>
-        <p>已完成 {session.used} / {session.base} 个有效学习事件。</p>
+        <p>{challengeMode ? (challengeRewarded ? '长词突破完成，已领取 10 花蜜奖励。' : '长词突破完成。') : `已完成 ${session.used} / ${session.base} 个有效学习事件。`}</p>
         <div className="v2-actions">
           <button className="v2-primary" onClick={session.nextStage}>下一阶段</button>
           <button className="v2-secondary" onClick={onGarden}>去花园收取种子</button>
