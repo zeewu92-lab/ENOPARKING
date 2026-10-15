@@ -412,3 +412,16 @@ body {
 .v2-home .home-learning-actions{gap:9px;margin-top:0}
 .v2-home .home-review-button{border-color:#dfe7dc;background:#f7faf5;color:#607762;font-weight:600}
 
+
+.v2-home .home-challenge-strip{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:56px;margin-top:14px;padding:0 16px;border:0;border-radius:14px;background:#f0f4ed;color:#405543}
+.v2-home .home-challenge-copy strong{font-size:13px;font-weight:600}
+.v2-home .home-challenge-copy i{margin:0 4px;color:#91a08f;font-style:normal;font-weight:400}
+.v2-home .home-challenge-action{color:#6d876c;font-size:23px;font-weight:400}
+.v2-home .home-garden-entry{margin-top:14px;border:0;border-radius:17px;background:#fffdf7;box-shadow:0 3px 14px rgba(62,49,52,.04)}
+.v2-home .home-garden-scene{height:126px}
+.v2-home .home-garden-info{padding:12px 16px 14px}
+.v2-home .home-garden-info h2{justify-content:flex-start;gap:8px;font-size:14px;font-weight:600}
+.v2-home .home-garden-info h2 span{color:#9aaa91;font-size:14px}
+.v2-home .home-garden-info h2 small{color:#788675;font-size:12px;font-weight:500}
+.v2-home .home-garden-bottom{display:none}
+
