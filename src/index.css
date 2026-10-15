@@ -396,3 +396,28 @@ body {
   .home-quick-strip .home-challenge-strip,.home-task-strip { gap:6px; padding:8px 7px; }
   .home-quick-strip .home-challenge-icon,.home-task-icon { flex-basis:27px; width:27px; height:27px; }
 }
+
+
+/* 首頁學習區精簡：只保留待澆灌數與單一進度條 */
+.home-learning { padding:17px 0 12px; }
+.home-section-line { align-items:center; }
+.home-section-line h2 { margin:0; color:#35483a; font-size:17px; font-weight:750; }
+.home-progress-row { padding:11px 0 10px; }
+.home-progress-main { margin:0 0 12px; }
+.home-progress-count { color:#2c4435; font-size:clamp(48px,12vw,62px); line-height:1; }
+.home-progress-count span { margin-left:5px; color:#69786a; font-size:15px; font-weight:650; letter-spacing:0; }
+.home-progress-ring,.home-progress-label,.home-progress-meta,.home-today-tag { display:none !important; }
+.home-progress-track-wrap { display:flex; align-items:center; gap:12px; }
+.home-progress-track-wrap .home-progress-track { flex:1; min-width:0; margin:0; height:6px; }
+.home-progress-endpoint { flex:0 0 auto; color:#9e4e71; font-size:12px; font-weight:800; font-variant-numeric:tabular-nums; }
+.home-learning-actions { margin-top:15px; }
+.home-learning-foot { margin-top:8px; justify-content:flex-end; }
+.home-quick-strip { margin-top:11px; }
+.home-long-word-task { background:#fff7fa; border-color:#f0dbe4; }
+.home-long-word-task .home-task-icon { background:#f6e0e9; color:#a94f75; font-size:13px; font-weight:800; }
+.home-long-word-task .home-challenge-action { color:#a94f75; }
+@media(max-width:380px) {
+  .home-progress-count { font-size:48px; }
+  .home-progress-count span { font-size:13px; }
+  .home-learning-actions { gap:8px; }
+}
