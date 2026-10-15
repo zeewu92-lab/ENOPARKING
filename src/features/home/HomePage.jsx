@@ -69,7 +69,7 @@ export default function HomePage({ user, goal, onStart, onLongWordChallenge, onS
         <div className="home-progress-row">
           <div className="home-progress-copy">
             <div className="home-progress-main">
-              <div className="home-progress-count">{Math.max(0, goal - today)}<span> 个待澆灌</span></div>
+              <div className="home-progress-count">{Math.max(0, goal - today)}<span> 个待浇灌</span></div>
             </div>
             <div className="home-progress-track-wrap">
               <div className="home-progress-track" role="progressbar" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100" aria-label="今日学习进度"><span style={{ width: `${progress}%` }} /></div>
