@@ -120,14 +120,3 @@ export function applyHarvestToGarden(count, { date = todayKey() } = {}) {
   return state;
 }
 
-
-export function addNectarReward(amount, { date = todayKey() } = {}) {
-  const reward = Math.max(0, Math.floor(Number(amount) || 0));
-  const state = readState();
-  if (!reward) return state;
-  state.petals = Math.max(0, Number(state.petals) || 0) + reward;
-  if (!state.nectarHistory || typeof state.nectarHistory !== 'object' || Array.isArray(state.nectarHistory)) state.nectarHistory = {};
-  state.nectarHistory[date] = (Number(state.nectarHistory[date]) || 0) + reward;
-  writeState(state);
-  return state;
-}
