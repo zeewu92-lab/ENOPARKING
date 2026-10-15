@@ -17,7 +17,7 @@ function getGreeting() {
   return '晚上好';
 }
 
-export default function HomePage({ user, goal, onStart, onLongWordChallenge, onSetup, onGarden, onArchive, onProfile }) {
+export default function HomePage({ user, goal, onStart, onSetup, onGarden, onArchive, onProfile }) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState(() => dateKey(new Date()));
@@ -89,11 +89,6 @@ export default function HomePage({ user, goal, onStart, onLongWordChallenge, onS
           <span className="home-challenge-icon" aria-hidden="true">🐞</span>
           <span className="home-challenge-copy"><strong>错词挑战</strong><small>{wrongWords.length ? `有 ${wrongWords.length} 个单词需要巩固` : '检查并巩固错词'}</small></span>
           <span className="home-challenge-action">{wrongWords.length ? '查看错词' : '查看'} <b aria-hidden="true">›</b></span>
-        </button>
-        <button className="home-task-strip home-long-word-task" onClick={onLongWordChallenge}>
-          <span className="home-task-icon" aria-hidden="true">Aa</span>
-          <span className="home-challenge-copy"><strong>长词突破</strong><small>完成挑战，领取奖励</small></span>
-          <span className="home-challenge-action">+10 花蜜 <b aria-hidden="true">›</b></span>
         </button>
       </section>
 
