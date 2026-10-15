@@ -399,3 +399,16 @@ body {
 
 
 /* homepage spacing update */
+
+/* Homepage card hierarchy */
+.v2-home .home-learning{position:relative;margin:0;padding:20px 16px 16px;border:0;border-radius:18px;background:#fff;box-shadow:0 3px 14px rgba(62,49,52,.045)}
+.v2-home .home-learning-goal{position:absolute;top:16px;right:16px;border:0;background:transparent;color:#718372;font-size:12px;font-weight:500}
+.v2-home .home-progress-count{margin:0 0 14px;color:#304538;font-size:clamp(35px,8vw,44px);line-height:1.12;font-weight:700}
+.v2-home .home-progress-count span{color:#657568;font-size:15px;font-weight:500}
+.v2-home .home-progress-track-wrap{display:flex;align-items:center;gap:10px;margin:0 0 16px}
+.v2-home .home-progress-track{flex:1;min-width:0;height:8px;margin:0;border-radius:999px;background:#edf1e9;overflow:hidden}
+.v2-home .home-progress-track span{height:100%;border-radius:inherit;background:linear-gradient(90deg,#eaa0bd,#df5e94)}
+.v2-home .home-progress-endpoint{flex:none;color:#7d897d;font-size:11px;font-weight:500}
+.v2-home .home-learning-actions{gap:9px;margin-top:0}
+.v2-home .home-review-button{border-color:#dfe7dc;background:#f7faf5;color:#607762;font-weight:600}
+
