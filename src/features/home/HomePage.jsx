@@ -62,35 +62,23 @@ export default function HomePage({ user, goal, onStart, onSetup, onGarden, onArc
         </div>
       </header>
 
-      <section className={`home-learning ${complete ? 'is-complete' : ''}`} aria-labelledby="home-learning-title">
-        <div className="home-section-line">
-          <h2 id="home-learning-title">学习</h2>
+      <section className={`home-learning ${complete ? 'is-complete' : ''}`} aria-label="学习进度">
+        <button className="home-learning-goal" onClick={onSetup}>目标 {goal} 词 <span aria-hidden="true">›</span></button>
+        <div className="home-progress-count">{Math.max(0, goal - today)}<span> 待浇灌</span></div>
+        <div className="home-progress-track-wrap">
+          <div className="home-progress-track" role="progressbar" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100" aria-label="学习进度"><span style={{ width: `${progress}%` }} /></div>
+          <span className="home-progress-endpoint">{Math.min(today, goal)}/{goal}</span>
         </div>
-        <div className="home-progress-row">
-          <div className="home-progress-copy">
-            <div className="home-progress-main">
-              <div className="home-progress-count">{Math.max(0, goal - today)}<span> 个待浇灌</span></div>
-            </div>
-            <div className="home-progress-track-wrap">
-              <div className="home-progress-track" role="progressbar" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100" aria-label="今日学习进度"><span style={{ width: `${progress}%` }} /></div>
-              <span className="home-progress-endpoint">{Math.min(today, goal)}/{goal}</span>
-            </div>
-            <div className="home-learning-actions">
-              <button className="v2-primary home-start-button" onClick={onStart}>{today > 0 ? '继续学习' : '开始学习'} <span aria-hidden="true">›</span></button>
-              <button className="home-review-button" onClick={onStart}><span aria-hidden="true">↻</span> 复习</button>
-            </div>
-          </div>
+        <div className="home-learning-actions">
+          <button className="v2-primary home-start-button" onClick={onStart}>{today > 0 ? '继续学习' : '开始学习'} <span aria-hidden="true">›</span></button>
+          <button className="home-review-button" onClick={onStart}><span aria-hidden="true">↻</span> 复习</button>
         </div>
-        <div className="home-learning-foot"><button onClick={onSetup}>调整每日计划 <span aria-hidden="true">›</span></button></div>
       </section>
 
-      <section className="home-quick-strip" aria-label="学习快捷入口">
-        <button className="home-challenge-strip" onClick={onArchive}>
-          <span className="home-challenge-icon" aria-hidden="true">🐞</span>
-          <span className="home-challenge-copy"><strong>错词挑战</strong><small>{wrongWords.length ? `有 ${wrongWords.length} 个单词需要巩固` : '检查并巩固错词'}</small></span>
-          <span className="home-challenge-action">{wrongWords.length ? '查看错词' : '查看'} <b aria-hidden="true">›</b></span>
-        </button>
-      </section>
+      <button className="home-challenge-strip" onClick={onArchive} aria-label={`错词挑战，${wrongWords.length} 个待攻克`}>
+        <span className="home-challenge-copy"><strong>错词挑战 <i aria-hidden="true">·</i> {wrongWords.length} 个待攻克</strong></span>
+        <span className="home-challenge-action" aria-hidden="true">›</span>
+      </button>
 
       <button className="home-garden-entry" onClick={onGarden}>
         <div className="home-garden-scene" aria-hidden="true">
@@ -99,7 +87,7 @@ export default function HomePage({ user, goal, onStart, onSetup, onGarden, onArc
           <div className="garden-flower flower-one"><i /><b>✿</b></div><div className="garden-flower flower-two"><i /><b>✿</b></div><div className="garden-flower flower-three"><i /><b>✿</b></div>
           <span className="garden-butterfly">✧</span>
         </div>
-        <div className="home-garden-info"><p className="v2-eyebrow">MY GARDEN</p><h2>我的花园 <span aria-hidden="true">›</span></h2><p>累计培育 <strong>{watered}/50</strong> 个单词</p><div className="home-garden-bottom"><small>花蜜 {nectar}</small><span>去花园 <b aria-hidden="true">›</b></span></div></div>
+        <div className="home-garden-info"><h2>我的花园 <span aria-hidden="true">·</span> <small>累计 {watered}/50</small></h2></div>
       </button>
 
       <footer className="home-footer"><span>语未央，词无尽。</span><button onClick={onArchive}>学习档案 <span aria-hidden="true">›</span></button></footer>
