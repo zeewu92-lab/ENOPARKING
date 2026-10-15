@@ -13,6 +13,11 @@ import { addNectarReward } from '../utils/gardenState.js';
 
 const ACCOUNT_GATE_ENABLED = true;
 
+function localDateKey() {
+  const now = new Date();
+  return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+}
+
 function loadConfig() {
   const textbook = storage.get('textbook') || 'pep-2019-required-1';
   const selectedUnits = storage.getJSON('selectedUnits', []);
@@ -105,7 +110,7 @@ export default function AppShell() {
         challengeMode={longWordChallenge}
         challengeRewarded={challengeRewarded}
         onChallengeComplete={() => {
-          const key = 'engnocrazy:longWordReward:' + new Date().toISOString().slice(0, 10);
+          const key = 'engnocrazy:longWordReward:' + localDateKey();
           if (localStorage.getItem(key)) return false;
           addNectarReward(10);
           localStorage.setItem(key, '1');
@@ -135,7 +140,7 @@ export default function AppShell() {
               const available = words.filter(item => /^[a-z]+$/i.test(String(item?.word || item?.w || '').trim()) && String(item?.word || item?.w || '').trim().length >= 8);
               if (!config.selectedUnits.length) { setView('setup'); return; }
               if (!available.length) { setError('当前词库没有可用于长词突破的单词，请先更换或添加词库。'); return; }
-              const key = 'engnocrazy:longWordReward:' + new Date().toISOString().slice(0, 10);
+              const key = 'engnocrazy:longWordReward:' + localDateKey();
               setChallengeRewarded(Boolean(localStorage.getItem(key)));
               setLongWordChallenge(true);
               setView('learning');
