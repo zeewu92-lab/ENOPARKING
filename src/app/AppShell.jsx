@@ -9,7 +9,6 @@ import LearningPage from '../features/learning/LearningPage.jsx';
 import GardenPage from '../features/garden/GardenPage.jsx';
 import ArchivePage from '../features/archive/ArchivePage.jsx';
 import ProfilePage from '../features/profile/ProfilePage.jsx';
-import { addNectarReward } from '../utils/gardenState.js';
 
 const ACCOUNT_GATE_ENABLED = true;
 
@@ -33,8 +32,6 @@ export default function AppShell() {
   const [words, setWords] = useState([]);
   const [loadingWords, setLoadingWords] = useState(false);
   const [error, setError] = useState('');
-  const [longWordChallenge, setLongWordChallenge] = useState(false);
-  const [challengeRewarded, setChallengeRewarded] = useState(false);
 
   useEffect(() => {
     if (!ACCOUNT_GATE_ENABLED) return;
@@ -96,29 +93,13 @@ export default function AppShell() {
   }
 
   if (view === 'learning') {
-    const longWords = words.filter(item => {
-      const value = String(item?.word || item?.w || '').trim();
-      return /^[a-z]+$/i.test(value) && value.length >= 8;
-    });
-    const activeWordList = longWordChallenge ? longWords : words;
-    const activeGoal = longWordChallenge ? Math.min(5, longWords.length) : config.goal;
     return (
       <LearningPage
-        wordList={activeWordList}
-        sourceKey={longWordChallenge ? sourceKey + '|long-word-challenge' : sourceKey}
-        goal={activeGoal}
-        challengeMode={longWordChallenge}
-        challengeRewarded={challengeRewarded}
-        onChallengeComplete={() => {
-          const key = 'engnocrazy:longWordReward:' + localDateKey();
-          if (localStorage.getItem(key)) return false;
-          addNectarReward(10);
-          localStorage.setItem(key, '1');
-          setChallengeRewarded(true);
-          return true;
-        }}
-        onExit={() => { setLongWordChallenge(false); setView('home'); }}
-        onGarden={() => { setLongWordChallenge(false); setView('garden'); }}
+        wordList={words}
+        sourceKey={sourceKey}
+        goal={config.goal}
+        onExit={() => setView('home')}
+        onGarden={() => setView('garden')}
       />
     );
   }
@@ -135,16 +116,7 @@ export default function AppShell() {
             user={user}
             wordCount={words.length}
             goal={config.goal}
-            onStart={() => { setLongWordChallenge(false); setChallengeRewarded(false); setView(config.selectedUnits.length ? 'learning' : 'setup'); }}
-            onLongWordChallenge={() => {
-              const available = words.filter(item => /^[a-z]+$/i.test(String(item?.word || item?.w || '').trim()) && String(item?.word || item?.w || '').trim().length >= 8);
-              if (!config.selectedUnits.length) { setView('setup'); return; }
-              if (!available.length) { setError('当前词库没有可用于长词突破的单词，请先更换或添加词库。'); return; }
-              const key = 'engnocrazy:longWordReward:' + localDateKey();
-              setChallengeRewarded(Boolean(localStorage.getItem(key)));
-              setLongWordChallenge(true);
-              setView('learning');
-            }}
+            onStart={() => setView(config.selectedUnits.length ? 'learning' : 'setup')}
             onSetup={() => setView('setup')}
             onGarden={() => setView('garden')}
             onArchive={() => setView('archive')}
