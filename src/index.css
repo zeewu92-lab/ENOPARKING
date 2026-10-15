@@ -425,3 +425,15 @@ body {
 .v2-home .home-garden-info h2 small{color:#788675;font-size:12px;font-weight:500}
 .v2-home .home-garden-bottom{display:none}
 
+
+@media(max-width:420px){
+.v2-home{padding-top:13px}
+.v2-home .home-topline{margin-bottom:15px}
+.v2-home .home-learning{padding:18px 14px 14px}
+.v2-home .home-learning-goal{top:14px;right:14px;font-size:11px}
+.v2-home .home-progress-count{margin-bottom:13px}
+.v2-home .home-progress-track-wrap{gap:8px;margin-bottom:14px}
+.v2-home .home-challenge-strip{min-height:54px;margin-top:12px;padding:0 13px}
+.v2-home .home-garden-scene{height:112px}
+.v2-home .home-garden-info{padding:11px 13px 12px}
+}
