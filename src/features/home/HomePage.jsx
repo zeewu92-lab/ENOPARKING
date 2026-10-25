@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { huoquXuexiTongji } from '../../utils/learningStats.js';
 import { getGardenState } from '../../utils/gardenState.js';
 import { huoquCuowuShu } from '../../utils/wrongBook.js';
+import { CURRENCY_NAME } from '../island/islandHost.js';
+
+// three.js 較大，延遲到首頁出現後才載入，不拖慢首屏
+const IslandCard = lazy(() => import('../island/IslandCard.jsx'));
 
 function dateKey(date) {
   return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
@@ -27,7 +31,6 @@ export default function HomePage({ user, goal, onStart, onSetup, onGarden, onArc
   const today = Math.max(0, Number(stats.todayWords) || 0);
   const complete = goal > 0 && today >= goal;
   const progress = goal > 0 ? Math.min(100, Math.round(today / goal * 100)) : 0;
-  const watered = Math.min(50, Math.max(0, Number(garden.tree?.growth) || 0));
   const nectar = Math.max(0, Number(garden.petals) || 0);
   const greeting = getGreeting();
   const username = String(user?.nickname || user?.username || '学习者').trim() || '学习者';
@@ -57,7 +60,7 @@ export default function HomePage({ user, goal, onStart, onSetup, onGarden, onArc
       <header className="home-topline">
         <button className="home-user-heading" onClick={onProfile} aria-label="打开个人资料"><span className="home-user-avatar">{avatarText}</span><span className="home-user-greeting">{greeting}，</span><span className="home-user-name">{username}</span></button>
         <div className="home-top-actions">
-          <button className="home-nectar" onClick={onGarden} aria-label="查看花蜜"><span aria-hidden="true">✦</span><span>花蜜</span><strong>{nectar}</strong></button>
+          <button className="home-nectar" onClick={onGarden} aria-label={`查看${CURRENCY_NAME}`}><span aria-hidden="true">✦</span><span>{CURRENCY_NAME}</span><strong>{nectar}</strong></button>
           <button className="home-calendar-pill" onClick={() => setCalendarOpen(true)} aria-haspopup="dialog" aria-expanded={calendarOpen}>种花日历 <span aria-hidden="true">›</span></button>
         </div>
       </header>
@@ -80,15 +83,9 @@ export default function HomePage({ user, goal, onStart, onSetup, onGarden, onArc
         <span className="home-challenge-action" aria-hidden="true">›</span>
       </button>
 
-      <button className="home-garden-entry" onClick={onGarden}>
-        <div className="home-garden-scene" aria-hidden="true">
-          <div className="garden-cloud cloud-one" /><div className="garden-cloud cloud-two" /><div className="garden-sun" />
-          <div className="garden-ground ground-back" /><div className="garden-ground ground-front" />
-          <div className="garden-flower flower-one"><i /><b>✿</b></div><div className="garden-flower flower-two"><i /><b>✿</b></div><div className="garden-flower flower-three"><i /><b>✿</b></div>
-          <span className="garden-butterfly">✧</span>
-        </div>
-        <div className="home-garden-info"><h2>我的花园 <span aria-hidden="true">·</span> <small>累计 {watered}/50</small></h2></div>
-      </button>
+      <Suspense fallback={<div aria-hidden="true" style={{ height: 'min(88vw, 380px)', marginTop: 16, borderRadius: 22, background: 'linear-gradient(#cfe4dc, #a9c58f)' }} />}>
+        <IslandCard />
+      </Suspense>
 
       <footer className="home-footer"><span>语未央，词无尽。</span><button onClick={onArchive}>学习档案 <span aria-hidden="true">›</span></button></footer>
 
@@ -119,7 +116,7 @@ export default function HomePage({ user, goal, onStart, onSetup, onGarden, onArc
             </div>
             <section className="flower-calendar-detail" aria-live="polite">
               <div><strong>{selectedDateLabel}</strong><span>{selectedIsFuture ? '还没到这一天' : selectedCount ? '有学习记录' : '暂无学习记录'}</span></div>
-              <div className="flower-calendar-detail-stats"><span><b>{hasSelectedCount ? selectedCount : studyDates.has(selectedDate) ? '有' : 0}</b> {hasSelectedCount ? '个单词' : studyDates.has(selectedDate) ? '学习记录' : '个单词'}</span><span><b>{hasSelectedNectar ? selectedNectar : '—'}</b> {hasSelectedNectar ? '花蜜' : '花蜜未记录'}</span></div>
+              <div className="flower-calendar-detail-stats"><span><b>{hasSelectedCount ? selectedCount : studyDates.has(selectedDate) ? '有' : 0}</b> {hasSelectedCount ? '个单词' : studyDates.has(selectedDate) ? '学习记录' : '个单词'}</span><span><b>{hasSelectedNectar ? selectedNectar : '—'}</b> {hasSelectedNectar ? CURRENCY_NAME : CURRENCY_NAME + '未记录'}</span></div>
             </section>
             <div className="flower-calendar-legend"><span><i className="legend-sprout">🌱</i> 1–2 个</span><span><i className="legend-bud">❀</i> 3–5 个</span><span><i className="legend-bloom">✿</i> 6 个以上</span></div>
             <footer className="flower-calendar-footer">

@@ -1,0 +1,52 @@
+/* 語未央島嶼：所有樣式都以 isl- 開頭，避免和產品樣式衝突 */
+.isl-slot, .isl-ui {
+  --isl-ink: #1c1a1f; --isl-mute: #8d8790; --isl-line: #ebe3e6; --isl-pink: #d9578b; --isl-pink-d: #8e2358;
+  --isl-honey: #f8efd8; --isl-honey-line: #efdfb5; --isl-honey-ink: #7a5310;
+}
+.isl-slot { position: relative; height: min(88vw, 380px); margin-top: 16px; }
+.isl-card { position: absolute; inset: 0; overflow: hidden; border-radius: 22px; background: linear-gradient(#cfe4dc, #a9c58f); box-shadow: 0 10px 30px #5a7a4a22; }
+.isl-canvas { position: absolute; inset: 0; }
+.isl-canvas canvas { display: block; width: 100%; height: 100%; outline: none; }
+.isl-text { position: absolute; left: 0; right: 0; bottom: 0; padding: 48px 16px 14px; color: #fff; pointer-events: none; background: linear-gradient(transparent, #1d33257a); text-shadow: 0 1px 10px #0a1a1090; }
+.isl-text small { font-size: 11px; font-weight: 700; letter-spacing: .08em; opacity: .92; }
+.isl-big { margin-top: 1px; font-size: 19px; font-weight: 900; }
+.isl-sub { margin-top: 1px; font-size: 12px; opacity: .92; }
+.isl-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.isl-glass { pointer-events: auto; margin-top: 8px; min-height: 30px; padding: 0 13px; border: 0; border-radius: 999px; background: #ffffffcc; color: #3b5a30; font: inherit; font-weight: 800; font-size: 12px; text-shadow: none; backdrop-filter: blur(8px); cursor: pointer; }
+.isl-glass[hidden] { display: none; }
+.isl-card.isl-full { position: fixed; inset: 0; z-index: 1000; border-radius: 0; }
+.isl-card.isl-full .isl-text { display: none; }
+
+.isl-ui button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.isl-ui button:active { transform: scale(.97); }
+.isl-ui [hidden] { display: none !important; }
+.isl-bar { position: fixed; z-index: 1006; left: 0; right: 0; top: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: max(12px, env(safe-area-inset-top)) 14px 8px; pointer-events: none; }
+.isl-bar > * { pointer-events: auto; }
+.isl-pill { min-height: 36px; padding: 0 13px; border-radius: 999px; background: #ffffffd9; backdrop-filter: blur(12px); font-size: 13px; font-weight: 700; box-shadow: 0 4px 16px #2a40301f; }
+.isl-hot { background: var(--isl-pink); color: #fff; }
+.isl-coin { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px 5px 6px; border-radius: 999px; background: var(--isl-honey); border: 1px solid var(--isl-honey-line); color: var(--isl-honey-ink); font-size: 12px; font-weight: 700; }
+.isl-coin b { font-size: 14px; font-variant-numeric: tabular-nums; }
+.isl-dot { width: 22px; height: 16px; border-radius: 999px; background: #fff; position: relative; flex: none; }
+.isl-dot::after { content: ""; position: absolute; inset: 3px 6px; border-radius: 50%; background: #b3507d; }
+.isl-lv { display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; min-height: 36px; border-radius: 999px; background: #ffffffd9; backdrop-filter: blur(12px); font-size: 13px; font-weight: 800; color: var(--isl-pink-d); }
+.isl-meter { width: 46px; height: 5px; border-radius: 9px; background: #8e235826; overflow: hidden; }
+.isl-meter u { display: block; height: 100%; width: 0; background: var(--isl-pink); transition: width .6s; text-decoration: none; }
+.isl-grow { flex: 1; }
+.isl-fab { position: fixed; z-index: 1006; left: 50%; bottom: max(22px, env(safe-area-inset-bottom)); transform: translateX(-50%); min-height: 46px; padding: 0 22px; border-radius: 999px; background: var(--isl-pink); color: #fff; font-weight: 800; box-shadow: 0 8px 24px #d9578b55; }
+.isl-ui .isl-fab:active { transform: translateX(-50%) scale(.97); }
+.isl-sheet { position: fixed; z-index: 1008; left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(520px, calc(100% - 24px)); padding: 12px 14px 14px; border: 1px solid var(--isl-line); border-radius: 20px; background: #fffffff2; backdrop-filter: blur(16px); color: var(--isl-ink); box-shadow: 0 14px 44px #3b1f2d2e; }
+.isl-sheet h2 { margin: 0 0 6px; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.isl-subtle { flex: 1; font-size: 12px; font-weight: 500; color: var(--isl-mute); text-align: right; }
+.isl-x { width: 34px; height: 34px; border-radius: 50%; background: #f3eef0; font-size: 13px; }
+.isl-shelf { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 8px; scrollbar-width: none; }
+.isl-shelf::-webkit-scrollbar { display: none; }
+.isl-item { flex: 0 0 84px; padding: 10px 6px; border-radius: 18px; border: 1px solid var(--isl-line); background: #fff; text-align: center; font-size: 12px; font-weight: 700; line-height: 1.5; }
+.isl-ico { display: block; font-size: 24px; line-height: 1.2; }
+.isl-item small { display: block; font-size: 11px; font-weight: 600; color: var(--isl-honey-ink); }
+.isl-lock, .isl-poor { opacity: .5; }
+.isl-actionbar { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; padding: 10px; }
+.isl-actionbar button { flex: 1 1 auto; min-height: 46px; padding: 0 14px; border-radius: 16px; border: 1px solid var(--isl-line); background: #fff; font-weight: 700; font-size: 14px; }
+.isl-actionbar button.isl-primary { background: var(--isl-pink); border-color: var(--isl-pink); color: #fff; }
+.isl-actionbar button:disabled { opacity: .45; cursor: default; }
+.isl-toast { position: fixed; z-index: 1020; top: max(70px, calc(env(safe-area-inset-top) + 60px)); left: 50%; max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 16px; background: #2f2229ee; color: #fff; font-size: 13px; line-height: 1.6; text-align: center; opacity: 0; transform: translate(-50%, -8px); transition: .3s; pointer-events: none; }
+.isl-toast.isl-on { opacity: 1; transform: translate(-50%, 0); }
